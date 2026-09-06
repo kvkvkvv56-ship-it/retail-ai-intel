@@ -36,7 +36,7 @@ export default function ReportView({ meta, nav }) {
                     className={`arch-item ${r.id === rep.id ? 'on' : ''}`}
                     onClick={() => api(`reports/${r.id}`).then(setRep)}>
               <span className="num">{r.period_start.slice(5)}</span>
-              <span className="arch-hl">{r.headline?.slice(0, 16)}</span>
+              <span className="arch-hl">{r.headline}</span>
             </button>
           ))}
         </div>

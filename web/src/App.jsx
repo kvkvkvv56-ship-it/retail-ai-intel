@@ -67,7 +67,7 @@ export default function App() {
       <header className="site-header">
         <div className="header-row">
           <div>
-            <h1 onClick={() => nav('/')}>行业与竞对 AI 洞察助手</h1>
+            <h1 onClick={() => nav('/')}>行业与竞对 AI 洞察情报站</h1>
           </div>
           <nav className="tabs">
             <Tab on={tab === 'run'} go={() => nav('/')}>运行回放</Tab>

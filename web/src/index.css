@@ -5,6 +5,9 @@
  * motion token 按 transitions.dev 的尺度分档，不用 `all` 过渡。
  */
 
+/* 站点标题用京东朗正体。注意这是 4KB 子集，只覆盖标题这几个字
+   —— 改站名前先确认新字在字库内，否则缺字会掉回系统字体，
+   24px 大字下两种字形并排非常明显。 */
 @font-face {
   font-family: 'JD Langzheng';
   src: url('/fonts/jd-langzheng-title.woff2') format('woff2');
@@ -34,9 +37,9 @@
   --line: #E5E5E5;
   --line-subtle: #F0F0F0;
 
+  --title: 'JD Langzheng', 'OPPO Sans', sans-serif;
   --sans: 'OPPO Sans', -apple-system, BlinkMacSystemFont, 'PingFang SC',
           'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  --title: 'JD Langzheng', var(--sans);
 
   --radius-sm: 6px;
   --radius-md: 12px;
@@ -506,8 +509,9 @@ a { color: inherit; text-decoration: none; }
 .arch-item.on { background: var(--text); border-color: var(--text); }
 .arch-item .num { font-size: 11px; color: var(--muted); }
 .arch-item .arch-hl {
-  font-size: 11.5px; color: var(--text-2); line-height: 1.4;
-  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  font-size: 11.5px; color: var(--text-2); line-height: 1.45;
+  overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
 }
 .arch-item.on .num, .arch-item.on .arch-hl { color: #fff; }
 
