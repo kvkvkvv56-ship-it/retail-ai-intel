@@ -410,16 +410,19 @@ def collect_jina(src: dict, cfg: dict) -> tuple[list[dict], str | None]:
         hit, miss = [], []
         for t, u in titled:
             (hit if any(k in t for k in ind) else miss).append((t, u))
-        if hit:
-            picked = hit
-            # 被标题粗筛拦下的条目同样进拒绝台账 —— 不丢弃只记账（§5.2）。
-            # 否则这一层的判断无法审计，也看不出筛得对不对。
-            dropped = [{"url": u, "title": t,
-                        "reason": "标题未命中行业相关词，未抓取全文（省一次渲染请求）"}
-                       for t, u in miss]
-        else:
-            # 一条不中时退回取最新若干篇，避免整源静默；不记账，因为并未淘汰
-            picked = titled[:limit]
+        picked = hit
+        # 被标题粗筛拦下的条目一律进拒绝台账 —— 不丢弃只记账（§5.2）。
+        #
+        # 早先这里有个「一条不中就退回取最新 N 篇」的兜底，是错的：晚点近期
+        # 全是机器人/医疗/半导体选题，一条行业词都不命中，兜底却照样抓了 6 篇
+        # 全文，既白花请求又把不相关内容灌进流水线，而且兜底路径不记账，
+        # 导致这一层完全不可审计。
+        #
+        # 现在的行为：一条不中就本轮不产出。这是诚实的结果——该信源本期确实
+        # 没有观察范围内的内容。全部标题仍写入台账，可据此判断筛得是否过严。
+        dropped = [{"url": u, "title": t,
+                    "reason": "标题未命中行业相关词，未抓取全文（省一次全文渲染请求）"}
+                   for t, u in miss]
     else:
         picked = pairs[:limit]
 
