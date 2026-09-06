@@ -52,7 +52,7 @@ def stage_collect(cfg: dict, srccfg: dict, use_exa: bool) -> tuple[list[dict], d
     instances = srccfg["rsshub_instances"]
     raw, errors = [], []
 
-    by_channel = {"rss": [], "rsshub": [], "direct": [], "exa": []}
+    by_channel = {"rss": [], "rsshub": [], "direct": [], "jina": [], "exa": []}
     for s in sources:
         by_channel.setdefault(s["channel"], []).append(s)
 
@@ -64,6 +64,8 @@ def stage_collect(cfg: dict, srccfg: dict, use_exa: bool) -> tuple[list[dict], d
                 items, err = C.collect_rsshub(s, cfg, instances)
             elif s["channel"] == "direct":
                 items, err = C.collect_direct(s, cfg)
+            elif s["channel"] == "jina":
+                items, err = C.collect_jina(s, cfg)
             else:
                 return [], None
             for it in items:
@@ -73,10 +75,11 @@ def stage_collect(cfg: dict, srccfg: dict, use_exa: bool) -> tuple[list[dict], d
         except Exception as e:                                # noqa: BLE001
             return [], f"{s['id']}: {type(e).__name__}: {e}"
 
-    feed_sources = by_channel["rss"] + by_channel["rsshub"] + by_channel["direct"]
+    feed_sources = (by_channel["rss"] + by_channel["rsshub"]
+                    + by_channel["direct"] + by_channel["jina"])
     print(f"  直采通道：{len(feed_sources)} 个信源 "
           f"(rss {len(by_channel['rss'])} / rsshub {len(by_channel['rsshub'])} "
-          f"/ direct {len(by_channel['direct'])})")
+          f"/ direct {len(by_channel['direct'])} / jina {len(by_channel['jina'])})")
 
     with ThreadPoolExecutor(max_workers=6) as ex:
         for f in as_completed([ex.submit(run_source, s) for s in feed_sources]):

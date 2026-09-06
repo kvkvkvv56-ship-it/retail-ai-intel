@@ -21,6 +21,8 @@ import json
 import os
 import re
 import ssl
+import threading
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -276,6 +278,123 @@ def collect_direct(src: dict, cfg: dict) -> tuple[list[dict], str | None]:
         if len(out) >= 25:
             break
     return out, None
+
+
+# --------------------------------------------------------------- jina 通道
+JINA = "https://r.jina.ai/"
+
+# Jina 返回的是 markdown，URL 后面常紧跟 ) ] " ' < > 等收尾符，需一并排除
+URL_RE = re.compile(r"""(https?://[^\s)\]"'<>]+)""")
+
+# Jina 免费额度 20 RPM（无 API key）。并发打请求会撞 403 —— 实测一次
+# 「列表页 + 8 篇文章 × 2 个信源」的突发就足以触发。故串行 + 固定间隔，
+# 撞到 403 退避后重试一次。慢，但每天只跑两轮，不构成瓶颈。
+# 实测结论：**匿名调用不可用于生产**。无 API key 时 Jina 按 IP 限流，
+# 一天内做几十次探测就会把配额打光，之后固定 403 —— 同样的请求头
+# 几分钟前 200、之后一直 403，与请求构造无关。
+# 免费 API key（jina.ai 注册即得）额度 200 RPM，足够本项目每天两轮。
+# 故：无 key 直接跳过该通道，不浪费 25 秒去撞 403。
+_JINA_MIN_INTERVAL = 3.2          # 秒，约 19 RPM（有 key 时可放宽）
+_jina_last = [0.0]
+_jina_lock = threading.Lock()
+
+
+def jina_enabled() -> bool:
+    return bool(os.environ.get("JINA_API_KEY"))
+
+
+def _jina_get(url: str, headers: dict | None = None):
+    """限流版 Jina 请求：全局串行 + 403 退避重试。"""
+    key = os.environ.get("JINA_API_KEY")
+    headers = {**(headers or {})}
+    if key:
+        headers["Authorization"] = f"Bearer {key}"
+    for attempt in range(2):
+        with _jina_lock:
+            gap = time.monotonic() - _jina_last[0]
+            if gap < _JINA_MIN_INTERVAL:
+                time.sleep(_JINA_MIN_INTERVAL - gap)
+            _jina_last[0] = time.monotonic()
+        st, body = fetch(url, timeout=70, headers=headers)
+        if st == 403 and attempt == 0:
+            time.sleep(20)            # 撞限流，退避后再试一次
+            continue
+        return st, body
+    return st, body
+
+
+def collect_jina(src: dict, cfg: dict) -> tuple[list[dict], str | None]:
+    """经 Jina Reader 采集客户端渲染的站点。
+
+    晚点 LatePost 与亿邦动力是本项目最想要、却三条通道全堵的两个信源：
+    前端渲染直抓不到、无 RSSHub 路由、不在 wechat2rss 免费列表。
+    Jina Reader 在服务端渲染 JS 后返回 markdown，实测：
+      亿邦首页 直抓 0 中文字 → Jina 3498 字
+      晚点文章页 直抓 3 字   → Jina 11288 字（全文）
+
+    两个已知限制，都不阻断可用性：
+      1. 列表页需带 X-With-Links-Summary 头才吐链接（不带则只有正文）
+      2. 两站都不给发布时间；亿邦文章页还会 403（Jina 出口 IP 被封）
+         → published_at 留空，交由 S3 从正文抽 event_date，
+           S5 的状态判定本就以 event_date 为准（§6.4）
+    """
+    if not jina_enabled():
+        return [], (f"{src['id']}: 未设置 JINA_API_KEY，跳过 Jina 通道"
+                    "（匿名额度不足以支撑生产采集，实测会稳定 403）")
+
+    st, body = _jina_get(src["channel_ref"],
+                         headers={"X-With-Links-Summary": "true"})
+    if not isinstance(st, int) or st != 200 or not body:
+        return [], f"{src['id']}: 列表页 Jina {st}"
+
+    page = decode(body)
+    pattern = src.get("article_url_pattern")
+    if not pattern:
+        return [], f"{src['id']}: 缺少 article_url_pattern，无法识别文章链接"
+    art_re = re.compile(pattern)
+
+    urls, seen = [], set()
+    for u in URL_RE.findall(page):
+        u = u.rstrip(".,;")
+        if art_re.search(u) and u not in seen:
+            seen.add(u)
+            urls.append(u)
+    if not urls:
+        return [], f"{src['id']}: 列表页未匹配到文章链接"
+
+    limit = int(src.get("jina_article_limit", 8))
+    out, errs = [], 0
+
+    def one(u: str):
+        st2, b2 = _jina_get(JINA + u)
+        if not isinstance(st2, int) or st2 != 200 or not b2:
+            return None
+        t = decode(b2)
+        title = re.search(r"^Title: (.+)$", t, re.M)
+        if not title or "403" in title.group(1) or "Forbidden" in title.group(1):
+            return None
+        content = t.split("Markdown Content:", 1)[-1]
+        content = re.sub(r"!\[[^\]]*\]\([^)]*\)", " ", content)   # 去图片
+        content = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"", content)  # 链接留文字
+        content = re.sub(r"\s+", " ", content).strip()
+        if len(re.findall(r"[一-鿿]", content)) < 120:
+            return None
+        pub, tsrc = parse_time(
+            (re.search(r"Published Time: (.+)", t) or [None, None])[1]
+            if re.search(r"Published Time: (.+)", t) else None, exact=True)
+        return {"url": u, "title": title.group(1).strip()[:300],
+                "content": content[:cfg["search"]["content_max_chars"]],
+                "published_at": pub, "time_source": tsrc}
+
+    for u in urls[:limit]:
+        r = one(u)
+        if r:
+            out.append(r)
+        else:
+            errs += 1
+
+    err = f"{src['id']}: {errs}/{min(len(urls), limit)} 篇文章取回失败" if errs else None
+    return out, err
 
 
 def collect_exa(cfg: dict, window_days: int) -> tuple[list[dict], dict, list[str]]:

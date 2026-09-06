@@ -112,13 +112,15 @@
       "source_class": "B",
       "affiliated_with": null,
       "reliability": 1.0,
-      "channel": "exa",
-      "channel_ref": null,
+      "channel": "jina",
+      "channel_ref": "https://r.jina.ai/https://www.latepost.com",
       "domains": [
         "latepost.com"
       ],
       "active": true,
-      "note": "⚠️ 情报密度最高但三条通道全堵（前端渲染/无RSSHub路由/不在wechat2rss免费列表），依赖 Exa 召回 + 原始出处归因"
+      "note": "三条常规通道全堵，经 Jina Reader 服务端渲染取全文（实测文章页 11288 中文字）。站点不给发布时间，event_date 由抽取阶段从正文获得",
+      "article_url_pattern": "latepost\\.com/news/dj_detail\\?id=\\d+",
+      "jina_article_limit": 8
     },
     {
       "id": "caixin",
@@ -335,13 +337,15 @@
       "source_class": "C",
       "affiliated_with": null,
       "reliability": 0.9,
-      "channel": "exa",
-      "channel_ref": null,
+      "channel": "jina",
+      "channel_ref": "https://r.jina.ai/https://www.ebrun.com",
       "domains": [
         "ebrun.com"
       ],
       "active": true,
-      "note": "⚠️ 电商垂类最专业但前端渲染 + RSSHub 无有效路由，依赖 Exa"
+      "note": "前端渲染且无 RSSHub 路由，经 Jina Reader 采集。注意其文章页对 Jina 出口 IP 返回 403，取回成功率低于晚点",
+      "article_url_pattern": "ebrun\\.com/\\d{8}/\\d+\\.shtml",
+      "jina_article_limit": 8
     },
     {
       "id": "100ec",
