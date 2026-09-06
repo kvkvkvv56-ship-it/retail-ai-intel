@@ -77,16 +77,6 @@
       ]
     },
     {
-      "id": "pdd",
-      "name": "拼多多",
-      "aliases": [
-        "拼多多",
-        "多多买菜",
-        "Temu",
-        "temu"
-      ]
-    },
-    {
       "id": "ai_vendor",
       "name": "AI 模型与工具厂商",
       "aliases": [
@@ -247,7 +237,6 @@
       "小红书",
       "薯管家",
       "REDnote",
-      "拼多多",
       "京东",
       "美团",
       "视频号",
@@ -267,8 +256,6 @@
       "微信电商",
       "腾讯电商",
       "小程序电商",
-      "多多买菜",
-      "Temu",
       "全托管",
       "半托管",
       "1688",
@@ -380,16 +367,6 @@
         "company": "wechat",
         "domain": "merchant_tools",
         "q": "微信小店 商家 AI 工具 腾讯 混元 电商"
-      },
-      {
-        "company": "pdd",
-        "domain": "retail_ops",
-        "q": "拼多多 Temu AI 商品 推荐"
-      },
-      {
-        "company": "pdd",
-        "domain": "merchant_tools",
-        "q": "拼多多 商家 AI 工具 全托管"
       },
       {
         "company": "ai_vendor",

@@ -115,9 +115,13 @@ export default function BriefView({ meta, nav }) {
       <div className="brief-bar">
         <button className="btn" onClick={run}
                 disabled={state === 'running'}>
-          {state === 'running' ? '生成中…' : prompt.trim() ? '生成简报' : '生成本期综述'}
+          {state === 'running' ? '生成中…' : '生成简报'}
         </button>
-        <span className="fhint">⌘/Ctrl + Enter</span>
+        <span className="fhint">
+          {prompt.trim()
+            ? '⌘/Ctrl + Enter'
+            : '不填需求也可直接生成 · 将综述知识库最新动态'}
+        </span>
       </div>
 
       {(state !== 'idle') && (
