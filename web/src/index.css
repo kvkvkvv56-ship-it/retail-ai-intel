@@ -261,3 +261,95 @@ footer.colophon {
 /* 日期与公司列不换行——「2026-」「09-03」拆两行会破坏纵向对齐 */
 .tbl td.num, .tbl td.nowrap { white-space: nowrap; }
 .tbl .conf, .tbl .st { white-space: nowrap; }
+
+/* ================= 周报 ================= */
+.hist {
+  margin-left: calc(var(--u) * 2); font: inherit; font-size: 12px;
+  text-transform: none; letter-spacing: 0; color: var(--ink);
+  background: none; border: 0; border-bottom: 1px solid var(--ink-20); cursor: pointer;
+}
+.headline {
+  font-size: 25px; font-weight: 600; line-height: 1.35; letter-spacing: -0.02em;
+  max-width: 26ch; margin: 0 0 calc(var(--u) * 5);
+  padding-bottom: calc(var(--u) * 3); border-bottom: 1px solid var(--ink);
+}
+.finding { max-width: var(--measure); margin-bottom: calc(var(--u) * 4); }
+.finding h4 { margin: 0 0 var(--u); font-size: 16px; font-weight: 600; }
+.finding h4::first-letter { font-variant-numeric: tabular-nums; }
+.finding p { margin: 0 0 var(--u); color: var(--ink-70); }
+.ev-row { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 1.5); align-items: baseline; }
+.ev-row.inline { display: inline-flex; margin-left: var(--u); }
+.ev {
+  background: none; border: 0; padding: 0; cursor: pointer; font: inherit;
+  font-size: 12px; font-variant-numeric: tabular-nums; color: var(--ink-45);
+  border-bottom: 1px solid var(--ink-20);
+}
+.ev:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.ev.sm { font-size: 11px; margin-left: var(--u); }
+
+.domains { display: grid; gap: calc(var(--u) * 3); }
+@media (min-width: 860px) { .domains { grid-template-columns: 1fr 1fr; } }
+.dom { border-top: 1px solid var(--rule); padding-top: calc(var(--u) * 1.5); }
+.dom h4 { margin: 0 0 var(--u); font-size: 14px; font-weight: 600; }
+.dom p { margin: 0 0 var(--u); font-size: 13px; color: var(--ink-70); }
+.dom .watch { color: var(--ink-45); font-size: 12px; }
+
+.watchlist { list-style: none; padding: 0; margin: 0; max-width: var(--measure); }
+.watchlist li { padding: var(--u) 0; border-bottom: 1px solid var(--rule); }
+.method {
+  max-width: var(--measure); font-size: 13px; color: var(--ink-70);
+  border-left: 2px solid var(--ink-20); padding-left: calc(var(--u) * 2);
+}
+
+/* ================= 定制简报 ================= */
+.prompt {
+  width: 100%; max-width: var(--measure); font: inherit; font-size: 14px;
+  padding: calc(var(--u) * 1.5); border: 1px solid var(--ink-20);
+  background: none; color: var(--ink); resize: vertical;
+  margin-bottom: calc(var(--u) * 2);
+}
+.prompt:focus { outline: none; border-color: var(--ink); }
+.brief-bar { display: flex; align-items: center; gap: calc(var(--u) * 2); }
+.btn {
+  font: inherit; font-size: 14px; padding: calc(var(--u) * 1.2) calc(var(--u) * 3);
+  background: var(--ink); color: var(--paper); border: 0; cursor: pointer;
+}
+.btn:disabled { background: var(--ink-20); cursor: default; }
+.btn:not(:disabled):hover { background: var(--accent); }
+
+.think {
+  margin-top: calc(var(--u) * 4); padding: calc(var(--u) * 2) 0;
+  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  max-width: var(--measure);
+}
+.think-head {
+  display: flex; align-items: center; gap: var(--u);
+  background: none; border: 0; padding: 0; cursor: pointer; font: inherit; font-size: 13px;
+}
+.steps {
+  list-style: none; padding: calc(var(--u) * 1.5) 0 0; margin: 0;
+  font-size: 12px; color: var(--ink-20);
+}
+.steps li { padding: 2px 0; }
+.steps li[data-done="true"] { color: var(--ink-45); }
+.steps li[data-done="true"]::before { content: "✓ "; }
+.steps li[data-active="true"] { color: var(--ink); font-weight: 600; }
+.steps li:not([data-done="true"])::before { content: "· "; }
+
+/* 扫光：状态文字在生成中缓慢掠过一道高光 */
+.shimmer {
+  background: linear-gradient(90deg, var(--ink-45) 20%, var(--ink) 50%, var(--ink-45) 80%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: sweep 2.2s linear infinite;
+}
+@keyframes sweep { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .shimmer { animation: none; color: var(--ink); -webkit-text-fill-color: currentColor; }
+}
+
+.brief-body { max-width: var(--measure); margin-top: calc(var(--u) * 4); }
+.brief-body p { margin: 0 0 calc(var(--u) * 1.5); }
+.brief-body ul { padding-left: calc(var(--u) * 2.5); margin: 0 0 calc(var(--u) * 2); }
+.brief-body li { margin-bottom: 4px; }
+.brief-body h4 { margin: calc(var(--u) * 3) 0 var(--u); font-size: 14px; }

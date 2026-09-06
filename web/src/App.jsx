@@ -5,6 +5,8 @@ import EventsView from './views/EventsView.jsx'
 import EventDetail from './views/EventDetail.jsx'
 import RejectsView from './views/RejectsView.jsx'
 import SourcesView from './views/SourcesView.jsx'
+import ReportView from './views/ReportView.jsx'
+import BriefView from './views/BriefView.jsx'
 
 export default function App() {
   const [meta, setMeta] = useState(null)
@@ -41,12 +43,15 @@ export default function App() {
     else if (rj) body = <RejectsView runId={rj[1]} nav={nav} />
     else if (path.startsWith('/events')) body = <EventsView meta={meta} nav={nav} />
     else if (path.startsWith('/sources')) body = <SourcesView />
+    else if (path.startsWith('/report')) body = <ReportView meta={meta} nav={nav} />
+    else if (path.startsWith('/brief')) body = <BriefView meta={meta} nav={nav} />
     else body = <RunView meta={meta} run={run} nav={nav} />
   }
 
   const tab = path.startsWith('/events') ? 'events'
     : path.startsWith('/sources') ? 'sources'
-    : path.startsWith('/report') ? 'report' : 'run'
+    : path.startsWith('/report') ? 'report'
+    : path.startsWith('/brief') ? 'brief' : 'run'
 
   return (
     <div className="shell">
@@ -60,6 +65,7 @@ export default function App() {
           <button aria-current={tab === 'run'} onClick={() => nav('/')}>运行回放</button>
           <button aria-current={tab === 'events'} onClick={() => nav('/events')}>事件库</button>
           <button aria-current={tab === 'report'} onClick={() => nav('/report')}>周报</button>
+          <button aria-current={tab === 'brief'} onClick={() => nav('/brief')}>定制简报</button>
           <button aria-current={tab === 'sources'} onClick={() => nav('/sources')}>信源</button>
         </nav>
       </header>
