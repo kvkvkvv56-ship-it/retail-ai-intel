@@ -125,8 +125,30 @@ def export(store: Store, cfg: dict, srccfg: dict) -> dict:
                 "discovered_at": it["discovered_at"], "channel": it["channel"],
                 "excerpt": (it["content"] or "")[:400],
             })
-        edges = [dict(r) for r in store.q(
-            "SELECT * FROM edges WHERE from_event=? OR to_event=?", (e["id"], e["id"]))]
+        # 关联事件要带上对方的标题与日期——只给 EV 编号读者无从判断值不值得点。
+        # 同时按 (对方, 关系) 去重：规则边与模型边可能指向同一对。
+        ev_meta = {r["id"]: r for r in store.q(
+            "SELECT id, title, company, event_date FROM events")}
+        edges, seen_edge = [], set()
+        for r in store.q("SELECT * FROM edges WHERE from_event=? OR to_event=?",
+                         (e["id"], e["id"])):
+            other = r["to_event"] if r["from_event"] == e["id"] else r["from_event"]
+            if other == e["id"]:
+                continue
+            key = (other, r["relation"])
+            if key in seen_edge:
+                continue
+            seen_edge.add(key)
+            m = ev_meta.get(other)
+            edges.append({
+                "other": other, "relation": r["relation"], "basis": r["basis"],
+                "created_by": r["created_by"],
+                "direction": "out" if r["from_event"] == e["id"] else "in",
+                "title": m["title"] if m else None,
+                "company": m["company"] if m else None,
+                "event_date": m["event_date"] if m else None,
+            })
+        edges.sort(key=lambda x: (x["relation"] != "follows", x["event_date"] or ""))
         total += _w(f"events/{e['id']}.json", {
             **e, "facts": claims["fact"], "inferences": claims["inference"],
             "recommendations": claims["recommendation"],

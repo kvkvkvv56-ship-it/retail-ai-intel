@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { api, CLASS_LABEL, fmtDate } from '../api.js'
+import { api, CLASS_LABEL, CLASS_SHORT, fmtDate } from '../api.js'
 import { Confidence, Status, TimeMark, Empty } from '../components/Bits.jsx'
+
+const REL_LABEL = {
+  follows: '后续进展', same_actor_track: '同主体动作',
+  corroborates: '相互印证', contradicts: '存在矛盾', causes: '因果关联',
+}
 
 export default function EventDetail({ id, meta, nav }) {
   const [e, setE] = useState(null)
@@ -58,10 +63,13 @@ export default function EventDetail({ id, meta, nav }) {
               <li key={c.id} className="claim fact">
                 <p>{c.text}</p>
                 {it && (
-                  <a className="src" href={it.url} target="_blank" rel="noopener noreferrer">
+                  <a className="src" href={it.url} target="_blank" rel="noopener noreferrer"
+                     title={CLASS_LABEL[it.effective_class] || ''}>
+                    <span className={`cls c${it.effective_class}`}>{it.effective_class}</span>
                     {it.source_name}
-                    <span className="cls">{CLASS_LABEL[it.effective_class] || ''}</span>
-                    <TimeMark at={it.published_at} source={it.time_source} /> ↗
+                    <span className="sep">·</span>
+                    <TimeMark at={it.published_at} source={it.time_source} />
+                    <span className="sep">↗</span>
                   </a>
                 )}
               </li>
@@ -144,19 +152,22 @@ export default function EventDetail({ id, meta, nav }) {
         <>
           <h3 className="sub-title">关联事件</h3>
           <ul className="edges">
-            {e.edges.map((g, i) => {
-              const other = g.from_event === e.id ? g.to_event : g.from_event
-              return (
-                <li key={i}>
-                  <button className="link" onClick={() => nav(`/events/${other}`)}>
-                    {g.relation === 'follows' ? '后续进展' :
-                      g.relation === 'same_actor_track' ? '同主体动作' : g.relation}
-                    {' '}→ {other}
-                  </button>
-                  <span className="d"> {g.basis}</span>
-                </li>
-              )
-            })}
+            {e.edges.map((g, i) => (
+              <li key={i}>
+                <button className="edge-item" onClick={() => nav(`/events/${g.other}`)}>
+                  <span className="edge-rel">{REL_LABEL[g.relation] || g.relation}</span>
+                  <span className="edge-title">{g.title || g.other}</span>
+                  <span className="edge-meta num">
+                    {g.event_date || '—'}{g.created_by === 'rule' ? ' · 规则' : ' · 模型'}
+                  </span>
+                </button>
+                {/* 规则边的依据是模板化的「同为 X 的动作，时间相邻」，没有信息量，
+                    不展示；模型提议的边带具体依据，值得展示 */}
+                {g.relation !== 'same_actor_track' && g.basis && (
+                  <div className="edge-basis">{g.basis}</div>
+                )}
+              </li>
+            ))}
           </ul>
         </>
       )}

@@ -510,3 +510,32 @@ a { color: inherit; text-decoration: none; }
   overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
 }
 .arch-item.on .num, .arch-item.on .arch-hl { color: #fff; }
+
+/* 事实的信源行：角标 + 名称 + 时间，横排 */
+.claim .src { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.claim .src .cls { flex: none; }
+.claim .src .sep { color: var(--line); }
+
+/* 关联事件：给标题不给编号——只给 EV 编号读者无从判断值不值得点 */
+.edges li { border-bottom: 1px solid var(--line-subtle); padding: 0; }
+.edge-item {
+  display: flex; align-items: baseline; gap: 10px; width: 100%;
+  padding: 11px 0; background: none; border: 0; cursor: pointer;
+  font-family: var(--sans); font-size: 12.5px; text-align: left;
+  transition: var(--t-bg);
+}
+.edge-item:hover { background: var(--bg-warm); }
+.edge-rel {
+  flex: none; font-size: 10.5px; color: var(--muted);
+  background: var(--line-subtle); padding: 1px 8px; border-radius: var(--radius-pill);
+}
+.edge-title {
+  flex: 1; min-width: 0; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.edge-item:hover .edge-title { text-decoration: underline; text-underline-offset: 3px; }
+.edge-meta { flex: none; font-size: 10.5px; color: var(--faint); }
+.edge-basis {
+  font-size: 11px; color: var(--faint); line-height: 1.6;
+  padding: 0 0 10px 0; max-width: 68ch;
+}
