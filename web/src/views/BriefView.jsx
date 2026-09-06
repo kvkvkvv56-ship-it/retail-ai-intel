@@ -75,6 +75,13 @@ export default function BriefView({ meta, nav }) {
 
   const curStep = steps.length ? steps[steps.length - 1] : null
 
+  /** field-sizing 仅新版 Chrome 支持，这里做兜底：单行起步，随内容自增到上限 */
+  const autoGrow = (el) => {
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = Math.min(el.scrollHeight, 300) + 'px'
+  }
+
   return (
     <div className="view">
       <p className="sec-title">定制简报</p>
@@ -93,8 +100,11 @@ export default function BriefView({ meta, nav }) {
                     borderRadius={12} active={state === 'running'}>
           <div className="prompt-wrap">
             <textarea
+              rows={1}
+              ref={autoGrow}
               placeholder="例：对比各平台 AI 导购的落地阶段差异，哪些做法对我方商家工具有借鉴价值？"
-              value={prompt} onChange={(e) => setPrompt(e.target.value)}
+              value={prompt}
+              onChange={(e) => { setPrompt(e.target.value); autoGrow(e.target) }}
               onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) run() }} />
           </div>
         </BorderBeam>
@@ -178,12 +188,14 @@ function renderMarkdown(md, nav) {
     if (table) {
       const [head, ...rows] = table
       out.push(
-        <table className="tbl compact" key={out.length}>
-          <thead><tr>{head.map((c, i) => <th key={i}>{inline(c, nav)}</th>)}</tr></thead>
-          <tbody>{rows.map((r, i) =>
-            <tr key={i}>{r.map((c, j) => <td key={j}>{inline(c, nav)}</td>)}</tr>)}
-          </tbody>
-        </table>)
+        <div className="tbl-scroll" key={out.length}>
+          <table className="tbl">
+            <thead><tr>{head.map((c, i) => <th key={i}>{inline(c, nav)}</th>)}</tr></thead>
+            <tbody>{rows.map((r, i) =>
+              <tr key={i}>{r.map((c, j) => <td key={j}>{inline(c, nav)}</td>)}</tr>)}
+            </tbody>
+          </table>
+        </div>)
       table = null
     }
   }
@@ -197,12 +209,11 @@ function renderMarkdown(md, nav) {
       continue
     }
     flush()
-    if (/^#{1,3}\s/.test(l)) {
+    if (/^#{1,4}\s/.test(l)) {
       const lvl = l.match(/^#+/)[0].length
       const txt = l.replace(/^#+\s*/, '')
-      out.push(lvl <= 2
-        ? <h3 className="sub-title" key={out.length}>{inline(txt, nav)}</h3>
-        : <h4 key={out.length}>{inline(txt, nav)}</h4>)
+      const H = lvl <= 2 ? 'h3' : lvl === 3 ? 'h4' : 'h5'
+      out.push(React.createElement(H, { key: out.length }, inline(txt, nav)))
     } else if (/^[-*]\s/.test(l)) {
       ;(list ||= []).push(<li key={list?.length || 0}>{inline(l.replace(/^[-*]\s/, ''), nav)}</li>)
     } else if (l.trim()) {

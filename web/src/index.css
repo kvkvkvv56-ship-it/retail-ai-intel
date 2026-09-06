@@ -317,17 +317,19 @@ a { color: inherit; text-decoration: none; }
   padding: 16px 18px; transition: var(--t-surface);
 }
 .prompt-wrap:focus-within { border-color: var(--muted); box-shadow: var(--shadow-elevated); }
-.beam-wrap { max-width: 68ch; }
+.beam-wrap { width: 100%; }
 .prompt-wrap textarea {
-  width: 100%; border: 0; outline: none; background: transparent;
-  font-family: var(--sans); font-size: 14px; line-height: 1.75; color: var(--text);
-  /* 固定起始高度，内容变长时由 JS 自增，到 max-height 后内部滚动。
-     不给手动 resize 手柄——拖拽把手会破坏版面。 */
-  resize: none; min-height: 116px; max-height: 320px; overflow-y: auto;
+  display: block; width: 100%; border: 0; outline: none; background: transparent;
+  font-family: var(--sans); font-size: 14px; line-height: 1.7; color: var(--text);
+  /* 单行起步，随内容自增，到上限后内部滚动。
+     field-sizing 在新版 Chrome 原生支持；旧内核由 JS 兜底（BriefView 里 autoGrow）。
+     不给 resize 手柄——拖拽把手会破坏版面。 */
+  resize: none; overflow-y: auto;
+  min-height: 24px; height: 24px; max-height: 300px;
   field-sizing: content;
 }
 .prompt-wrap textarea::placeholder { color: var(--faint); }
-.brief-bar { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+.brief-bar { display: flex; align-items: center; gap: 14px; margin: 16px 0 28px; }
 .btn {
   font-family: var(--sans); font-size: 13px; font-weight: 500;
   padding: 9px 22px; border-radius: var(--radius-pill); border: 0; cursor: pointer;
@@ -336,7 +338,7 @@ a { color: inherit; text-decoration: none; }
 .btn:disabled { background: var(--line); color: var(--faint); cursor: default; }
 .btn:not(:disabled):hover { box-shadow: var(--shadow-elevated); }
 
-.think { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 14px 16px; max-width: 68ch; }
+.think { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 14px 16px; }
 .think-head { display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 0; cursor: pointer; font-family: var(--sans); font-size: 12.5px; color: var(--text); }
 .steps { list-style: none; padding-top: 12px; font-size: 11.5px; color: var(--faint); }
 .steps li { padding: 3px 0; }
@@ -355,12 +357,28 @@ a { color: inherit; text-decoration: none; }
   .shimmer { animation: none; color: var(--text); -webkit-text-fill-color: currentColor; }
 }
 
-.brief-body { max-width: 68ch; margin-top: 24px; font-size: 13.5px; line-height: 1.8; }
-.brief-body p { margin-bottom: 12px; }
-.brief-body ul { padding-left: 20px; margin-bottom: 14px; }
-.brief-body li { margin-bottom: 4px; }
-.brief-body h4 { font-size: 13px; font-weight: 500; margin: 20px 0 8px; }
-.brief-body .tbl { margin: 8px 0 16px; }
+.brief-body { margin-top: 28px; font-size: 14px; line-height: 1.85; }
+.brief-body > p { margin-bottom: 14px; max-width: 74ch; }
+.brief-body ul { padding-left: 20px; margin-bottom: 16px; max-width: 74ch; }
+.brief-body li { margin-bottom: 5px; }
+/* 标题分级：一级 18px 上加分隔线，二级 15px，三级 13.5px。
+   早先全部映射到同一个类，Markdown 的层级信息在渲染后全丢了。 */
+.brief-body h3 {
+  font-size: 18px; font-weight: 600; letter-spacing: -.01em;
+  margin: 32px 0 14px; padding-top: 18px; border-top: 1px solid var(--line);
+}
+.brief-body h3:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.brief-body h4 { font-size: 15px; font-weight: 600; margin: 24px 0 10px; }
+.brief-body h5 { font-size: 13.5px; font-weight: 600; color: var(--text-2); margin: 18px 0 8px; }
+.brief-body strong { font-weight: 600; }
+
+/* 表格：允许横向滚动而不是把列挤成一字一行 */
+.tbl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 10px 0 20px; }
+.brief-body .tbl { min-width: 620px; font-size: 13px; }
+.brief-body .tbl th { padding: 0 14px 10px 0; white-space: nowrap; }
+.brief-body .tbl td { padding: 12px 14px 12px 0; line-height: 1.65; vertical-align: top; }
+.brief-body .tbl td:first-child, .brief-body .tbl th:first-child { padding-left: 2px; }
+.brief-body .tbl .ev { margin: 2px 4px 2px 0; }
 
 .offline-bar {
   margin-top: 14px; padding: 10px 14px; border-radius: var(--radius-sm);
