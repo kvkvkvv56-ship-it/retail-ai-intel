@@ -104,8 +104,15 @@ export default function SourcesView() {
       {rev && rev.total > 0 && (
         <>
           <p className="sec-title mt">
-            人工复核记录 · {rev.results.filter((r) => r.reviewer !== 'system').length} 次
+            人工复核记录 · {rev.total} 次操作，影响 {rev.affected_events} 个事件
           </p>
+          {/* 按操作类型先给聚合，再列最近几条。逐条列出会把有效信息淹没在
+              重复里——尤其批量裁决之后 */}
+          <div className="dist" style={{ marginBottom: 14 }}>
+            {Object.entries(rev.by_action || {}).map(([k, n]) => (
+              <span key={k}>{ACTION_LABEL[k] || k} <b>{n}</b></span>
+            ))}
+          </div>
           <table className="tbl rev-tbl">
             <colgroup>
               <col style={{ width: '7.5em' }} />
@@ -119,7 +126,7 @@ export default function SourcesView() {
               </tr>
             </thead>
             <tbody>
-              {rev.results.filter((r) => r.reviewer !== 'system').map((r, i) => (
+              {rev.results.map((r, i) => (
                 <tr key={i}>
                   {/* 时间与对象靠左：早先误用了 .num 类，而 .num 带
                       text-align: right，把这两列推到了右边 */}
@@ -135,6 +142,12 @@ export default function SourcesView() {
               ))}
             </tbody>
           </table>
+          {rev.truncated > 0 && (
+            <p className="empty">
+              仅显示最近 {rev.results.length} 条，另有 {rev.truncated} 条见仓库
+              <code> data/reviews.jsonl</code>
+            </p>
+          )}
         </>
       )}
     </div>

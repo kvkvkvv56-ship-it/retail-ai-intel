@@ -45,9 +45,12 @@ def _log(store, ttype, tid, action, note):
 def cmd_queue(store, _):
     pend = store.q("""SELECT id, title, company, confidence, status, review_state,
                              independent_orgs, event_date
-                      FROM events WHERE review_state NOT IN ('none','confirmed','rejected')
+                      FROM events WHERE review_state IN ('pending','suspect_duplicate')
                       ORDER BY review_state, event_date DESC""")
-    print(f"\n待复核事件 {len(pend)} 个")
+    watching = store.one("SELECT COUNT(*) FROM events WHERE review_state='watching'")
+    # watching 是「已裁决为持续观察」，不是待办
+    print(f"\n待复核事件 {len(pend)} 个"
+          + (f"（另有 {watching} 个已转持续观察，无需处理）" if watching else ""))
     print("=" * 92)
     by = {}
     for e in pend:
@@ -86,6 +89,38 @@ def cmd_queue(store, _):
     if stale:
         print(f"\n（另有 {stale} 组标记因其中的事件已被后续自动归并合掉而失效，已跳过）")
     print()
+
+
+# ==================================================================== batch
+def cmd_batch(store, a):
+    """批量裁决同一类待办。
+
+    一次批量操作是**一个人的一次判断**，所以只记一条 review，
+    在 note 里写清适用范围与条数——而不是写 56 条一模一样的记录。
+    逐条留痕看似严谨，实际是把有效信息淹没在重复里。
+    """
+    where = {"pending": "review_state='pending'",
+             "suspect": "review_state='suspect_duplicate'",
+             "single": "confidence='单源待确认'"}[a.scope]
+    rows = store.q(f"SELECT id, title, confidence FROM events WHERE {where}")
+    if not rows:
+        print(f"范围 {a.scope} 下没有待处理事件")
+        return 0
+
+    state = {"confirm": "confirmed", "reject": "rejected", "watch": "watching"}[a.action]
+    ids = [r["id"] for r in rows]
+    store.db.execute(
+        f"UPDATE events SET review_state='{state}' WHERE {where}")
+    _log(store, "batch", f"{a.scope}×{len(ids)}", a.action,
+         (a.note or "") + f"｜适用 {len(ids)} 个事件：" + "、".join(ids[:6])
+         + (f" 等（共 {len(ids)} 个）" if len(ids) > 6 else ""))
+    store.commit()
+    print(f"✅ {len(ids)} 个事件 → {state}（记 1 条复核记录，非逐条）")
+    for r in rows[:5]:
+        print(f"     {r['id']}  {r['title'][:40]}")
+    if len(rows) > 5:
+        print(f"     …另 {len(rows)-5} 个")
+    return 0
 
 
 # ==================================================================== event
@@ -212,6 +247,11 @@ def main() -> int:
     pe.add_argument("action", nargs="?", choices=["confirm", "reject", "watch"])
     pe.add_argument("--note", default="")
 
+    pb = sub.add_parser("batch", help="批量裁决同类待办（只记一条复核记录）")
+    pb.add_argument("scope", choices=["pending", "suspect", "single"])
+    pb.add_argument("action", choices=["confirm", "reject", "watch"])
+    pb.add_argument("--note", default="")
+
     pm = sub.add_parser("merge", help="归并纠错")
     pm.add_argument("a"); pm.add_argument("b")
     pm.add_argument("action", choices=["split", "same"])
@@ -228,7 +268,7 @@ def main() -> int:
     a = ap.parse_args()
     store = Store()
     try:
-        rc = {"queue": cmd_queue, "event": cmd_event,
+        rc = {"queue": cmd_queue, "event": cmd_event, "batch": cmd_batch,
               "merge": cmd_merge, "source": cmd_source}[a.cmd](store, a)
         if a.cmd != "queue":
             store.dump()

@@ -215,8 +215,22 @@ def export(store: Store, cfg: dict, srccfg: dict) -> dict:
     stats["sources"] = len(health)
 
     # -------------------------------------------------- reviews 人工复核记录
-    revs = [dict(r) for r in store.q("SELECT * FROM reviews ORDER BY created_at DESC")]
-    total += _w("reviews.json", {"total": len(revs), "results": revs})
+    # 复核记录按操作类型聚合再外显。逐条列出会把有效信息淹没在重复里
+    # ——尤其批量裁决之后。系统自动标记（reviewer=system）也不进人工记录。
+    revs = [dict(r) for r in store.q(
+        "SELECT * FROM reviews WHERE reviewer!='system' ORDER BY created_at DESC")]
+    by_action: dict[str, int] = defaultdict(int)
+    for r in revs:
+        by_action[r["action"]] += 1
+    affected = store.one(
+        "SELECT COUNT(*) FROM events WHERE review_state NOT IN ('none','')") or 0
+    total += _w("reviews.json", {
+        "total": len(revs),
+        "by_action": dict(by_action),
+        "affected_events": affected,
+        "results": revs[:12],          # 只给最近 12 条，其余靠聚合数交代
+        "truncated": max(0, len(revs) - 12),
+    })
     stats["reviews"] = len(revs)
 
     # ---------------------------------------------- 检索索引（前端全文检索）
