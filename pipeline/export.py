@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import urllib.parse
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -113,10 +114,20 @@ def export(store: Store, cfg: dict, srccfg: dict) -> dict:
         for it in store.q("SELECT * FROM items WHERE event_id=? ORDER BY published_at",
                           (e["id"],)):
             s = src_by_id.get(it["source_id"] or "")
+            # 未登记的域名直接显示域名本身，不写「未登记域名」——
+            # 读者要的是「这条来自哪」，域名就是答案。
+            # 注册表只登记我们单独摘出的优质信源，不必也不该穷举全网域名。
+            host = ""
+            try:
+                host = urllib.parse.urlsplit(it["url"]).netloc.lower()
+                host = host[4:] if host.startswith("www.") else host
+            except ValueError:
+                pass
             items.append({
                 "id": it["id"], "title": it["title"], "url": it["url"],
                 "source_id": it["source_id"],
-                "source_name": s["name"] if s else "未登记域名",
+                "source_name": s["name"] if s else (host or "来源未知"),
+                "registered": bool(s),
                 "source_class": it["source_class"],
                 "effective_class": it["effective_class"],
                 "original_source": it["original_source"],

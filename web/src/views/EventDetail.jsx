@@ -112,15 +112,16 @@ export default function EventDetail({ id, meta, nav }) {
       <h3 className="sub-title">
         原始信源 <span className="n">{e.items.length}</span>
       </h3>
-      <table className="tbl compact">
+      <table className="tbl src-tbl">
+        <colgroup>
+          <col /><col style={{ width: '9em' }} /><col style={{ width: '6.5em' }} />
+          <col style={{ width: '6.5em' }} /><col style={{ width: '6.5em' }} />
+          <col style={{ width: '4.5em' }} />
+        </colgroup>
         <thead>
           <tr>
-            <th>标题</th>
-            <th style={{ width: '8em' }}>信源</th>
-            <th style={{ width: '7em' }}>一手性</th>
-            <th style={{ width: '6.5em' }}>发布</th>
-            <th style={{ width: '6.5em' }}>采集</th>
-            <th style={{ width: '4em' }}>通道</th>
+            <th>标题</th><th>信源</th><th>一手性</th>
+            <th>发布</th><th>采集</th><th>通道</th>
           </tr>
         </thead>
         <tbody>
@@ -133,16 +134,17 @@ export default function EventDetail({ id, meta, nav }) {
                 )}
                 {i.partial_content && <span className="tag">付费墙·仅摘要</span>}
               </td>
-              <td className="d">{i.source_name}</td>
-              <td className="d">
-                {CLASS_LABEL[i.effective_class] || '—'}
+              <td className="d nowrap" title={i.source_name}>{i.source_name}</td>
+              <td className="nowrap" title={CLASS_LABEL[i.effective_class] || ''}>
+                <span className={`cls c${i.effective_class}`}>{i.effective_class}</span>
+                <span className="d"> {CLASS_SHORT[i.effective_class] || '—'}</span>
                 {i.effective_class !== i.source_class && (
-                  <span className="tag">归因升级</span>
+                  <span className="pill mini">归因升级</span>
                 )}
               </td>
-              <td className="num dim"><TimeMark at={i.published_at} source={i.time_source} /></td>
-              <td className="num dim">{fmtDate(i.discovered_at)}</td>
-              <td className="d">{i.channel}</td>
+              <td className="tnum d nowrap"><TimeMark at={i.published_at} source={i.time_source} /></td>
+              <td className="tnum d nowrap">{fmtDate(i.discovered_at)}</td>
+              <td className="nowrap"><span className="chan">{i.channel}</span></td>
             </tr>
           ))}
         </tbody>

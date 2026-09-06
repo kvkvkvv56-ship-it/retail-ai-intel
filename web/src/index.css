@@ -427,6 +427,10 @@ a { color: inherit; text-decoration: none; }
   font-weight: 500; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis;
 }
+/* 事件详情里的原始信源表：标题列允许两行，其余列一律不换行、靠左 */
+.src-tbl td { white-space: normal; }
+.src-tbl td.nowrap, .src-tbl th { white-space: nowrap; }
+.src-tbl td > a { display: inline-block; max-width: 100%; }
 .src-tbl .nowrap { white-space: nowrap; }
 
 /* 一手性等级：字母做角标，短名跟后面 */

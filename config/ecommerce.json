@@ -5,17 +5,26 @@
   "report_window_days": 7,
   "companies": [
     {
-      "id": "taobao",
-      "name": "淘宝天猫",
+      "id": "alibaba",
+      "name": "阿里巴巴",
       "aliases": [
-        "淘天",
         "淘宝",
         "天猫",
-        "阿里电商",
+        "淘天",
+        "阿里",
+        "阿里巴巴",
+        "阿里云",
         "阿里妈妈",
+        "通义",
+        "千问",
+        "Qwen",
+        "qwen",
+        "万相",
         "1688",
         "闲鱼",
-        "千牛"
+        "千牛",
+        "支付宝",
+        "飞猪"
       ]
     },
     {
@@ -289,22 +298,22 @@
     "_comment": "查询矩阵按「公司 × 领域」展开，保证每个领域都有召回下限。v1 的问题是每家 3 条泛问，导致 data_bi 与 service_fulfillment 无对应查询词、事件必然稀疏。",
     "matrix": [
       {
-        "company": "taobao",
+        "company": "alibaba",
         "domain": "retail_ops",
         "q": "淘宝 天猫 AI 搜索推荐 导购 上线"
       },
       {
-        "company": "taobao",
+        "company": "alibaba",
         "domain": "marketing",
         "q": "淘宝 AIGC 营销素材 数字人 直播"
       },
       {
-        "company": "taobao",
+        "company": "alibaba",
         "domain": "merchant_tools",
         "q": "淘天 商家 AI 经营工具 千牛"
       },
       {
-        "company": "taobao",
+        "company": "alibaba",
         "domain": "data_bi",
         "q": "阿里 电商 数据 智能分析 商家诊断"
       },
@@ -399,7 +408,7 @@
         "q": "智能客服 国家标准 电商 消费者权益"
       },
       {
-        "company": "taobao",
+        "company": "alibaba",
         "domain": "retail_ops",
         "q": "2026 淘宝 天猫 AI 战略 升级"
       },
@@ -454,7 +463,7 @@
         "q": "2026 商家 AI 工具 采用 调研"
       },
       {
-        "company": "taobao",
+        "company": "alibaba",
         "domain": "service_fulfillment",
         "q": "淘宝 天猫 智能客服 AI 售后 2026"
       }
@@ -489,5 +498,10 @@
     "strong_model_env": "KB_STRONG_MODEL"
   },
   "collect_window_days": 250,
-  "_window_note": "collect_window_days 决定采集往回捞多久，window_days 决定状态判定的观察窗口。早先混用一个参数，导致 2026 上半年的事件在采集阶段就被判 stale 丢弃（累计 124 条），而它们本该作为「旧闻/背景」入库提供历史上下文。"
+  "_window_note": "collect_window_days 决定采集往回捞多久，window_days 决定状态判定的观察窗口。早先混用一个参数，导致 2026 上半年的事件在采集阶段就被判 stale 丢弃（累计 124 条），而它们本该作为「旧闻/背景」入库提供历史上下文。",
+  "_我方": {
+    "company": "jd",
+    "name": "京东零售",
+    "note": "本情报站服务于京东零售。所有事件都要给出对我方的启示；京东自身的动态同样观察——追踪自家公开足迹是竞对情报的常规做法。"
+  }
 }

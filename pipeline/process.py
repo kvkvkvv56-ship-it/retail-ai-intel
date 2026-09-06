@@ -149,10 +149,12 @@ def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
     comp_name = {c["id"]: c["name"] for c in cfg["companies"]}
     valid = set(comp_name)
     # 模型会输出体系外的主体（如 1688、阿里云），归到所属集团；无法归属的进 industry
-    alias = {"1688": "taobao", "alibaba": "taobao", "aliyun": "taobao",
-             "tmall": "taobao", "taotian": "taobao", "ali": "taobao",
+    alias = {"1688": "alibaba", "taobao": "alibaba", "aliyun": "alibaba",
+             "tmall": "alibaba", "taotian": "alibaba", "ali": "alibaba",
+             "qwen": "alibaba", "tongyi": "alibaba", "alimama": "alibaba",
              "bytedance": "douyin", "doubao": "douyin", "jinritemai": "douyin",
-             "kwai": "kuaishou", "xhs": "xiaohongshu", "rednote": "xiaohongshu"}
+             "kwai": "kuaishou", "xhs": "xiaohongshu", "rednote": "xiaohongshu",
+             "jingdong": "jd", "wechat_shop": "wechat", "tencent": "wechat"}
     rows = store.q("SELECT * FROM items WHERE status='extracted' ORDER BY id")
 
     by_company: dict[str, list[dict]] = {}
@@ -189,8 +191,18 @@ def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
         for f in as_completed([ex.submit(one, c, v) for c, v in by_company.items()]):
             company, cands, res, err = f.result()
             if err or not res:
+                # 归并调用失败时不能把这批候选留在 extracted 状态静默丢失——
+                # 它们已经过预筛与抽取，是有效数据。降级为「每条独立成事件」，
+                # 宁可事件碎一些，也不能凭空少掉。
+                # （实测这个泄漏让事件数从 129 掉到 79，51 条卡在 extracted）
                 stats["error"] += 1
-                continue
+                res = {"groups": [{"canonical_key": c["event_key"],
+                                   "title": c.get("event_title") or c["event_key"],
+                                   "members": [i],
+                                   "reason": "归并调用失败，降级为独立事件"}
+                                  for i, c in enumerate(cands)],
+                       "relations": []}
+                stats["merge_fallback"] = stats.get("merge_fallback", 0) + len(cands)
 
             for g in res.get("groups", []):
                 members = [cands[i] for i in g.get("members", [])
@@ -424,6 +436,19 @@ def _write_claims(store, event_id: str, data: dict) -> None:
         store.upsert("claims", {
             "id": cid, "event_id": event_id, "kind": "fact",
             "text": txt.strip()[:500], "source_item_id": item_id})
+
+    # implication 是助手对我方的判断，按 §7 落为 recommendation：
+    # 不得带 source_item_id —— 能追溯到某篇文章的就不是建议，是别人的观点
+    imp = data.get("implication")
+    if isinstance(imp, dict) and isinstance(imp.get("text"), str) \
+            and len(imp["text"].strip()) >= 8:
+        txt = imp["text"].strip()[:500]
+        cid = "cl_" + hashlib.sha1(f"{event_id}r{txt}".encode()).hexdigest()[:12]
+        store.upsert("claims", {
+            "id": cid, "event_id": event_id, "kind": "recommendation",
+            "text": txt, "source_item_id": None,
+            "audience": imp.get("audience"),
+            "needs_internal_data": 1 if imp.get("needs_internal_data") else 0})
 
     for inf in data.get("inferences") or []:
         txt = inf.get("text") if isinstance(inf, dict) else inf

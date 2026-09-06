@@ -100,6 +100,21 @@ tmall-ai-business-manager、xiaohongshu-search-diandian、kuaishou-semantic-id-s
 时间：如果正文明确写了动作发生的日期，填 event_date（YYYY-MM-DD）；
 无法确认就填 null，**不要猜测或用报道日期顶替**。
 
+═══ 我方视角 ═══
+本情报站服务于**京东零售**。每个事件都必须给出 implication —— 这条动态
+对京东零售意味着什么。要求：
+
+- 具体到可动作，不要写「值得关注」「有借鉴意义」这类空话
+- 分清三种意义：① 竞对能力构成的压力 ② 可直接借鉴的做法
+  ③ 上游能力变化带来的新可能
+- audience 从「运营 / 商分 / 营销 / 技术 / 供应链」中选最贴切的一个
+- needs_internal_data：公开信息无法验证效果的（如「能提升转化率」）一律 true
+- 事件主体本身就是京东时，implication 写它对京东后续动作的含义，
+  或该动作暴露的能力缺口
+- 确实推不出有价值含义时，text 写 null —— 不要为了填字段而编
+
+implication 是**你的判断**，不是事实。它不会被算作事实，会单独标注为建议。
+
 只输出 JSON，不要任何其他内容。"""
 
 
@@ -123,7 +138,9 @@ _TAIL_A = """
  "event_key": "...", "event_title": "20字以内的中性标题",
  "summary": "50字以内客观概述", "stage": "...",
  "facts": ["每条一个可核查的事实，必须来自本文"],
- "inferences": [], "note": "如信息不足以判断可留空"}"""
+ "inferences": [], "note": "如信息不足以判断可留空",
+ "implication": {"text": "对京东零售的启示，或 null", "audience": "运营|商分|营销|技术|供应链",
+                 "needs_internal_data": true/false}}"""
 
 _TAIL_B = """
 
@@ -143,7 +160,9 @@ _TAIL_B = """
  "event_key": "...", "event_title": "...", "summary": "...", "stage": "...",
  "event_date": "YYYY-MM-DD 或 null",
  "facts": ["..."],
- "inferences": [{"text": "...", "attributed_to": "媒体名"}]}"""
+ "inferences": [{"text": "...", "attributed_to": "媒体名"}],
+ "implication": {"text": "对京东零售的启示，或 null", "audience": "运营|商分|营销|技术|供应链",
+                 "needs_internal_data": true/false}}"""
 
 _TAIL_C = """
 
@@ -162,7 +181,9 @@ _TAIL_C = """
  "event_key": "...", "event_title": "...", "summary": "...", "stage": "...",
  "event_date": "YYYY-MM-DD 或 null",
  "facts": ["..."], "inferences": [],
- "original_source_hint": "媒体名 或 null", "note": "..."}"""
+ "original_source_hint": "媒体名 或 null", "note": "...",
+ "implication": {"text": "对京东零售的启示，或 null", "audience": "运营|商分|营销|技术|供应链",
+                 "needs_internal_data": true/false}}"""
 
 _TAIL_E = """
 
@@ -179,7 +200,9 @@ _TAIL_E = """
 {"relevant": true/false, "company": "...", "domains": [...],
  "event_key": "...", "event_title": "...", "summary": "...",
  "stage": null, "facts": [],
- "inferences": [{"text": "...", "attributed_to": "作者名"}]}"""
+ "inferences": [{"text": "...", "attributed_to": "作者名"}],
+ "implication": {"text": "对京东零售的启示，或 null", "audience": "运营|商分|营销|技术|供应链",
+                 "needs_internal_data": true/false}}"""
 
 _CLASS_TAIL = {"A": _TAIL_A, "B": _TAIL_B, "C": _TAIL_C, "E": _TAIL_E}
 
