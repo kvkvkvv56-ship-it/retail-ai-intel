@@ -153,6 +153,12 @@ def stage_dedup(store: Store, raw: list[dict], cfg: dict, srccfg: dict,
             reject(it, "collect", "no_title", "缺少标题或链接，无法追溯")
             continue
 
+        # jina 通道的标题级粗筛结果：不抓全文，但必须留痕可审计
+        if it.get("_prefilter_drop"):
+            stats["off_topic"] += 1
+            reject(it, "jina_title_filter", "off_topic", it["_prefilter_drop"])
+            continue
+
         canon = C.canonical_url(it["url"])
         iid = C.item_id(canon)
 

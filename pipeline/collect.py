@@ -405,13 +405,23 @@ def collect_jina(src: dict, cfg: dict) -> tuple[list[dict], str | None]:
     # 反之只带 AI 却讲汽车的，行业词过不了。AI 相关性留给正文阶段判。
     ind = (cfg.get("relevance") or {}).get("industry_terms") or []
     titled = [(t, u) for t, u in pairs if t]
+    dropped: list[dict] = []
     if ind and titled:
-        hit = [(t, u) for t, u in titled if any(k in t for k in ind)]
-        # 一条不中时退回取最新若干篇，避免因标题过短而整源静默
-        picked = hit or titled[:limit]
-        skipped = len(titled) - len(hit)
+        hit, miss = [], []
+        for t, u in titled:
+            (hit if any(k in t for k in ind) else miss).append((t, u))
+        if hit:
+            picked = hit
+            # 被标题粗筛拦下的条目同样进拒绝台账 —— 不丢弃只记账（§5.2）。
+            # 否则这一层的判断无法审计，也看不出筛得对不对。
+            dropped = [{"url": u, "title": t,
+                        "reason": "标题未命中行业相关词，未抓取全文（省一次渲染请求）"}
+                       for t, u in miss]
+        else:
+            # 一条不中时退回取最新若干篇，避免整源静默；不记账，因为并未淘汰
+            picked = titled[:limit]
     else:
-        picked, skipped = pairs[:limit], 0
+        picked = pairs[:limit]
 
     out, errs = [], 0
 
@@ -443,11 +453,17 @@ def collect_jina(src: dict, cfg: dict) -> tuple[list[dict], str | None]:
         else:
             errs += 1
 
+    # 把被标题粗筛拦下的挂在返回值上，由 run.py 写入拒绝台账
+    for d in dropped:
+        out.append({"url": d["url"], "title": d["title"], "content": "",
+                    "published_at": None, "time_source": None,
+                    "_prefilter_drop": d["reason"]})
+
     notes = []
     if errs:
         notes.append(f"{errs}/{min(len(picked), limit)} 篇取回失败")
-    if skipped:
-        notes.append(f"标题粗筛跳过 {skipped} 篇（省下同等次数的抓取）")
+    if dropped:
+        notes.append(f"标题粗筛跳过 {len(dropped)} 篇（省下同等次数的全文抓取）")
     return out, (f"{src['id']}: " + "；".join(notes)) if notes else None
 
 
