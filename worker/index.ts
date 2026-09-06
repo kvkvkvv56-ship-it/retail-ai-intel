@@ -200,16 +200,69 @@ async function generateBrief(request: Request, env: Env): Promise<Response> {
       await send('thinking', { step: 'analyze', text: '分析简报范围与筛选条件' })
 
       const all = await snapshot(env, 'events')
-      if (!all) throw new Error('事件快照不可用')
+      const meta = await snapshot(env, 'meta')
+      if (!all || !meta) throw new Error('事件快照不可用')
       let evs = all.results as any[]
-      if (companies.length) evs = evs.filter((e) => companies.includes(e.company))
-      if (domains.length) evs = evs.filter((e) => (e.domains || []).some((d: string) => domains.includes(d)))
-      evs = evs.filter((e) => e.status === '新增' || e.status === '延续').slice(0, 18)
+
+      // ── 从提示词识别检索意图 ───────────────────────────────
+      // 早先只按勾选框筛选，提示词完全不参与检索：用户打「只讲快手」
+      // 却没勾快手，系统就把最近 15 条全喂给模型，写出来自然跑题。
+      const hitCompanies = new Set<string>(companies)
+      for (const c of meta.companies || []) {
+        const names = [c.name, ...(c.aliases || [])]
+        if (names.some((n: string) => n && prompt.includes(n))) hitCompanies.add(c.id)
+      }
+      const hitDomains = new Set<string>(domains)
+      for (const d of meta.domains || []) {
+        if (d.name && prompt.includes(d.name)) hitDomains.add(d.id)
+      }
+
+      if (hitCompanies.size) evs = evs.filter((e) => hitCompanies.has(e.company))
+      if (hitDomains.size) {
+        evs = evs.filter((e) => (e.domains || []).some((d: string) => hitDomains.has(d)))
+      }
+
+      // ── 词面相关性排序 ────────────────────────────────────
+      // 主体/领域筛不出来时（或筛完仍很多），按提示词与标题概述的词面重合度排序。
+      // 用滑动二元组：非重叠切分会因偏移不同而对不上（S4b 踩过同样的坑）。
+      const grams = (t: string) => {
+        const cn = (t || '').replace(/[^\u4e00-\u9fff]/g, '')
+        const g = new Set<string>()
+        for (let i = 0; i < cn.length - 1; i++) g.add(cn.slice(i, i + 2))
+        for (const w of (t || '').toLowerCase().match(/[a-z]{2,}/g) || []) g.add(w)
+        return g
+      }
+      const pg = grams(prompt)
+      const score = (e: any) => {
+        const eg = grams(`${e.title} ${e.summary || ''}`)
+        let n = 0
+        for (const g of pg) if (eg.has(g)) n++
+        // 本期动态优先于历史背景，但不排除后者——用户可能就是要问历史
+        return n + (e.status === '新增' ? 2 : e.status === '延续' ? 1 : 0)
+      }
+      evs = evs.map((e) => ({ e, s: score(e) }))
+        .sort((a, b) => b.s - a.s)
+        .slice(0, 18)
+        .map((x) => x.e)
+
+      const scope: string[] = []
+      if (hitCompanies.size) {
+        scope.push('公司：' + [...hitCompanies]
+          .map((id) => (meta.companies || []).find((c: any) => c.id === id)?.name || id)
+          .join('、'))
+      }
+      if (hitDomains.size) {
+        scope.push('领域：' + [...hitDomains]
+          .map((id) => (meta.domains || []).find((d: any) => d.id === id)?.name || id)
+          .join('、'))
+      }
 
       await send('thinking', {
         step: 'retrieve',
-        text: `检索知识库事件 · 命中 ${evs.length} 条`,
-        meta: { hits: evs.length },
+        text: scope.length
+          ? `按「${scope.join('　')}」检索 · 命中 ${evs.length} 条`
+          : `按提示词相关性排序 · 取前 ${evs.length} 条`,
+        meta: { hits: evs.length, scope },
       })
 
       if (evs.length === 0) {
@@ -235,14 +288,11 @@ async function generateBrief(request: Request, env: Env): Promise<Response> {
       await send('sources', { events: cited, count: cited.length })
       await send('thinking', { step: 'compose', text: '生成洞察并组装内容' })
 
-      const scope = [
-        companies.length ? `公司：${companies.join('、')}` : '公司：全部',
-        domains.length ? `领域：${domains.join('、')}` : '领域：全部',
-      ].join('　')
-
       const messages = [
         { role: 'system', content: BRIEF_SYS },
-        { role: 'user', content: `简报范围\n${scope}\n\n知识库上下文（${ctx.length} 个事件）：\n\n${ctx.join('\n\n')}` },
+        { role: 'user', content:
+          `简报范围\n${scope.length ? scope.join('　') : '未限定，按提示词相关性取前 ' + ctx.length + ' 条'}\n\n` +
+          `知识库上下文（${ctx.length} 个事件，已按与提示词的相关性排序）：\n\n${ctx.join('\n\n')}` },
         { role: 'user', content: prompt },
       ]
 
