@@ -561,7 +561,15 @@ def stage_verify(store, cfg: dict, srccfg: dict) -> dict:
             status = "旧闻/背景"
         stats[status] += 1
 
-        review = "pending" if conf == "单源待确认" else (ev["review_state"] or "none")
+        # 人工复核结果必须黏住：只有从未复核过（none）的单源事件才进队列。
+        # 早先无条件把单源事件置为 pending，导致每跑一轮流水线，
+        # 人工裁决过的 watching/confirmed 全被冲掉、队列反复回到原点——
+        # 人在环的意义就没了。
+        prev = ev["review_state"] or "none"
+        if prev in ("watching", "confirmed", "rejected", "suspect_duplicate"):
+            review = prev
+        else:
+            review = "pending" if conf == "单源待确认" else "none"
         if review == "pending":
             stats["pending_review"] += 1
 

@@ -70,6 +70,10 @@ def cmd_queue(store, _):
     alive = {r["id"] for r in store.q("SELECT id FROM events")}
     done = {r["target_id"] for r in
             store.q("SELECT target_id FROM reviews WHERE action IN ('split','same')")}
+    # 批量裁决同样算已处理：涉及的事件已脱离 suspect_duplicate 态，
+    # 标记若还挂着会造成「队列清空但仍显示待裁决」的自相矛盾
+    resolved = {r["id"] for r in store.q(
+        "SELECT id FROM events WHERE review_state IN ('confirmed','rejected','watching')")}
     flags, stale = [], 0
     for f in store.q("SELECT target_id, note FROM reviews WHERE action='flag'"):
         ids = f["target_id"].split("|")
@@ -77,6 +81,8 @@ def cmd_queue(store, _):
             stale += 1
             continue
         if f["target_id"] in done or "|".join(reversed(ids)) in done:
+            continue
+        if all(i in resolved for i in ids):
             continue
         flags.append(f)
 
