@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { ThinkingOrb } from 'thinking-orbs'
+import { BorderBeam } from 'border-beam'
 
 // 步骤 → orb 动画状态。让动画语义对应真实阶段，而不是当装饰用：
 // searching 是扫描地球仪、connecting 是连线成星座、composing 是起伏的绸带。
@@ -79,23 +80,32 @@ export default function BriefView({ meta, nav }) {
       <p className="sec-title">定制简报</p>
 
       <div className="filterbar">
-        <FilterRow label="公司" opts={meta.companies.map((c) => [c.id, c.name])}
-                   cur={companies} on={toggle(companies, setCompanies)} />
-        <FilterRow label="领域" opts={meta.domains.map((d) => [d.id, d.name])}
-                   cur={domains} on={toggle(domains, setDomains)} />
+        <div className="fgroups">
+          <FilterRow label="公司" opts={meta.companies.map((c) => [c.id, c.name])}
+                     cur={companies} on={toggle(companies, setCompanies)} />
+          <FilterRow label="领域" opts={meta.domains.map((d) => [d.id, d.name])}
+                     cur={domains} on={toggle(domains, setDomains)} />
+        </div>
       </div>
 
-      <textarea className="prompt" rows={3}
-        placeholder="例：对比各平台 AI 导购的落地阶段差异，哪些做法对我方商家工具有借鉴价值？"
-        value={prompt} onChange={(e) => setPrompt(e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) run() }} />
+      <div className="beam-wrap">
+        <BorderBeam size="md" colorVariant="colorful" theme="light"
+                    borderRadius={12} active={state === 'running'}>
+          <div className="prompt-wrap">
+            <textarea
+              placeholder="例：对比各平台 AI 导购的落地阶段差异，哪些做法对我方商家工具有借鉴价值？"
+              value={prompt} onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) run() }} />
+          </div>
+        </BorderBeam>
+      </div>
 
       <div className="brief-bar">
         <button className="btn" onClick={run}
                 disabled={state === 'running' || prompt.trim().length < 2}>
           {state === 'running' ? '生成中…' : '生成简报'}
         </button>
-        <span className="d">⌘/Ctrl + Enter</span>
+        <span className="fhint">⌘/Ctrl + Enter</span>
       </div>
 
       {(state !== 'idle') && (
@@ -147,11 +157,11 @@ function FilterRow({ label, opts, cur, on }) {
     <div className="frow">
       <span className="flabel">{label}</span>
       {opts.map(([v, name]) => (
-        <button key={v} className="fopt" aria-pressed={cur.includes(v)} onClick={() => on(v)}>
+        <button key={v} className={`fchip ${cur.includes(v) ? 'on' : ''}`} onClick={() => on(v)}>
           {name}
         </button>
       ))}
-      {cur.length === 0 && <span className="d">未选＝全部</span>}
+      {cur.length === 0 && <span className="fhint">全部</span>}
     </div>
   )
 }

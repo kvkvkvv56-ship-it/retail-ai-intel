@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "border-beam": "^1.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "thinking-orbs": "^0.3.1"

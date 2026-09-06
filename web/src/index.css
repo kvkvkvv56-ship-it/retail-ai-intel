@@ -141,8 +141,29 @@ a { color: inherit; text-decoration: none; }
 .conf-p { color: var(--c-pending); }
 
 /* ===================== 筛选与搜索 ===================== */
-.filterbar { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 20px; }
-.frow { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+/* 筛选区分层：搜索独立一行，四组筛选各自带标签、组间发丝线分隔 —— 
+   早期版本四排 chip 无差别平铺，看不出哪一排是什么维度 */
+.filterbar { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
+.fgroups {
+  display: flex; flex-direction: column; gap: 0;
+  border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden;
+}
+.frow {
+  display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+  padding: 10px 14px;
+}
+.fgroups .frow + .frow { border-top: 1px solid var(--line-subtle); }
+.flabel {
+  font-size: 11px; color: var(--muted); letter-spacing: .3px;
+  min-width: 3.6em; flex: none;
+}
+.fhint { font-size: 11px; color: var(--faint); margin-left: 2px; }
+.fclear {
+  align-self: flex-start; background: none; border: 0; padding: 0; cursor: pointer;
+  font-family: var(--sans); font-size: 11px; color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.fclear:hover { color: var(--text); border-bottom-color: var(--text); }
 .fchip {
   padding: 4px 12px; border-radius: var(--radius-pill);
   font-family: var(--sans); font-size: 11px; cursor: pointer; user-select: none;
@@ -184,7 +205,11 @@ a { color: inherit; text-decoration: none; }
 .ev-tags { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
 .ev-title { font-size: 14.5px; font-weight: 500; line-height: 1.5; letter-spacing: -.01em; margin-bottom: 6px; }
 .ev-sum { font-size: 12.5px; color: var(--text-2); line-height: 1.7; margin-bottom: 10px; }
-.ev-foot { display: flex; gap: 14px; align-items: center; font-size: 10px; color: var(--faint); flex-wrap: wrap; }
+.ev-foot {
+  display: flex; gap: 6px 14px; align-items: center;
+  font-size: 10.5px; color: var(--faint); flex-wrap: wrap;
+}
+.ev-foot > span + span::before { content: ''; }
 
 /* 阶段刻度：四档全列，当前档加重 */
 .stage { font-size: 10px; color: var(--faint); letter-spacing: .3px; }
@@ -275,9 +300,10 @@ a { color: inherit; text-decoration: none; }
 .ev:hover { background: var(--line); }
 
 .domains { display: grid; gap: 0; }
-@media (min-width: 820px) { .domains { grid-template-columns: 1fr 1fr; gap: 0 32px; } }
-.domcard { padding: 18px 0; border-bottom: 1px solid var(--line-subtle); }
-.domcard h4 { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+@media (min-width: 820px) { .domains { grid-template-columns: 1fr 1fr; column-gap: 40px; } }
+/* 每块独立成卡：上边线 + 内边距，避免两栏内容糊成一片 */
+.domcard { padding: 16px 0 18px; border-top: 1px solid var(--line); }
+.domcard h4 { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
 .domcard p { font-size: 12px; color: var(--text-2); line-height: 1.65; }
 .domcard .watch { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line-subtle); font-size: 11px; color: var(--muted); }
 .wl { list-style: none; max-width: 68ch; }
@@ -288,12 +314,17 @@ a { color: inherit; text-decoration: none; }
 .brief-panel { border-bottom: 1px solid var(--line); padding-bottom: 24px; margin-bottom: 24px; }
 .prompt-wrap {
   background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-md);
-  padding: 14px 16px; transition: var(--t-surface); max-width: 68ch;
+  padding: 16px 18px; transition: var(--t-surface);
 }
-.prompt-wrap:focus-within { box-shadow: var(--shadow-elevated); }
+.prompt-wrap:focus-within { border-color: var(--muted); box-shadow: var(--shadow-elevated); }
+.beam-wrap { max-width: 68ch; }
 .prompt-wrap textarea {
-  width: 100%; border: 0; outline: none; resize: vertical; background: transparent;
-  font-family: var(--sans); font-size: 13.5px; line-height: 1.7; color: var(--text);
+  width: 100%; border: 0; outline: none; background: transparent;
+  font-family: var(--sans); font-size: 14px; line-height: 1.75; color: var(--text);
+  /* 固定起始高度，内容变长时由 JS 自增，到 max-height 后内部滚动。
+     不给手动 resize 手柄——拖拽把手会破坏版面。 */
+  resize: none; min-height: 116px; max-height: 320px; overflow-y: auto;
+  field-sizing: content;
 }
 .prompt-wrap textarea::placeholder { color: var(--faint); }
 .brief-bar { display: flex; align-items: center; gap: 12px; margin-top: 14px; }

@@ -68,15 +68,6 @@ export default function App() {
         <div className="header-row">
           <div>
             <h1 onClick={() => nav('/')}>行业与竞对 AI 洞察助手</h1>
-            {meta && (
-              <div className="hstats">
-                <span className="s"><b>{meta.counts.events}</b>事件</span>
-                <span className="s"><b>{meta.counts.items}</b>条目</span>
-                <span className="s"><b>{meta.counts.claims}</b>事实/推断/建议</span>
-                <span className="s"><b>{meta.counts.rejects}</b>已记账淘汰</span>
-                <span className="s">观察窗口 {meta.window_days} 天</span>
-              </div>
-            )}
           </div>
           <nav className="tabs">
             <Tab on={tab === 'run'} go={() => nav('/')}>运行回放</Tab>

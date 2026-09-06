@@ -85,11 +85,11 @@ export default function ReportView({ meta, nav }) {
       <h3 className="sub-title">分领域态势</h3>
       <div className="domains">
         {Object.entries(b.domain_summaries || {}).map(([k, v]) => (
-          <div className="dom" key={k}>
+          <section className="domcard" key={k}>
             <h4>{domName[k] || k}</h4>
             <p>{v.summary}</p>
             {v.watch && <p className="watch">下期观察：{v.watch}</p>}
-          </div>
+          </section>
         ))}
       </div>
 

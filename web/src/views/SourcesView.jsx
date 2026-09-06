@@ -34,7 +34,6 @@ export default function SourcesView() {
             <th className="num" style={{ width: '4.5em' }}>命中</th>
             <th className="num" style={{ width: '4.5em' }}>采纳</th>
             <th className="num" style={{ width: '5em' }}>采纳率</th>
-            <th>备注</th>
           </tr>
         </thead>
         <tbody>
@@ -51,7 +50,6 @@ export default function SourcesView() {
               <td className="num dim">
                 {s.accept_rate == null ? '—' : `${Math.round(s.accept_rate * 100)}%`}
               </td>
-              <td className="d">{s.note || ''}</td>
             </tr>
           ))}
         </tbody>
