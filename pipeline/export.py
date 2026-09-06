@@ -202,6 +202,27 @@ def export(store: Store, cfg: dict, srccfg: dict) -> dict:
             "c": e["company"], "d": e["domains"]} for e in ev_rows]
     total += _w("search-index.json", idx)
 
+    # ------------------------------------------ 降级数据（技术方案 §10.6）
+    # 构建时嵌入 JS bundle。API 取不到时页面仍可读，显示「离线模式」。
+    # 只放读首页与列表所需的最小集，详情页仍需在线——完整数据 350KB，
+    # 全塞进 bundle 会拖慢首屏，得不偿失。
+    fallback = {
+        "meta": json.loads((OUT / "meta.json").read_text(encoding="utf-8")),
+        "events": {"total": len(listing), "results": listing},
+        "runs": {"total": len(runs), "results": runs[:3]},
+        "latest_run": json.loads((OUT / f"runs/{runs[0]['id']}.json").read_text(
+            encoding="utf-8")) if runs else None,
+        "reports": {"total": len(reps), "results": [
+            {k: r[k] for k in ("id", "period_start", "period_end", "headline",
+                               "generated_at")} for r in reps]},
+        "latest_report": ({**reps[0], "body": _j(reps[0]["body"])} if reps else None),
+    }
+    fb = ROOT / "web" / "src" / "data"
+    fb.mkdir(parents=True, exist_ok=True)
+    txt = json.dumps(fallback, ensure_ascii=False, separators=(",", ":"))
+    (fb / "fallback.json").write_text(txt, encoding="utf-8")
+    stats["fallback_kb"] = round(len(txt) / 1024)
+
     stats["bytes"] = total
     return stats
 

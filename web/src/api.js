@@ -1,14 +1,48 @@
+import fallback from './data/fallback.json'
+
 const cache = new Map()
+
+/** 离线（降级）状态。任一请求走了内嵌快照即置位，由 App 显示提示条。 */
+export const offline = { on: false }
+const listeners = new Set()
+export const onOffline = (fn) => { listeners.add(fn); return () => listeners.delete(fn) }
+function markOffline() {
+  if (offline.on) return
+  offline.on = true
+  listeners.forEach((f) => f())
+}
+
+/**
+ * 内嵌快照兜底（技术方案 §10.6）
+ * 只覆盖首页与列表所需的最小集；详情页仍需在线。
+ */
+function fromFallback(path) {
+  if (path === 'meta') return fallback.meta
+  if (path === 'events') return fallback.events
+  if (path === 'runs') return fallback.runs
+  if (path === 'reports') return fallback.reports
+  if (path.startsWith('runs/') && fallback.latest_run
+      && path === `runs/${fallback.latest_run.id}`) return fallback.latest_run
+  if (path.startsWith('reports/') && fallback.latest_report
+      && path === `reports/${fallback.latest_report.id}`) return fallback.latest_report
+  return null
+}
 
 export async function api(path) {
   if (cache.has(path)) return cache.get(path)
-  const p = fetch(`/api/v1/${path}`).then(async (r) => {
-    if (!r.ok) {
-      const body = await r.json().catch(() => ({}))
-      throw new Error(body.detail || `${r.status} ${path}`)
-    }
-    return r.json()
-  })
+  const p = fetch(`/api/v1/${path}`)
+    .then(async (r) => {
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}))
+        throw new Error(body.detail || `${r.status} ${path}`)
+      }
+      return r.json()
+    })
+    .catch((e) => {
+      const fb = fromFallback(path)
+      if (fb) { markOffline(); return fb }
+      throw e
+    })
   cache.set(path, p)
   return p
 }

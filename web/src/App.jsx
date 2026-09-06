@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { api } from './api.js'
+import { api, offline, onOffline } from './api.js'
 import RunView from './views/RunView.jsx'
 import EventsView from './views/EventsView.jsx'
 import EventDetail from './views/EventDetail.jsx'
@@ -13,6 +13,9 @@ export default function App() {
   const [run, setRun] = useState(null)
   const [err, setErr] = useState(null)
   const [path, setPath] = useState(window.location.pathname)
+  const [isOffline, setOffline] = useState(offline.on)
+
+  useEffect(() => onOffline(() => setOffline(true)), [])
 
   useEffect(() => {
     const onPop = () => setPath(window.location.pathname)
@@ -69,6 +72,11 @@ export default function App() {
           <button aria-current={tab === 'sources'} onClick={() => nav('/sources')}>信源</button>
         </nav>
       </header>
+      {isOffline && (
+        <div className="offline-bar">
+          离线模式 · 接口暂不可用，正在显示构建时嵌入的快照。事件详情与定制简报需要联网。
+        </div>
+      )}
       {body}
       <footer className="colophon">
         <span>只采集公开可访问信息，遵守 robots.txt</span>

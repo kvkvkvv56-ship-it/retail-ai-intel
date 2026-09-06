@@ -75,6 +75,14 @@ export default function EventsView({ meta, nav }) {
                   <div className="dim sm">
                     {(r.domains || []).map((d) => domName[d] || d).join(' · ') || '未分类'}
                   </div>
+                  {/* 窄屏隐藏了置信度/状态/阶段列，折进本格——这些是核心信息，
+                      不能因为屏幕窄就丢掉 */}
+                  <div className="fold-meta">
+                    <Confidence value={r.confidence} />
+                    <Status value={r.status} />
+                    <span className="dim">{r.stage || '阶段未判定'}</span>
+                    <span className="dim num">{r.n_sources} 源 / {r.n_facts} 事实</span>
+                  </div>
                 </td>
                 <td className="dim nowrap">{compName[r.company] || r.company}</td>
                 <td className="dim">{r.stage || '—'}</td>
