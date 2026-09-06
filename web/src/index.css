@@ -487,3 +487,26 @@ a { color: inherit; text-decoration: none; }
 .weblist li { padding: 3px 0; line-height: 1.6; }
 .weblist a { border-bottom: 1px solid var(--line); }
 .weblist a:hover { border-bottom-color: var(--text); }
+
+/* 周报历史存档 */
+.archive {
+  display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap;
+  padding: 12px 14px; margin-bottom: 22px;
+  border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg-warm);
+}
+.arch-k { font-size: 11px; color: var(--muted); align-self: center; margin-right: 4px; }
+.arch-item {
+  display: flex; flex-direction: column; gap: 3px; align-items: flex-start;
+  padding: 7px 12px; border-radius: var(--radius-sm); cursor: pointer;
+  background: var(--bg); border: 1px solid var(--line);
+  font-family: var(--sans); text-align: left; max-width: 15em;
+  transition: var(--t-surface);
+}
+.arch-item:hover { border-color: var(--muted); }
+.arch-item.on { background: var(--text); border-color: var(--text); }
+.arch-item .num { font-size: 11px; color: var(--muted); }
+.arch-item .arch-hl {
+  font-size: 11.5px; color: var(--text-2); line-height: 1.4;
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.arch-item.on .num, .arch-item.on .arch-hl { color: #fff; }

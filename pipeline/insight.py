@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from pipeline.llm import parse_json
 
@@ -108,10 +108,34 @@ def _period(cfg: dict) -> tuple[str, str]:
     return start.isoformat(), (this_monday - timedelta(days=1)).isoformat()
 
 
-def _prev_watchlist(store) -> list[str]:
+def week_of(d: str) -> str:
+    """某日期所属自然周的周一。"""
+    y, m, dd = (int(x) for x in d[:10].split("-"))
+    x = date(y, m, dd)
+    return (x - timedelta(days=x.weekday())).isoformat()
+
+
+def weeks_with_events(store, min_events: int = 3) -> list[str]:
+    """有足够事件量、值得出周报的自然周，由早到晚。
+
+    只有 1-2 个事件的周不出周报——周报的价值在跨事件看格局，
+    单事件复述没有意义（周报 prompt 里也写了这条）。
+    """
+    counts: dict[str, int] = {}
+    for r in store.q("SELECT event_date FROM events WHERE event_date IS NOT NULL"):
+        counts[week_of(r["event_date"])] = counts.get(week_of(r["event_date"]), 0) + 1
+    return sorted(w for w, n in counts.items() if n >= min_events)
+
+
+def _prev_watchlist(store, before: str | None = None) -> list[str]:
     """取上一期 watchlist —— 技术方案 §9.1 要求喂进 prompt 做延续性检查。
-    v1 设计了这个输入但从未真正传入，本实现补上。"""
-    rows = store.q("SELECT body FROM reports ORDER BY period_start DESC LIMIT 1")
+    v1 设计了这个输入但从未真正传入，本实现补上。
+    回填历史时按 before 取「该期之前最近的一期」，保证链条正确。"""
+    if before:
+        rows = store.q("""SELECT body FROM reports WHERE period_start < ?
+                          ORDER BY period_start DESC LIMIT 1""", (before,))
+    else:
+        rows = store.q("SELECT body FROM reports ORDER BY period_start DESC LIMIT 1")
     if not rows:
         return []
     try:
@@ -123,19 +147,31 @@ def _prev_watchlist(store) -> list[str]:
         return []
 
 
-def stage_insight(store, llm, cfg: dict, run_id: str) -> dict:
-    """周报合成。输入本期事件清单 + 上期 watchlist。"""
+def stage_insight(store, llm, cfg: dict, run_id: str,
+                  period_start: str | None = None) -> dict:
+    """周报合成。输入本期事件清单 + 上期 watchlist。
+
+    周期口径是**事件发生周**（event_date 落在该自然周内），不是「本轮观察到」。
+    两者是不同的东西：前者回答「上周行业发生了什么」，是读者对周报的预期，
+    也使历史回填成为可能；后者只反映系统何时发现，无法回溯。
+    """
     dom_name = {d["id"]: d["name"] for d in cfg["domains"]}
     comp_name = {c["id"]: c["name"] for c in cfg["companies"]}
-    p_start, p_end = _period(cfg)
 
-    # 本期事件 = 新增 + 延续（旧闻/背景不进周报正文，仅作历史上下文）
-    evs = store.q("""SELECT * FROM events WHERE status IN ('新增','延续')
-                     ORDER BY company, event_date DESC""")
+    if period_start:
+        p_start = period_start
+        y, m, dd = (int(x) for x in p_start.split("-"))
+        p_end = (date(y, m, dd) + timedelta(days=6)).isoformat()
+    else:
+        p_start, p_end = _period(cfg)
+
+    evs = store.q("""SELECT * FROM events
+                     WHERE event_date >= ? AND event_date <= ?
+                     ORDER BY company, event_date DESC""", (p_start, p_end))
     stats = {"period": f"{p_start}~{p_end}", "events_in": len(evs),
              "key_findings": 0, "implications": 0, "watchlist": 0, "error": None}
     if not evs:
-        stats["error"] = "本期无新增或延续事件，跳过周报"
+        stats["error"] = f"{p_start}~{p_end} 无事件，跳过"
         return stats
 
     lines = []
@@ -151,7 +187,7 @@ def stage_insight(store, llm, cfg: dict, run_id: str) -> dict:
             f"  标题：{e['title']}\n"
             + "".join(f"  · {f['text'][:120]}\n" for f in facts))
 
-    prev = _prev_watchlist(store)
+    prev = _prev_watchlist(store, p_start)
     user = (f"本期事件清单（{len(evs)} 条，窗口 {p_start} ~ {p_end}）：\n\n"
             + "\n".join(lines)
             + "\n\n上期观察清单：\n"

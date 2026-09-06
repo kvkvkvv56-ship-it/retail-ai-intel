@@ -26,16 +26,25 @@ export default function ReportView({ meta, nav }) {
 
   return (
     <div className="view">
+      {/* 历史存档：往期一行排开，当前期高亮。周报是持续产出物，
+          「能翻到上几期」本身就是可持续运行的证据 */}
+      {list.total > 1 && (
+        <div className="archive">
+          <span className="arch-k">往期</span>
+          {list.results.map((r) => (
+            <button key={r.id}
+                    className={`arch-item ${r.id === rep.id ? 'on' : ''}`}
+                    onClick={() => api(`reports/${r.id}`).then(setRep)}>
+              <span className="num">{r.period_start.slice(5)}</span>
+              <span className="arch-hl">{r.headline?.slice(0, 16)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <p className="sec-title">
         {rep.period_start} ~ {rep.period_end}
-        {list.total > 1 && (
-          <select className="hist" value={rep.id}
-                  onChange={(e) => api(`reports/${e.target.value}`).then(setRep)}>
-            {list.results.map((r) => (
-              <option key={r.id} value={r.id}>{r.period_start} ~ {r.period_end}</option>
-            ))}
-          </select>
-        )}
+        <span className="d"> · 第 {list.results.length - list.results.findIndex((r) => r.id === rep.id)} 期 / 共 {list.total} 期</span>
       </p>
 
       <div className="headline-banner">
