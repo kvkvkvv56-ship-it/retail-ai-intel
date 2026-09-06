@@ -25,12 +25,37 @@ export default function SourcesView() {
   return (
     <div className="view">
       <p className="sec-title">信源体系 · {d.total} 个</p>
+
+      {/* 概览条：一手性与通道的分布，直接回应「信息源是否多元」 */}
+      <div className="src-overview">
+        <div className="ov-group">
+          <span className="ov-k">一手性</span>
+          {['A', 'B', 'C', 'D', 'E'].map((c) => {
+            const n = d.results.filter((s) => s.source_class === c).length
+            return n ? (
+              <span className="ov-item" key={c}>
+                <span className={`cls c${c}`}>{c}</span>
+                <span className="d">{CLASS_SHORT[c]}</span><b>{n}</b>
+              </span>
+            ) : null
+          })}
+        </div>
+        <div className="ov-group">
+          <span className="ov-k">通道</span>
+          {Object.entries(d.by_channel).filter(([, n]) => n).map(([k, n]) => (
+            <span className="ov-item" key={k}>
+              <span className="chan">{k}</span><b>{n}</b>
+            </span>
+          ))}
+        </div>
+      </div>
+
       <table className="tbl src-tbl">
         <colgroup>
-          <col style={{ width: '15em' }} /><col style={{ width: '7em' }} />
-          <col style={{ width: '5.5em' }} /><col style={{ width: '4em' }} />
-          <col style={{ width: '4em' }} /><col style={{ width: '9em' }} />
-          <col />
+          <col style={{ width: '24%' }} /><col style={{ width: '15%' }} />
+          <col style={{ width: '10%' }} /><col style={{ width: '8%' }} />
+          <col style={{ width: '8%' }} /><col style={{ width: '17%' }} />
+          <col style={{ width: '18%' }} />
         </colgroup>
         <thead>
           <tr>
@@ -40,7 +65,7 @@ export default function SourcesView() {
             <th className="num">命中</th>
             <th className="num">采纳</th>
             <th>采纳率</th>
-            <th />
+            <th>最近命中</th>
           </tr>
         </thead>
         <tbody>
@@ -68,7 +93,9 @@ export default function SourcesView() {
                   </span>
                 )}
               </td>
-              <td />
+              <td className="tnum d">
+                {s.last_hit ? fmtDate(s.last_hit) : <span className="d">未命中</span>}
+              </td>
             </tr>
           ))}
         </tbody>
