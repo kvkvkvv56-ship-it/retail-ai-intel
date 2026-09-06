@@ -408,3 +408,49 @@ a { color: inherit; text-decoration: none; }
   .stage-card .v { font-size: 24px; }
   .tbl th:nth-child(n+4), .tbl td:nth-child(n+4) { display: none; }
 }
+
+/* ===================== 信源表 =====================
+   列宽用 colgroup 固定：早先「信源」列自动撑满、把「一手性」挤到
+   折行成两行，行高被撑到 100px+。现在名称列吃剩余宽度，其余定宽不折行。 */
+.src-tbl { table-layout: fixed; }
+.src-tbl td { padding: 11px 10px 11px 0; vertical-align: middle; }
+.src-tbl .src-name {
+  font-weight: 500; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.src-tbl .nowrap { white-space: nowrap; }
+
+/* 一手性等级：字母做角标，短名跟后面 */
+.cls {
+  display: inline-block; width: 16px; height: 16px; line-height: 16px;
+  text-align: center; border-radius: 3px; font-size: 10px; font-weight: 600;
+  background: var(--line-subtle); color: var(--text-2);
+}
+.cls.cA { background: #E8F0E8; color: #2D6A2D; }
+.cls.cB { background: #E8EEF4; color: #3B6A8A; }
+.cls.cC { background: var(--line-subtle); color: var(--text-2); }
+.cls.cD { background: #F5F0EA; color: #8A6D3B; }
+.cls.cE { background: #F3EEF5; color: #6D4A8A; }
+
+.chan {
+  display: inline-block; padding: 1px 7px; border-radius: var(--radius-pill);
+  background: var(--line-subtle); color: var(--muted);
+  font-size: 10.5px; letter-spacing: .2px;
+}
+
+/* 采纳率：细条 + 数字，一眼看出信源产出效率 */
+.rate { display: flex; align-items: center; gap: 8px; }
+.rate-bar {
+  flex: 1; height: 3px; border-radius: 2px; background: var(--line-subtle);
+  overflow: hidden; min-width: 34px;
+}
+.rate-bar i { display: block; height: 100%; background: var(--text); border-radius: 2px; }
+.rate .num { font-size: 11px; min-width: 2.4em; text-align: right; }
+
+.pill.mini { font-size: 9.5px; padding: 1px 6px; margin-left: 6px; }
+
+@media (max-width: 640px) {
+  .src-tbl { table-layout: auto; }
+  .src-tbl colgroup { display: none; }
+  .rate-bar { display: none; }
+}

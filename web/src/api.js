@@ -58,6 +58,11 @@ export const CLASS_LABEL = {
   D: '聚合转载', E: '观点评论',
 }
 
+/** 表格里用的短名——完整名在窄列里会折成两行，把行高撑起来 */
+export const CLASS_SHORT = {
+  A: '当事方', B: '深度原创', C: '常规报道', D: '聚合转载', E: '观点',
+}
+
 export const REASON_LABEL = {
   duplicate_url: 'URL 重复', syndication: '转载', stale: '超出时间窗口',
   off_topic: '与观察范围无关', irrelevant: 'LLM 判定不相关',

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { api, CLASS_LABEL, fmtDate } from '../api.js'
+import { api, CLASS_LABEL, CLASS_SHORT, fmtDate } from '../api.js'
 
 /**
  * 信源健康度（技术方案 §3.4）
@@ -25,30 +25,46 @@ export default function SourcesView() {
   return (
     <div className="view">
       <p className="sec-title">信源体系 · {d.total} 个</p>
-      <table className="tbl compact">
+      <table className="tbl src-tbl">
+        <colgroup>
+          <col /><col style={{ width: '6.5em' }} /><col style={{ width: '5.5em' }} />
+          <col style={{ width: '4em' }} /><col style={{ width: '4em' }} />
+          <col style={{ width: '8.5em' }} />
+        </colgroup>
         <thead>
           <tr>
             <th>信源</th>
-            <th style={{ width: '8em' }}>一手性</th>
-            <th style={{ width: '5em' }}>通道</th>
-            <th className="num" style={{ width: '4.5em' }}>命中</th>
-            <th className="num" style={{ width: '4.5em' }}>采纳</th>
-            <th className="num" style={{ width: '5em' }}>采纳率</th>
+            <th>一手性</th>
+            <th>通道</th>
+            <th className="num">命中</th>
+            <th className="num">采纳</th>
+            <th>采纳率</th>
           </tr>
         </thead>
         <tbody>
           {d.results.map((s) => (
             <tr key={s.id} className={s.hits ? '' : 'faded'}>
-              <td>
+              <td className="src-name" title={s.name}>
                 {s.name}
-                {s.affiliated_with && <span className="tag">自家媒体·不计独立源</span>}
+                {s.affiliated_with && <span className="pill warn mini">自家媒体</span>}
+                {!s.active && <span className="pill mini">已停用</span>}
               </td>
-              <td className="d">{s.source_class} {CLASS_LABEL[s.source_class]}</td>
-              <td className="d">{s.channel}</td>
-              <td className="num">{s.hits}</td>
-              <td className="num">{s.accepted}</td>
-              <td className="num dim">
-                {s.accept_rate == null ? '—' : `${Math.round(s.accept_rate * 100)}%`}
+              <td className="nowrap" title={CLASS_LABEL[s.source_class]}>
+                <span className={`cls c${s.source_class}`}>{s.source_class}</span>
+                <span className="d"> {CLASS_SHORT[s.source_class]}</span>
+              </td>
+              <td><span className="chan">{s.channel}</span></td>
+              <td className="num">{s.hits || '—'}</td>
+              <td className="num">{s.accepted || '—'}</td>
+              <td>
+                {s.accept_rate == null ? <span className="d">—</span> : (
+                  <span className="rate">
+                    <span className="rate-bar">
+                      <i style={{ width: `${Math.round(s.accept_rate * 100)}%` }} />
+                    </span>
+                    <span className="num d">{Math.round(s.accept_rate * 100)}%</span>
+                  </span>
+                )}
               </td>
             </tr>
           ))}
