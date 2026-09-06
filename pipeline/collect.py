@@ -353,13 +353,21 @@ def collect_jina(src: dict, cfg: dict) -> tuple[list[dict], str | None]:
         return [], f"{src['id']}: 缺少 article_url_pattern，无法识别文章链接"
     art_re = re.compile(pattern)
 
-    urls, seen = [], set()
-    for u in URL_RE.findall(page):
+    # 「标题 + 链接」配对（Jina 的 links summary 用 markdown 链接格式）
+    pairs, seen = [], set()
+    for title, u in re.findall(r"- \[([^\]]{4,90})\]\((https?://[^)]+)\)", page):
         u = u.rstrip(".,;")
         if art_re.search(u) and u not in seen:
             seen.add(u)
-            urls.append(u)
-    if not urls:
+            pairs.append((strip_html(title), u))
+    # 配对失败时退回纯 URL 提取（拿不到标题，只能盲抓）
+    if not pairs:
+        for u in URL_RE.findall(page):
+            u = u.rstrip(".,;")
+            if art_re.search(u) and u not in seen:
+                seen.add(u)
+                pairs.append(("", u))
+    if not pairs:
         return [], f"{src['id']}: 列表页未匹配到文章链接"
 
     # 仅列表模式：文章页取不到时的降级。亿邦动力即属此类——列表页与文章页
@@ -368,10 +376,9 @@ def collect_jina(src: dict, cfg: dict) -> tuple[list[dict], str | None]:
     # 没有正文，抽取会偏薄；其真正价值在于**作为独立信源为其他事件提供
     # 多源印证**——置信度计算只看独立组织数，不要求每个源都有正文。
     if src.get("jina_listing_only"):
-        pairs = re.findall(r"- \[([^\]]{4,90})\]\((https?://[^)]+)\)", page)
         date_re = re.compile(src.get("url_date_pattern", r"/(20\d{2})(\d{2})(\d{2})/"))
         out, seen2 = [], set()
-        for title, u in pairs:
+        for title, u in re.findall(r"- \[([^\]]{4,90})\]\((https?://[^)]+)\)", page):
             if not art_re.search(u) or u in seen2:
                 continue
             seen2.add(u)
@@ -386,6 +393,26 @@ def collect_jina(src: dict, cfg: dict) -> tuple[list[dict], str | None]:
         return out[:int(src.get("jina_article_limit", 25))], None
 
     limit = int(src.get("jina_article_limit", 8))
+
+    # 标题级粗筛：只对可能相关的文章抓全文。
+    #
+    # 晚点覆盖机器人 / 汽车 / 芯片 / 云 / 电商全赛道，盲抓最新 8 篇命中电商的
+    # 概率很低——首轮 16 篇里一篇电商都没有，全被后续粗筛与预筛拦掉，
+    # 白花了 16 次 Jina 请求。改为先看标题、只抓命中的。
+    #
+    # 判据只用 industry_terms（公司名 / 电商零售词），不要求标题里出现 AI：
+    # 标题短，「阿里妈妈万相点睛」这类不带 AI 字样但确属观察范围；
+    # 反之只带 AI 却讲汽车的，行业词过不了。AI 相关性留给正文阶段判。
+    ind = (cfg.get("relevance") or {}).get("industry_terms") or []
+    titled = [(t, u) for t, u in pairs if t]
+    if ind and titled:
+        hit = [(t, u) for t, u in titled if any(k in t for k in ind)]
+        # 一条不中时退回取最新若干篇，避免因标题过短而整源静默
+        picked = hit or titled[:limit]
+        skipped = len(titled) - len(hit)
+    else:
+        picked, skipped = pairs[:limit], 0
+
     out, errs = [], 0
 
     def one(u: str):
@@ -409,15 +436,19 @@ def collect_jina(src: dict, cfg: dict) -> tuple[list[dict], str | None]:
                 "content": content[:cfg["search"]["content_max_chars"]],
                 "published_at": pub, "time_source": tsrc}
 
-    for u in urls[:limit]:
+    for _t, u in picked[:limit]:
         r = one(u)
         if r:
             out.append(r)
         else:
             errs += 1
 
-    err = f"{src['id']}: {errs}/{min(len(urls), limit)} 篇文章取回失败" if errs else None
-    return out, err
+    notes = []
+    if errs:
+        notes.append(f"{errs}/{min(len(picked), limit)} 篇取回失败")
+    if skipped:
+        notes.append(f"标题粗筛跳过 {skipped} 篇（省下同等次数的抓取）")
+    return out, (f"{src['id']}: " + "；".join(notes)) if notes else None
 
 
 def collect_exa(cfg: dict, window_days: int) -> tuple[list[dict], dict, list[str]]:

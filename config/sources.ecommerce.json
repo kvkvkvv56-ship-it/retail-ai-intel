@@ -118,9 +118,9 @@
         "latepost.com"
       ],
       "active": true,
-      "note": "三条常规通道全堵，经 Jina Reader 服务端渲染取全文（实测文章页 11288 中文字）。站点不给发布时间，event_date 由抽取阶段从正文获得",
+      "note": "三条常规通道全堵，经 Jina Reader 服务端渲染取全文（实测文章页 11288 中文字）。站点不给发布时间，event_date 由抽取阶段从正文获得。晚点覆盖机器人/汽车/芯片/云等全赛道，故先按标题做行业词粗筛，只对命中的抓全文。",
       "article_url_pattern": "latepost\\.com/news/dj_detail\\?id=\\d+",
-      "jina_article_limit": 8
+      "jina_article_limit": 6
     },
     {
       "id": "caixin",
