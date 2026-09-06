@@ -7,8 +7,8 @@
     python3 pipeline/run.py --no-exa         # 跳过 Exa（零成本，只跑免费通道）
 
 阶段（docs/技术方案.md §2.1）：
-    S0 采集 → S1 去重 → [S2 预筛 → S3 抽取 → S4 归并 → S5 核验 → S6 关系边 → S7 洞察]
-    方括号内为 D5-D7 待实现
+    S0 采集 → S1 去重 → S2 预筛 → S3 抽取 → S4 归并 → S5 核验 → [S6 洞察]
+    方括号内为 D7 待实现
 """
 from __future__ import annotations
 
@@ -23,6 +23,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline import collect as C                                  # noqa: E402
+from pipeline import process as PR                                 # noqa: E402
+from pipeline.llm import LLM                                       # noqa: E402
 from pipeline.store import ROOT, Store                             # noqa: E402
 
 CONFIG_DIR = ROOT / "config"
@@ -234,7 +236,8 @@ def stage_dedup(store: Store, raw: list[dict], cfg: dict, srccfg: dict,
 
 
 # ==================================================================== 报告
-def print_funnel(stats: dict, cost: dict, errors: list[str], store: Store, run_id: str):
+def print_funnel(stats: dict, cost: dict, errors: list[str], store: Store,
+                 run_id: str, llm_stats: dict | None = None):
     W = 66
     print("\n" + "=" * W)
     print("漏斗回放")
@@ -265,8 +268,29 @@ def print_funnel(stats: dict, cost: dict, errors: list[str], store: Store, run_i
     if rows:
         print("  时间口径：" + "  ".join(f"{r['t']}={r['n']}" for r in rows))
 
+    if llm_stats:
+        v = llm_stats["verify"]
+        print(f"\n  事件 {v['events']} 个")
+        print("  置信度：" + "  ".join(
+            f"{k}={v[k]}" for k in ("官方确认·多源印证", "官方一手", "多源已验证",
+                                    "深度单源", "单源待确认") if v.get(k)))
+        print("  状态：  " + "  ".join(
+            f"{k}={v[k]}" for k in ("新增", "延续", "静默", "旧闻/背景") if v.get(k)))
+        m = llm_stats["merge"]
+        if m.get("orphan_rescued"):
+            print(f"  孤儿挽回：{m['orphan_rescued']} 条未被模型分组的候选独立成事件")
+        if v.get("backdated"):
+            print(f"  回溯性旧闻拦截：{v['backdated']} 个事件的 event_date 早于观察窗口，"
+                  f"判为旧闻而非新增")
+        if v.get("stage_discounted"):
+            print(f"  阶段打折：{v['stage_discounted']} 个事件的官方口径被第三方下修")
+        if v.get("pending_review"):
+            print(f"  待人工复核：{v['pending_review']} 个单源事件")
+        u = llm_stats["llm_usage"]
+        print(f"\n  LLM：{u['calls']} 次调用（缓存命中 {u['cache_hits']}），"
+              f"in {u['in_tokens']} / out {u['out_tokens']} tokens，约 ¥{llm_stats['llm_cost_cny']}")
     if cost["queries"]:
-        print(f"\n  Exa 成本：${cost['total']} / {cost['queries']} 组查询")
+        print(f"  Exa 成本：${cost['total']} / {cost['queries']} 组查询")
     if errors:
         print(f"\n  采集告警 {len(errors)} 条（不阻断）：")
         for e in errors[:8]:
@@ -280,6 +304,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", default="ecommerce")
     ap.add_argument("--stage", default="all", choices=["all", "collect"])
+    ap.add_argument("--mock", action="store_true",
+                    help="仅用 LLM 缓存回放，零 API key 复现")
     ap.add_argument("--rebuild", action="store_true", help="从 JSONL 重建 intel.db 后退出")
     ap.add_argument("--no-exa", action="store_true", help="跳过 Exa 通道（零成本）")
     args = ap.parse_args()
@@ -315,15 +341,44 @@ def main() -> int:
     print(f"  → 入库 {stats['accepted']}，拒绝 "
           f"{stats['raw'] - stats['accepted']}（全部留痕于 rejects 台账）")
 
+    llm_stats = {}
+    if args.stage == "all":
+        llm = LLM(mock=args.mock)
+
+        print("\n[S2] LLM 预筛（便宜档，吃最大调用量）")
+        ps = PR.stage_prescreen(store, llm, run_id)
+        print(f"  → 保留 {ps['keep']}，淘汰 {ps['drop']}"
+              + (f"，异常 {ps['error']}" if ps["error"] else ""))
+
+        print("\n[S3] 结构化抽取（强档，提示词按信源一手性分流）")
+        ex = PR.stage_extract(store, llm, run_id, srccfg)
+        print(f"  → 抽出 {ex['extracted']} 条事件草稿"
+              f"（fact {ex['facts']} / inference {ex['inferences']}），"
+              f"D类跳过 {ex['skipped_D']}，判无关 {ex['irrelevant']}")
+
+        PR.cache_drafts(store)
+
+        print("\n[S4] 事件归并（按公司通读聚类）")
+        mg = PR.stage_merge(store, llm, cfg, run_id)
+        print(f"  → {mg['candidates']} 条候选归并为 {mg['events']} 个事件"
+              f"（合并掉 {mg['merged_away']} 条重复报道），关系边 {mg['relations']}")
+
+        print("\n[S5] 核验（纯规则）")
+        vf = PR.stage_verify(store, cfg, srccfg)
+        print(f"  → {vf['events']} 个事件完成置信度/阶段/状态判定")
+
+        llm_stats = {"prescreen": ps, "extract": ex, "merge": mg, "verify": vf,
+                     "llm_usage": llm.usage, "llm_cost_cny": llm.cost_estimate()}
+
     store.upsert("runs", {
         "id": run_id, "started_at": started, "finished_at": now_iso(),
         "mode": "live", "dataset": args.dataset,
-        "stats": {**stats, "collect_errors": errors},
+        "stats": {**stats, **llm_stats, "collect_errors": errors},
         "cost": cost, "config_hash": config_hash(cfg, srccfg),
     })
     store.commit()
 
-    print_funnel(stats, cost, errors, store, run_id)
+    print_funnel(stats, cost, errors, store, run_id, llm_stats)
 
     counts = store.dump()
     print(f"\n已同步 JSONL 真相源：" +

@@ -1,0 +1,4 @@
+{"from_event": "EV-230aef29", "to_event": "EV-43491a2d", "relation": "follows", "basis": "豆包先接入抖音商城实现跳转导购，后内测App内直接下单功能，后者是前者基础上的功能升级，属于同一产品线的后续进展。", "created_by": "llm"}
+{"from_event": "EV-6452e9b6", "to_event": "EV-536888b3", "relation": "follows", "basis": "2023年618前平台AI工具官宣是早期探索，2025年双11AI应用集中落地是后续规模化应用，同一趋势（电商平台AI工具落地）的先后阶段。", "created_by": "llm"}
+{"from_event": "EV-536888b3", "to_event": "EV-008df526", "relation": "follows", "basis": "2025年双11平台AI应用集中落地，到2026年618演变为千问入淘与豆包闭环的AI入口之争，是同一AI电商竞争主题的后续升级。", "created_by": "llm"}
+{"from_event": "EV-904bec61", "to_event": "EV-eb423905", "relation": "follows", "basis": "两条目均涉及小红书AI业务布局，但为不同产品线（导购 vs 搜索），且时间上导购功能报道在先，搜索整合在后，存在先后关系。", "created_by": "llm"}
