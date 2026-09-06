@@ -1,0 +1,23 @@
+# ===== 密钥：绝不提交 =====
+secrets.env
+*.env
+!.env.example
+.dev.vars
+
+# ===== 本地缓存与可重建产物 =====
+intel.db
+intel.db-*
+data/cache/
+data/raw/
+
+# ===== 依赖与构建 =====
+node_modules/
+dist/
+.wrangler/
+__pycache__/
+*.pyc
+.venv/
+
+# ===== 杂项 =====
+*.log
+.DS_Store

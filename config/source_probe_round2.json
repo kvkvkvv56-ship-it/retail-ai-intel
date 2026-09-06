@@ -1,0 +1,168 @@
+{
+  "probed_at": "2026-09-06T17:11:20",
+  "elapsed_sec": 181.6,
+  "wechat_routes": [
+    {
+      "route": "/wechat/ce/pWlOoxJKzFOd6H9GkQ8Uxw",
+      "label": "wechat/ce · 微信公众号（第三方镜像）",
+      "instance": "https://rsshub.rssforever.com",
+      "status": "503",
+      "items": 0,
+      "snippet": "<html><head><title>Welcome to RSSHub!</title><script src=\"https://cdn.tailwindcss.com\"></script><style>       "
+    },
+    {
+      "route": "/wechat/ershicimi/lianggezhong",
+      "label": "wechat/ershicimi · 二十次幂",
+      "instance": "https://rsshub.rssforever.com",
+      "status": "503",
+      "items": 0,
+      "snippet": "<html><head><title>Welcome to RSSHub!</title><script src=\"https://cdn.tailwindcss.com\"></script><style>       "
+    },
+    {
+      "route": "/wechat/wemp/1",
+      "label": "wechat/wemp · Wemp",
+      "instance": "https://rsshub.rssforever.com",
+      "status": "503",
+      "items": 0,
+      "snippet": "<html><head><title>Welcome to RSSHub!</title><script src=\"https://cdn.tailwindcss.com\"></script><style>       "
+    },
+    {
+      "route": "/wechat/feeddd/1",
+      "label": "wechat/feeddd · feeddd 项目",
+      "instance": "https://rsshub.rssforever.com",
+      "status": "503",
+      "items": 0,
+      "snippet": "<html><head><title>Welcome to RSSHub!</title><script src=\"https://cdn.tailwindcss.com\"></script><style>       "
+    },
+    {
+      "route": "/wechat/uread/1",
+      "label": "wechat/uread · 优读",
+      "instance": "https://rsshub.rssforever.com",
+      "status": "TimeoutError",
+      "items": 0,
+      "snippet": ""
+    },
+    {
+      "route": "/wechat/miniprogram/1",
+      "label": "wechat/miniprogram",
+      "instance": "https://rsshub.rssforever.com",
+      "status": "503",
+      "items": 0,
+      "snippet": "<html><head><title>Welcome to RSSHub!</title><script src=\"https://cdn.tailwindcss.com\"></script><style>       "
+    }
+  ],
+  "fallback_routes": [
+    {
+      "id": "ebrun",
+      "name": "亿邦动力",
+      "route": null,
+      "items": 0,
+      "titles": []
+    },
+    {
+      "id": "jiqizhixin",
+      "name": "机器之心",
+      "route": null,
+      "items": 0,
+      "titles": []
+    },
+    {
+      "id": "yicai",
+      "name": "第一财经",
+      "route": "/yicai/brief",
+      "instance": "https://hub.slarker.me",
+      "items": 50,
+      "titles": [
+        "&lt;b&gt;财政部将向中国进出口银行注资300亿元 |&lt;/b&gt; 中国进出口银行9月6日宣布，财政部将向中国进出口银行注资300亿元，有效巩固进出口银行资本根基、厚植可持续发展...",
+        "&lt;b&gt;国金证券：推荐三个潜在方向 |&lt;/b&gt; 国金证券表示，市场的迷雾并未散去，但是手中的罗盘正在指出潜在方向。推荐三个方向：第一，商品侧，能源是首要推荐，以煤...",
+        "&lt;b&gt;中色股份：控股子公司达瑞矿业收到印尼法院通知 |&lt;/b&gt; 中色股份公告，公司控股子公司中色印尼达瑞矿业有限公司（简称“达瑞矿业”）于9月4日收到印度尼西亚共..."
+      ]
+    },
+    {
+      "id": "lanjinger",
+      "name": "蓝鲸财经",
+      "route": null,
+      "items": 0,
+      "titles": []
+    },
+    {
+      "id": "100ec",
+      "name": "网经社",
+      "route": null,
+      "items": 0,
+      "titles": []
+    },
+    {
+      "id": "xiaohongshu",
+      "name": "小红书",
+      "route": null,
+      "items": 0,
+      "titles": []
+    },
+    {
+      "id": "caixin",
+      "name": "财新",
+      "route": "/caixin/latest",
+      "instance": "https://hub.slarker.me",
+      "items": 20,
+      "titles": [
+        "【市场洞察】瑞银：中国AI模型性价比突出 中美差距缩窄至3到6个月",
+        "大西洋观察│道法不同：关键领域挑战的欧美路径差异",
+        "火线评论｜“内卷外溢”病根在国内"
+      ]
+    },
+    {
+      "id": "latepost",
+      "name": "晚点",
+      "route": null,
+      "items": 0,
+      "titles": []
+    },
+    {
+      "id": "36kr",
+      "name": "36氪·资讯",
+      "route": "/36kr/hot-list",
+      "instance": "https://rsshub.rssforever.com",
+      "items": 8,
+      "titles": [
+        "GPT-6最佳拍档＝字节Seedance",
+        "暴走5万步，IFA 2026一手情报：超1000家中国厂商创历史，物理AI狠戳老外兴奋点",
+        "一只“小章鱼”，替阿里撬开万亿美元新市场"
+      ]
+    }
+  ],
+  "article_tests": [
+    {
+      "id": "caixin",
+      "name": "财新",
+      "url": "https://www.caixin.com/2026-09-01/",
+      "status": "200",
+      "cn_chars": 590,
+      "paywall_hits": []
+    },
+    {
+      "id": "latepost",
+      "name": "晚点",
+      "url": "https://www.latepost.com/news/dj_detail?id=1",
+      "status": "200",
+      "cn_chars": 3,
+      "paywall_hits": []
+    },
+    {
+      "id": "ebrun",
+      "name": "亿邦动力",
+      "url": "https://www.ebrun.com/20260101/1.shtml",
+      "status": "200",
+      "cn_chars": 0,
+      "paywall_hits": []
+    },
+    {
+      "id": "yicai",
+      "name": "第一财经",
+      "url": "https://www.yicai.com/news/",
+      "status": "200",
+      "cn_chars": 1188,
+      "paywall_hits": []
+    }
+  ]
+}
