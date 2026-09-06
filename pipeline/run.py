@@ -311,7 +311,16 @@ def main() -> int:
     ap.add_argument("--no-exa", action="store_true", help="跳过 Exa 通道（零成本）")
     args = ap.parse_args()
 
+    # CI 是全新 checkout，intel.db 被 gitignore。若不先从 JSONL 重建，
+    # known_urls / known_titles 全空，跨期去重会失效并把历史条目重新入库一遍。
+    from pipeline.store import DATA, DB_PATH
+    auto_rebuild = not DB_PATH.exists() and (DATA / "items.jsonl").exists()
+
     store = Store()
+    if auto_rebuild:
+        c = store.rebuild()
+        print(f"intel.db 不存在，已从 JSONL 重建："
+              + "  ".join(f"{k}={v}" for k, v in c.items() if v))
 
     if args.rebuild:
         counts = store.rebuild()

@@ -1,0 +1,92 @@
+name: 情报流水线
+
+# 每日两轮采集。北京时间 08:30 / 20:30（UTC 00:30 / 12:30）。
+#
+# 刻意只跑 Python：v1 的 CI 是被 `npm ci` 挂死 44 分钟烧满作业超时拖垮的，
+# 前端构建与部署已从关键路径上摘除，改为手动或独立 workflow。
+on:
+  schedule:
+    - cron: '30 0 * * *'
+    - cron: '30 12 * * *'
+  workflow_dispatch:
+    inputs:
+      no_exa:
+        description: '跳过 Exa 通道（零成本，只跑免费信源）'
+        type: boolean
+        default: false
+
+concurrency:
+  group: pipeline
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      # 流水线零第三方依赖（仅标准库），无需 pip install
+
+      - name: 跑流水线
+        env:
+          EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+          KB_LLM_API_KEY: ${{ secrets.KB_LLM_API_KEY }}
+          KB_LLM_BASE_URL: https://api.deepseek.com
+          KB_SCOUT_MODEL: deepseek-chat
+          KB_STRONG_MODEL: deepseek-chat
+        run: |
+          python pipeline/run.py ${{ inputs.no_exa && '--no-exa' || '' }}
+
+      - name: 提交数据变更
+        run: |
+          git config user.name  "intel-pipeline[bot]"
+          git config user.email "intel-pipeline@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "本轮无数据变更，跳过提交"
+            exit 0
+          fi
+          # 安全闸：数据文件不该出现密钥
+          if git diff --cached | grep -qE 'sk-[a-zA-Z0-9]{24,}|EXA_API_KEY *= *[^$]'; then
+            echo "::error::暂存区检出疑似密钥，已中止提交"
+            exit 1
+          fi
+          EV=$(wc -l < data/events.jsonl 2>/dev/null || echo 0)
+          IT=$(wc -l < data/items.jsonl 2>/dev/null || echo 0)
+          git commit -m "数据更新：${EV} 事件 / ${IT} 条目 ($(date -u +%Y-%m-%d\ %H:%M) UTC)"
+          git push
+
+      - name: 运行摘要
+        if: always()
+        run: |
+          {
+            echo "## 本轮运行"
+            echo '```'
+            python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("data/runs.jsonl")
+          if p.exists():
+              lines = [l for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+              if lines:
+                  r = json.loads(lines[-1])
+                  s = r.get("stats") or {}
+                  print(f"运行 {r['id']}")
+                  print(f"采集 {s.get('raw',0)} → 入库 {s.get('accepted',0)}")
+                  v = s.get("verify") or {}
+                  if v:
+                      print(f"事件 {v.get('events',0)}  "
+                            f"新增 {v.get('新增',0)}  延续 {v.get('延续',0)}  "
+                            f"旧闻 {v.get('旧闻/背景',0)}")
+                  print(f"Exa ${(r.get('cost') or {}).get('total',0)}  "
+                        f"LLM ¥{s.get('llm_cost_cny',0)}")
+          PY
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
