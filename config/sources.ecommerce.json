@@ -504,6 +504,35 @@
       "domains": [],
       "active": true,
       "note": "字节系报道强，公众号为主"
+    },
+    {
+      "id": "aihot",
+      "name": "AIHOT（发现渠道）",
+      "org": "aggregator_aihot",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "aihot",
+      "channel_ref": "https://aihot.virxact.com/api/v1",
+      "domains": [],
+      "active": true,
+      "aihot_queries": [
+        "电商",
+        "淘宝",
+        "抖音",
+        "快手",
+        "小红书",
+        "京东",
+        "微信小店",
+        "购物",
+        "导购",
+        "广告",
+        "视频生成",
+        "图像生成",
+        "数字人",
+        "素材"
+      ],
+      "note": "AI 行业动态聚合与精选站，本项目开工前做过完整拆解。它是发现渠道不是信源——落库用 links.original 指向的原文，信源按原文域名解析，解析不到时采信其 source.name 与一手性判定。使用依据：其公开规则对个人非商业与组织内部使用免费。"
     }
   ],
   "_original_source_patterns": {

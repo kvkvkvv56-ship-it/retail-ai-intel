@@ -470,6 +470,67 @@ def collect_jina(src: dict, cfg: dict) -> tuple[list[dict], str | None]:
     return out, (f"{src['id']}: " + "；".join(notes)) if notes else None
 
 
+# --------------------------------------------------------------- AIHOT 通道
+AIHOT_API = "https://aihot.virxact.com/api/v1"
+
+# AIHOT 的 source.name 形如「OpenAI：官网动态（RSS）」「IT之家（RSS）」，
+# 据此判定一手性：官方渠道 → A，其余按常规媒体 C。
+_OFFICIAL_HINT = ("官网", "官方", "Blog", "blog", "更新日志", "changelog",
+                  "开发者", "Newsroom", "newsroom", "财报")
+
+
+def collect_aihot(src: dict, cfg: dict) -> tuple[list[dict], str | None]:
+    """经 AIHOT 发现条目（技术方案 §4.1 补充通道）。
+
+    AIHOT 是 AI 行业动态的聚合与精选站（本项目开工前做过完整拆解，
+    见 docs/参考-AIHOT产品拆解.md）。它的 API 匿名只读、无需 key。
+
+    **它是发现渠道，不是信源**：真正的信源是 links.original 指向的原文
+    发布方，AIHOT 只是告诉我们这条存在。故：
+      - channel 记为 aihot
+      - source 按原文域名解析注册表，解析不到时用 AIHOT 给的 source.name
+        并按「是否官方渠道」判一手性
+      - 落库的 url 一律用 links.original，不用 AIHOT 站内页
+
+    使用依据：AIHOT 公开使用规则对「个人非商业 / 组织内部」使用免费。
+    本项目为内部审阅与个人使用，不对外分发，落在免费范围内。
+    """
+    queries = src.get("aihot_queries") or []
+    if not queries:
+        return [], f"{src['id']}: 未配置 aihot_queries"
+
+    out, seen, errs = [], set(), 0
+    for q in queries:
+        url = (f"{AIHOT_API}/items?mode=all&window=7d&limit=40"
+               f"&q={urllib.parse.quote(q)}")
+        st, body = fetch(url, timeout=30)
+        if not isinstance(st, int) or st != 200 or not body:
+            errs += 1
+            continue
+        try:
+            data = json.loads(decode(body))
+        except json.JSONDecodeError:
+            errs += 1
+            continue
+        for it in data.get("items") or []:
+            orig = (it.get("links") or {}).get("original")
+            if not orig or orig in seen:
+                continue
+            seen.add(orig)
+            pub, tsrc = parse_time(it.get("publishedAt"), exact=True)
+            sname = ((it.get("source") or {}).get("name") or "").strip()
+            out.append({
+                "url": orig,
+                "title": (it.get("title") or it.get("originalTitle") or "")[:300],
+                "content": (it.get("summary") or "")[:cfg["search"]["content_max_chars"]],
+                "published_at": pub, "time_source": tsrc,
+                "_aihot_source": sname,
+                "_aihot_class": "A" if any(h in sname for h in _OFFICIAL_HINT) else "C",
+            })
+    err = f"{src['id']}: {errs}/{len(queries)} 组查询失败" if errs else None
+    return out, err
+
+
 def collect_exa(cfg: dict, window_days: int) -> tuple[list[dict], dict, list[str]]:
     """Exa 搜索：公司×领域矩阵 + 无直采通道信源的站内定向检索。"""
     key = os.environ.get("EXA_API_KEY")

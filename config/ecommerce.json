@@ -284,7 +284,7 @@
     "engine": "exa",
     "endpoint": "https://api.exa.ai/search",
     "category": "news",
-    "num_results": 6,
+    "num_results": 10,
     "content_max_chars": 2000,
     "_comment": "查询矩阵按「公司 × 领域」展开，保证每个领域都有召回下限。v1 的问题是每家 3 条泛问，导致 data_bi 与 service_fulfillment 无对应查询词、事件必然稀疏。",
     "matrix": [
@@ -397,6 +397,66 @@
         "company": "industry",
         "domain": "service_fulfillment",
         "q": "智能客服 国家标准 电商 消费者权益"
+      },
+      {
+        "company": "taobao",
+        "domain": "retail_ops",
+        "q": "2026 淘宝 天猫 AI 战略 升级"
+      },
+      {
+        "company": "douyin",
+        "domain": "retail_ops",
+        "q": "2026 抖音电商 AI 战略 商家大会"
+      },
+      {
+        "company": "jd",
+        "domain": "retail_ops",
+        "q": "2026 京东 AI 战略 大模型 落地"
+      },
+      {
+        "company": "wechat",
+        "domain": "retail_ops",
+        "q": "2026 微信小店 视频号 电商 AI"
+      },
+      {
+        "company": "xiaohongshu",
+        "domain": "marketing",
+        "q": "2026 小红书 AI 商业化 广告"
+      },
+      {
+        "company": "kuaishou",
+        "domain": "ai_supply",
+        "q": "可灵 AI 版本 更新 能力 升级"
+      },
+      {
+        "company": "ai_vendor",
+        "domain": "ai_supply",
+        "q": "2026 图像模型 发布 电商 商品图 应用"
+      },
+      {
+        "company": "ai_vendor",
+        "domain": "ai_supply",
+        "q": "2026 视频生成模型 商业化 广告 素材"
+      },
+      {
+        "company": "ai_vendor",
+        "domain": "marketing",
+        "q": "AI 数字人 直播 带货 工具 2026"
+      },
+      {
+        "company": "industry",
+        "domain": "data_bi",
+        "q": "2026 电商 AI 报告 渗透率 数据"
+      },
+      {
+        "company": "industry",
+        "domain": "merchant_tools",
+        "q": "2026 商家 AI 工具 采用 调研"
+      },
+      {
+        "company": "taobao",
+        "domain": "service_fulfillment",
+        "q": "淘宝 天猫 智能客服 AI 售后 2026"
       }
     ],
     "_site_queries_comment": "晚点与亿邦动力无直采通道（信源实测报告 §5），为其单独设计站内检索，用 includeDomains 定向召回",
@@ -427,5 +487,7 @@
     "api_key_env": "KB_LLM_API_KEY",
     "scout_model_env": "KB_SCOUT_MODEL",
     "strong_model_env": "KB_STRONG_MODEL"
-  }
+  },
+  "collect_window_days": 250,
+  "_window_note": "collect_window_days 决定采集往回捞多久，window_days 决定状态判定的观察窗口。早先混用一个参数，导致 2026 上半年的事件在采集阶段就被判 stale 丢弃（累计 124 条），而它们本该作为「旧闻/背景」入库提供历史上下文。"
 }

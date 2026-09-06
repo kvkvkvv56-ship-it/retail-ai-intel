@@ -52,7 +52,8 @@ def stage_collect(cfg: dict, srccfg: dict, use_exa: bool) -> tuple[list[dict], d
     instances = srccfg["rsshub_instances"]
     raw, errors = [], []
 
-    by_channel = {"rss": [], "rsshub": [], "direct": [], "jina": [], "exa": []}
+    by_channel = {"rss": [], "rsshub": [], "direct": [], "jina": [],
+                  "aihot": [], "exa": []}
     for s in sources:
         by_channel.setdefault(s["channel"], []).append(s)
 
@@ -66,6 +67,8 @@ def stage_collect(cfg: dict, srccfg: dict, use_exa: bool) -> tuple[list[dict], d
                 items, err = C.collect_direct(s, cfg)
             elif s["channel"] == "jina":
                 items, err = C.collect_jina(s, cfg)
+            elif s["channel"] == "aihot":
+                items, err = C.collect_aihot(s, cfg)
             else:
                 return [], None
             for it in items:
@@ -76,10 +79,12 @@ def stage_collect(cfg: dict, srccfg: dict, use_exa: bool) -> tuple[list[dict], d
             return [], f"{s['id']}: {type(e).__name__}: {e}"
 
     feed_sources = (by_channel["rss"] + by_channel["rsshub"]
-                    + by_channel["direct"] + by_channel["jina"])
+                    + by_channel["direct"] + by_channel["jina"]
+                    + by_channel["aihot"])
     print(f"  直采通道：{len(feed_sources)} 个信源 "
           f"(rss {len(by_channel['rss'])} / rsshub {len(by_channel['rsshub'])} "
-          f"/ direct {len(by_channel['direct'])} / jina {len(by_channel['jina'])})")
+          f"/ direct {len(by_channel['direct'])} / jina {len(by_channel['jina'])}"
+          f" / aihot {len(by_channel['aihot'])})")
 
     with ThreadPoolExecutor(max_workers=6) as ex:
         for f in as_completed([ex.submit(run_source, s) for s in feed_sources]):
@@ -92,7 +97,8 @@ def stage_collect(cfg: dict, srccfg: dict, use_exa: bool) -> tuple[list[dict], d
     if use_exa:
         print(f"  Exa 通道：{len(cfg['search']['matrix'])} 组矩阵查询 "
               f"+ {len(cfg['search'].get('site_queries', []))} 组站内定向")
-        exa_items, cost, exa_err = C.collect_exa(cfg, cfg["window_days"])
+        exa_items, cost, exa_err = C.collect_exa(
+            cfg, cfg.get("collect_window_days", cfg["window_days"]))
         for it in exa_items:
             it["_src"] = None
             it["_channel"] = "exa"
@@ -119,7 +125,11 @@ def stage_dedup(store: Store, raw: list[dict], cfg: dict, srccfg: dict,
     patterns = {k: v for k, v in patterns.items() if not k.startswith("_")}
     src_by_id = {s["id"]: s for s in srccfg["sources"]}
 
-    window_start = datetime.now(timezone.utc) - timedelta(days=cfg["window_days"])
+    # 采集窗口 ≠ 观察窗口：前者决定往回捞多久，后者决定状态判定。
+    # 早先混用一个参数，2026 上半年的事件在采集阶段就被判 stale 丢弃，
+    # 而它们本该作为「旧闻/背景」入库提供历史上下文。
+    collect_days = cfg.get("collect_window_days", cfg["window_days"])
+    window_start = datetime.now(timezone.utc) - timedelta(days=collect_days)
     thr = cfg["verify"]["simhash_hamming_threshold"]
 
     known_urls = {r["url_canonical"] for r in store.q("SELECT url_canonical FROM items")}
@@ -175,7 +185,7 @@ def stage_dedup(store: Store, raw: list[dict], cfg: dict, srccfg: dict,
                 if datetime.fromisoformat(pub) < window_start:
                     stats["stale"] += 1
                     reject(it, "window", "stale",
-                           f"发布于 {pub[:10]}，早于 {cfg['window_days']} 天观察窗口")
+                           f"发布于 {pub[:10]}，早于 {collect_days} 天采集窗口")
                     continue
             except ValueError:
                 pass
@@ -193,8 +203,16 @@ def stage_dedup(store: Store, raw: list[dict], cfg: dict, srccfg: dict,
                 continue
 
         # ---- 信源归属 ----
-        src = it.get("_src") or C.attribute(it["url"], domain_idx)
-        scls = src["source_class"] if src else cfg["verify"]["unknown_source_class"]
+        # AIHOT 通道的条目：先按原文域名解析注册表；解析不到时不落到默认 D，
+        # 而是采信 AIHOT 提供的 source.name 与据此判定的一手性——
+        # 「OpenAI 官网动态」是一手，不该因为不在我们注册表里就降成聚合转载。
+        resolved = C.attribute(it["url"], domain_idx)
+        if it.get("_channel") == "aihot":
+            src = resolved
+            scls = (src["source_class"] if src else it.get("_aihot_class", "C"))
+        else:
+            src = it.get("_src") or resolved
+            scls = src["source_class"] if src else cfg["verify"]["unknown_source_class"]
 
         # ---- 原始出处归因（技术方案 §4.0）----
         orig, eff = None, scls
@@ -344,7 +362,9 @@ def main() -> int:
     run_id = "RUN-" + datetime.now(timezone.utc).strftime("%Y%m%d-%H%M")
     started = now_iso()
 
-    print(f"运行 {run_id}   数据集={args.dataset}   窗口={cfg['window_days']}天")
+    print(f"运行 {run_id}   数据集={args.dataset}   "
+          f"采集窗口={cfg.get('collect_window_days', cfg['window_days'])}天 / "
+          f"观察窗口={cfg['window_days']}天")
 
     # 信源注册表落库（配置即数据，可被 SQL 查询）
     for s in srccfg["sources"]:
