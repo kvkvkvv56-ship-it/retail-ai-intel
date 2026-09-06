@@ -1,0 +1,103 @@
+{
+  "dataset": "ecommerce",
+  "name": "电商竞对 AI 洞察",
+  "window_days": 30,
+  "report_window_days": 7,
+
+  "companies": [
+    {"id": "taobao",      "name": "淘宝天猫",   "aliases": ["淘天", "淘宝", "天猫", "阿里电商", "阿里妈妈"]},
+    {"id": "douyin",      "name": "抖音电商",   "aliases": ["抖音", "字节", "字节跳动", "巨量引擎", "抖店"]},
+    {"id": "kuaishou",    "name": "快手电商",   "aliases": ["快手", "快手小店", "磁力引擎"]},
+    {"id": "xiaohongshu", "name": "小红书电商", "aliases": ["小红书", "REDnote", "薯管家"]},
+    {"id": "industry",    "name": "行业·监管",  "aliases": ["行业级", "监管", "政策"]}
+  ],
+
+  "domains": [
+    {"id": "retail_ops",          "name": "商品与零售运营", "desc": "AI搜索推荐、AI导购/购物助手、详情页生成、选品、供给治理"},
+    {"id": "marketing",           "name": "营销与内容生成", "desc": "AIGC素材、智能投放、AI直播/数字人、达人匹配"},
+    {"id": "merchant_tools",      "name": "商家工具与服务", "desc": "商家经营AI工具、AI开店、经营诊断、客服SaaS"},
+    {"id": "data_bi",             "name": "数据与商业分析", "desc": "数据产品、归因、BI智能化、行业洞察、Agent取数"},
+    {"id": "service_fulfillment", "name": "客服与履约",     "desc": "智能客服、售后、物流供应链AI、履约诊断"}
+  ],
+
+  "stages": ["概念宣传", "试点探索", "已上线", "规模化应用"],
+  "statuses": ["新增", "延续", "静默", "旧闻/背景"],
+  "confidence_levels": ["官方确认·多源印证", "官方一手", "多源已验证", "深度单源", "单源待确认"],
+
+  "relevance": {
+    "_comment": [
+      "零成本关键词粗筛，位于 LLM 预筛之前。通用新闻源（新浪科技 rollnews、",
+      "第一财经 brief）会返回全量财经快讯，直接喂 LLM 是浪费。",
+      "规则：必须同时命中 ai_terms 与 industry_terms。",
+      "宁松勿紧——真正的相关性判断交给 S2 LLM 预筛，这里只滤掉明显无关的。",
+      "被滤条目全部记入拒绝台账 reason_code=off_topic，可审计可回溯。"
+    ],
+    "ai_terms": [
+      "AI", "ai", "人工智能", "大模型", "AIGC", "aigc", "智能体", "Agent", "agent",
+      "机器学习", "深度学习", "生成式", "数字人", "GPT", "LLM", "算法",
+      "智能客服", "智能推荐", "大语言模型", "多模态", "具身智能", "AI原生"
+    ],
+    "industry_terms": [
+      "电商", "零售", "商家", "网购", "直播带货", "带货", "消费", "商城", "购物",
+      "淘宝", "天猫", "淘天", "阿里", "阿里巴巴", "阿里妈妈", "支付宝",
+      "抖音", "字节", "字节跳动", "巨量引擎", "抖店", "今日头条",
+      "快手", "磁力引擎", "快手小店",
+      "小红书", "薯管家", "REDnote",
+      "拼多多", "京东", "美团", "视频号",
+      "供应链", "履约", "选品", "货架", "GMV", "客单价", "转化率"
+    ]
+  },
+
+  "verify": {
+    "min_independent_orgs": 2,
+    "unknown_source_class": "D",
+    "simhash_hamming_threshold": 3,
+    "embedding_topk": 8,
+    "embedding_min_cosine": 0.82
+  },
+
+  "search": {
+    "engine": "exa",
+    "endpoint": "https://api.exa.ai/search",
+    "category": "news",
+    "num_results": 6,
+    "content_max_chars": 2000,
+    "_comment": "查询矩阵按「公司 × 领域」展开，保证每个领域都有召回下限。v1 的问题是每家 3 条泛问，导致 data_bi 与 service_fulfillment 无对应查询词、事件必然稀疏。",
+    "matrix": [
+      {"company": "taobao",      "domain": "retail_ops",          "q": "淘宝 天猫 AI 搜索推荐 导购 上线"},
+      {"company": "taobao",      "domain": "marketing",           "q": "淘宝 AIGC 营销素材 数字人 直播"},
+      {"company": "taobao",      "domain": "merchant_tools",      "q": "淘天 商家 AI 经营工具 生意管家"},
+      {"company": "taobao",      "domain": "data_bi",             "q": "阿里 电商 数据 智能分析 商家诊断"},
+      {"company": "taobao",      "domain": "service_fulfillment", "q": "淘宝 智能客服 AI 售后 履约"},
+
+      {"company": "douyin",      "domain": "retail_ops",          "q": "抖音电商 AI 搜索 推荐 商品 上线"},
+      {"company": "douyin",      "domain": "marketing",           "q": "巨量引擎 AI 投放 素材生成 数字人"},
+      {"company": "douyin",      "domain": "merchant_tools",      "q": "抖音电商 商家 AI 工具 抖店"},
+      {"company": "douyin",      "domain": "service_fulfillment", "q": "抖音电商 智能客服 AI 售后"},
+
+      {"company": "kuaishou",    "domain": "retail_ops",          "q": "快手电商 AI 商品 推荐 搜索"},
+      {"company": "kuaishou",    "domain": "marketing",           "q": "快手 磁力引擎 AI 营销 数字人 直播"},
+      {"company": "kuaishou",    "domain": "merchant_tools",      "q": "快手电商 商家 AI 经营工具"},
+
+      {"company": "xiaohongshu", "domain": "retail_ops",          "q": "小红书电商 AI 搜索 种草 商品"},
+      {"company": "xiaohongshu", "domain": "marketing",           "q": "小红书 AI 营销 笔记生成 达人"},
+      {"company": "xiaohongshu", "domain": "merchant_tools",      "q": "小红书 商家 AI 工具 开店"},
+
+      {"company": "industry",    "domain": "retail_ops",          "q": "AI 电商 监管 新规 算法备案"},
+      {"company": "industry",    "domain": "marketing",           "q": "AIGC 标识 电商 内容治理 合规"},
+      {"company": "industry",    "domain": "data_bi",             "q": "电商平台 数据 算法 合规 管理办法"}
+    ],
+    "_site_queries_comment": "晚点与亿邦动力无直采通道（信源实测报告 §5），为其单独设计站内检索，用 includeDomains 定向召回",
+    "site_queries": [
+      {"q": "AI 电商 平台",         "domains": ["latepost.com"]},
+      {"q": "AI 商家 工具 平台",     "domains": ["ebrun.com"]}
+    ]
+  },
+
+  "llm": {
+    "base_url_env": "KB_LLM_BASE_URL",
+    "api_key_env": "KB_LLM_API_KEY",
+    "scout_model_env": "KB_SCOUT_MODEL",
+    "strong_model_env": "KB_STRONG_MODEL"
+  }
+}

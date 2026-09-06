@@ -1,0 +1,336 @@
+#!/usr/bin/env python3
+"""流水线入口
+
+    python3 pipeline/run.py                  # 完整一轮
+    python3 pipeline/run.py --stage collect  # 只跑采集
+    python3 pipeline/run.py --rebuild        # 从 JSONL 重建 intel.db
+    python3 pipeline/run.py --no-exa         # 跳过 Exa（零成本，只跑免费通道）
+
+阶段（docs/技术方案.md §2.1）：
+    S0 采集 → S1 去重 → [S2 预筛 → S3 抽取 → S4 归并 → S5 核验 → S6 关系边 → S7 洞察]
+    方括号内为 D5-D7 待实现
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from pipeline import collect as C                                  # noqa: E402
+from pipeline.store import ROOT, Store                             # noqa: E402
+
+CONFIG_DIR = ROOT / "config"
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def load_config(dataset: str) -> tuple[dict, dict]:
+    cfg = json.loads((CONFIG_DIR / f"{dataset}.json").read_text(encoding="utf-8"))
+    src = json.loads((CONFIG_DIR / f"sources.{dataset}.json").read_text(encoding="utf-8"))
+    return cfg, src
+
+
+def config_hash(cfg: dict, src: dict) -> str:
+    blob = json.dumps([cfg, src], ensure_ascii=False, sort_keys=True).encode()
+    return hashlib.sha1(blob).hexdigest()[:12]
+
+
+# ==================================================================== S0
+def stage_collect(cfg: dict, srccfg: dict, use_exa: bool) -> tuple[list[dict], dict, list[str]]:
+    sources = [s for s in srccfg["sources"] if s.get("active", True)]
+    instances = srccfg["rsshub_instances"]
+    raw, errors = [], []
+
+    by_channel = {"rss": [], "rsshub": [], "direct": [], "exa": []}
+    for s in sources:
+        by_channel.setdefault(s["channel"], []).append(s)
+
+    def run_source(s: dict):
+        try:
+            if s["channel"] == "rss":
+                items, err = C.collect_rss(s, cfg)
+            elif s["channel"] == "rsshub":
+                items, err = C.collect_rsshub(s, cfg, instances)
+            elif s["channel"] == "direct":
+                items, err = C.collect_direct(s, cfg)
+            else:
+                return [], None
+            for it in items:
+                it["_src"] = s
+                it["_channel"] = s["channel"]
+            return items, err
+        except Exception as e:                                # noqa: BLE001
+            return [], f"{s['id']}: {type(e).__name__}: {e}"
+
+    feed_sources = by_channel["rss"] + by_channel["rsshub"] + by_channel["direct"]
+    print(f"  直采通道：{len(feed_sources)} 个信源 "
+          f"(rss {len(by_channel['rss'])} / rsshub {len(by_channel['rsshub'])} "
+          f"/ direct {len(by_channel['direct'])})")
+
+    with ThreadPoolExecutor(max_workers=6) as ex:
+        for f in as_completed([ex.submit(run_source, s) for s in feed_sources]):
+            items, err = f.result()
+            raw.extend(items)
+            if err:
+                errors.append(err)
+
+    cost = {"total": 0.0, "queries": 0}
+    if use_exa:
+        print(f"  Exa 通道：{len(cfg['search']['matrix'])} 组矩阵查询 "
+              f"+ {len(cfg['search'].get('site_queries', []))} 组站内定向")
+        exa_items, cost, exa_err = C.collect_exa(cfg, cfg["window_days"])
+        for it in exa_items:
+            it["_src"] = None
+            it["_channel"] = "exa"
+        raw.extend(exa_items)
+        errors.extend(exa_err)
+    else:
+        print("  Exa 通道：已跳过（--no-exa）")
+
+    return raw, cost, errors
+
+
+# ==================================================================== S1
+def stage_dedup(store: Store, raw: list[dict], cfg: dict, srccfg: dict,
+                run_id: str) -> dict:
+    """三层去重 + 拒绝台账（技术方案 §5）。
+
+    L1 URL 精确  → duplicate_url
+    L2 SimHash   → syndication（转载）
+    L3 语义归并  → D5 实现（需 embedding + LLM 裁决）
+    另有时间窗口与信源类别过滤。
+    """
+    domain_idx = C.build_domain_index(srccfg["sources"])
+    patterns = srccfg.get("_original_source_patterns", {})
+    patterns = {k: v for k, v in patterns.items() if not k.startswith("_")}
+    src_by_id = {s["id"]: s for s in srccfg["sources"]}
+
+    window_start = datetime.now(timezone.utc) - timedelta(days=cfg["window_days"])
+    thr = cfg["verify"]["simhash_hamming_threshold"]
+
+    known_urls = {r["url_canonical"] for r in store.q("SELECT url_canonical FROM items")}
+    known_hashes = [(r["id"], r["simhash"]) for r in
+                    store.q("SELECT id, simhash FROM items WHERE simhash IS NOT NULL")]
+    known_titles = {C.normalize_title(r["title"]): r["id"]
+                    for r in store.q("SELECT id, title FROM items")}
+
+    rel = cfg.get("relevance", {})
+    ai_terms = rel.get("ai_terms", [])
+    ind_terms = rel.get("industry_terms", [])
+
+    stats = {"raw": len(raw), "duplicate_url": 0, "syndication": 0, "off_topic": 0,
+             "stale": 0, "no_title": 0, "accepted": 0, "attributed": 0}
+
+    def reject(it, stage, code, detail, merged=None):
+        store.insert("rejects", {
+            "run_id": run_id, "item_id": None, "url": it.get("url"),
+            "title": (it.get("title") or "")[:200],
+            "source_name": (it.get("_src") or {}).get("name") or "未登记",
+            "stage": stage, "reason_code": code, "reason_detail": detail,
+            "merged_into": merged, "created_at": now_iso(),
+        })
+
+    batch_hashes: list[tuple[str, str]] = []
+
+    for it in raw:
+        title = (it.get("title") or "").strip()
+        if not title or not it.get("url"):
+            stats["no_title"] += 1
+            reject(it, "collect", "no_title", "缺少标题或链接，无法追溯")
+            continue
+
+        canon = C.canonical_url(it["url"])
+        iid = C.item_id(canon)
+
+        # ---- L1 URL 精确去重 ----
+        if canon in known_urls:
+            stats["duplicate_url"] += 1
+            reject(it, "url_dedup", "duplicate_url", "该 URL 此前已采集，跳过（零 LLM 成本）")
+            continue
+
+        # ---- 时间窗口 ----
+        pub, tsrc = it.get("published_at"), it.get("time_source")
+        if pub and tsrc in ("exact", "parsed"):
+            try:
+                if datetime.fromisoformat(pub) < window_start:
+                    stats["stale"] += 1
+                    reject(it, "window", "stale",
+                           f"发布于 {pub[:10]}，早于 {cfg['window_days']} 天观察窗口")
+                    continue
+            except ValueError:
+                pass
+
+        # ---- 关键词粗筛（零成本，LLM 预筛前）----
+        blob = f"{title} {it.get('content') or ''}"
+        if ai_terms and ind_terms:
+            hit_ai = next((t for t in ai_terms if t in blob), None)
+            hit_ind = next((t for t in ind_terms if t in blob), None)
+            if not (hit_ai and hit_ind):
+                stats["off_topic"] += 1
+                miss = "AI 相关词" if not hit_ai else "行业相关词"
+                reject(it, "keyword_filter", "off_topic",
+                       f"未命中{miss}，判为与观察范围无关（零成本粗筛，未消耗 LLM）")
+                continue
+
+        # ---- 信源归属 ----
+        src = it.get("_src") or C.attribute(it["url"], domain_idx)
+        scls = src["source_class"] if src else cfg["verify"]["unknown_source_class"]
+
+        # ---- 原始出处归因（技术方案 §4.0）----
+        orig, eff = None, scls
+        cand = C.detect_original_source(blob, patterns)
+        if cand and (not src or cand != src["id"]):
+            orig = cand
+            oc = src_by_id.get(cand, {}).get("source_class")
+            if oc and oc < eff:              # A<B<C<D<E，取更靠近一手的
+                eff = oc
+                stats["attributed"] += 1
+
+        # ---- L2a 标题归一化精确匹配（抓跨站转载）----
+        ntitle = C.normalize_title(title)
+        if ntitle and ntitle in known_titles:
+            stats["syndication"] += 1
+            reject(it, "title_dedup", "syndication",
+                   f"标题归一化后与 {known_titles[ntitle]} 一致（剥离站名后缀），判为转载",
+                   merged=known_titles[ntitle])
+            continue
+
+        # ---- L2b SimHash 正文近重复（抓改标题的转载）----
+        sh = C.simhash(blob)
+        dup_of = None
+        for oid, oh in known_hashes + batch_hashes:
+            if oh and C.hamming(sh, oh) <= thr:
+                dup_of = oid
+                break
+        if dup_of:
+            stats["syndication"] += 1
+            reject(it, "simhash", "syndication",
+                   f"正文与 {dup_of} 近重复（汉明距离≤{thr}），判为转载", merged=dup_of)
+            continue
+
+        store.upsert("items", {
+            "id": iid, "url": it["url"], "url_canonical": canon, "title": title,
+            "content": (it.get("content") or "")[:cfg["search"]["content_max_chars"]],
+            "source_id": src["id"] if src else None, "source_class": scls,
+            "original_source": orig, "effective_class": eff,
+            "published_at": pub, "time_source": tsrc,
+            "discovered_at": now_iso(), "run_id": run_id,
+            "channel": it.get("_channel"), "simhash": sh, "status": "pending",
+        })
+        known_urls.add(canon)
+        known_titles[ntitle] = iid
+        batch_hashes.append((iid, sh))
+        stats["accepted"] += 1
+
+    return stats
+
+
+# ==================================================================== 报告
+def print_funnel(stats: dict, cost: dict, errors: list[str], store: Store, run_id: str):
+    W = 66
+    print("\n" + "=" * W)
+    print("漏斗回放")
+    print("=" * W)
+    r, a = stats["raw"], stats["accepted"]
+    print(f"  采集原始条目          {r:>5}")
+    print(f"    ├─ URL 重复          -{stats['duplicate_url']:>4}   （此前已采集，零成本）")
+    print(f"    ├─ 超出时间窗口      -{stats['stale']:>4}")
+    print(f"    ├─ 关键词粗筛淘汰    -{stats['off_topic']:>4}   （与观察范围无关，未耗 LLM）")
+    print(f"    ├─ 转载近重复        -{stats['syndication']:>4}   （SimHash 判定）")
+    print(f"    └─ 缺标题/链接       -{stats['no_title']:>4}")
+    print(f"  入库待处理            {a:>5}   （通过率 {a / r * 100:.0f}%）" if r else "")
+    if stats["attributed"]:
+        print(f"  原始出处归因命中      {stats['attributed']:>5}   （转载→回溯到一手信源）")
+
+    rows = store.q("""SELECT channel, COUNT(*) n FROM items WHERE run_id=?
+                      GROUP BY channel ORDER BY n DESC""", (run_id,))
+    if rows:
+        print("\n  按通道：" + "  ".join(f"{r['channel']}={r['n']}" for r in rows))
+
+    rows = store.q("""SELECT COALESCE(effective_class,'?') c, COUNT(*) n FROM items
+                      WHERE run_id=? GROUP BY c ORDER BY c""", (run_id,))
+    if rows:
+        print("  按一手性：" + "  ".join(f"{r['c']}类={r['n']}" for r in rows))
+
+    rows = store.q("""SELECT COALESCE(time_source,'缺失') t, COUNT(*) n FROM items
+                      WHERE run_id=? GROUP BY t""", (run_id,))
+    if rows:
+        print("  时间口径：" + "  ".join(f"{r['t']}={r['n']}" for r in rows))
+
+    if cost["queries"]:
+        print(f"\n  Exa 成本：${cost['total']} / {cost['queries']} 组查询")
+    if errors:
+        print(f"\n  采集告警 {len(errors)} 条（不阻断）：")
+        for e in errors[:8]:
+            print(f"    · {e}")
+        if len(errors) > 8:
+            print(f"    · …另有 {len(errors) - 8} 条")
+    print("=" * W)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dataset", default="ecommerce")
+    ap.add_argument("--stage", default="all", choices=["all", "collect"])
+    ap.add_argument("--rebuild", action="store_true", help="从 JSONL 重建 intel.db 后退出")
+    ap.add_argument("--no-exa", action="store_true", help="跳过 Exa 通道（零成本）")
+    args = ap.parse_args()
+
+    store = Store()
+
+    if args.rebuild:
+        counts = store.rebuild()
+        print("已从 JSONL 重建 intel.db：")
+        for t, n in counts.items():
+            if n:
+                print(f"  {t:10} {n}")
+        store.close()
+        return 0
+
+    cfg, srccfg = load_config(args.dataset)
+    run_id = "RUN-" + datetime.now(timezone.utc).strftime("%Y%m%d-%H%M")
+    started = now_iso()
+
+    print(f"运行 {run_id}   数据集={args.dataset}   窗口={cfg['window_days']}天")
+
+    # 信源注册表落库（配置即数据，可被 SQL 查询）
+    for s in srccfg["sources"]:
+        store.upsert("sources", s)
+    store.commit()
+
+    print("\n[S0] 采集")
+    raw, cost, errors = stage_collect(cfg, srccfg, use_exa=not args.no_exa)
+    print(f"  → 原始条目 {len(raw)}")
+
+    print("\n[S1] 三层去重")
+    stats = stage_dedup(store, raw, cfg, srccfg, run_id)
+    print(f"  → 入库 {stats['accepted']}，拒绝 "
+          f"{stats['raw'] - stats['accepted']}（全部留痕于 rejects 台账）")
+
+    store.upsert("runs", {
+        "id": run_id, "started_at": started, "finished_at": now_iso(),
+        "mode": "live", "dataset": args.dataset,
+        "stats": {**stats, "collect_errors": errors},
+        "cost": cost, "config_hash": config_hash(cfg, srccfg),
+    })
+    store.commit()
+
+    print_funnel(stats, cost, errors, store, run_id)
+
+    counts = store.dump()
+    print(f"\n已同步 JSONL 真相源：" +
+          "  ".join(f"{t}={n}" for t, n in counts.items() if n))
+    store.close()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

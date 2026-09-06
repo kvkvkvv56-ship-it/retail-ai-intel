@@ -1,0 +1,542 @@
+{
+  "_comment": [
+    "信源注册表 · 电商数据集",
+    "source_class 为一手性等级（离事件现场多近），不是发布主体身份：",
+    "  A 当事方直述 / B 原创深度报道 / C 常规媒体报道 / D 聚合转载 / E 观点评论",
+    "org 为组织去重键：同组织多渠道只算一个独立信源。",
+    "affiliated_with 标记自家媒体：报道该主体时不计入独立信源（如天下网商报淘宝）。",
+    "channel 由 W1 D1-D2 实测确定，证据见 docs/信源实测报告.md。",
+    "未登记域名默认按 D 类（聚合转载）处理，不能独立支撑事件。"
+  ],
+  "rsshub_instances": [
+    "https://rsshub.rssforever.com",
+    "https://hub.slarker.me"
+  ],
+  "sources": [
+    {
+      "id": "kuaishou_ir",
+      "name": "快手投资者关系",
+      "org": "kuaishou_official",
+      "source_class": "A",
+      "affiliated_with": "kuaishou",
+      "reliability": 1.0,
+      "channel": "rss",
+      "channel_ref": "https://ir.kuaishou.com/rss.xml",
+      "domains": [
+        "ir.kuaishou.com"
+      ],
+      "active": true,
+      "note": "财报与业绩公告，官方一手"
+    },
+    {
+      "id": "alibaba_ir",
+      "name": "阿里巴巴集团",
+      "org": "ali_official",
+      "source_class": "A",
+      "affiliated_with": "taobao",
+      "reliability": 1.0,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "alibabagroup.com"
+      ],
+      "active": true,
+      "note": "⚠️ 修正：新闻列表为客户端渲染，首页 23026 字实为导航与营销文案。direct 不成立，改 Exa"
+    },
+    {
+      "id": "bytedance_jobs",
+      "name": "字节跳动招聘",
+      "org": "bytedance_official",
+      "source_class": "A",
+      "affiliated_with": "douyin",
+      "reliability": 1.0,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "jobs.bytedance.com"
+      ],
+      "active": true,
+      "note": "⚠️ 修正：岗位列表客户端渲染，无服务端文章链接。改 Exa"
+    },
+    {
+      "id": "oceanengine",
+      "name": "巨量引擎",
+      "org": "oceanengine_official",
+      "source_class": "A",
+      "affiliated_with": "douyin",
+      "reliability": 0.9,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "oceanengine.com",
+        "open.oceanengine.com"
+      ],
+      "active": true,
+      "note": "⚠️ 修正：首页仅课程入口无新闻，direct 不成立。改 Exa"
+    },
+    {
+      "id": "xiaohongshu_official",
+      "name": "小红书官方",
+      "org": "xhs_official",
+      "source_class": "A",
+      "affiliated_with": "xiaohongshu",
+      "reliability": 1.0,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "xiaohongshu.com",
+        "school.xiaohongshu.com"
+      ],
+      "active": true,
+      "note": "前端渲染，直抓无正文，靠 Exa 间接覆盖"
+    },
+    {
+      "id": "alibaba_talent",
+      "name": "阿里招聘",
+      "org": "ali_official",
+      "source_class": "A",
+      "affiliated_with": "taobao",
+      "reliability": 0.9,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "talent.alibaba.com"
+      ],
+      "active": true,
+      "note": "前端渲染"
+    },
+    {
+      "id": "latepost",
+      "name": "晚点 LatePost",
+      "org": "media_latepost",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 1.0,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "latepost.com"
+      ],
+      "active": true,
+      "note": "⚠️ 情报密度最高但三条通道全堵（前端渲染/无RSSHub路由/不在wechat2rss免费列表），依赖 Exa 召回 + 原始出处归因"
+    },
+    {
+      "id": "caixin",
+      "name": "财新网",
+      "org": "media_caixin",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 1.0,
+      "channel": "rsshub",
+      "channel_ref": "/caixin/latest",
+      "domains": [
+        "caixin.com"
+      ],
+      "active": true,
+      "partial_content": true,
+      "note": "正文付费墙，只取标题与导语，标记 partial"
+    },
+    {
+      "id": "yicai",
+      "name": "第一财经",
+      "org": "media_yicai",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 0.95,
+      "channel": "rsshub",
+      "channel_ref": "/yicai/brief",
+      "domains": [
+        "yicai.com"
+      ],
+      "active": true,
+      "note": "首页有反爬验证，RSSHub 绕过"
+    },
+    {
+      "id": "36kr",
+      "name": "36氪",
+      "org": "media_36kr",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 0.9,
+      "channel": "rsshub",
+      "channel_ref": "/36kr/newsflashes",
+      "domains": [
+        "36kr.com"
+      ],
+      "active": true,
+      "note": "含智能涌现 AI 垂类"
+    },
+    {
+      "id": "wallstreetcn",
+      "name": "华尔街见闻",
+      "org": "media_wallstreetcn",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 0.9,
+      "channel": "rsshub",
+      "channel_ref": "/wallstreetcn/news/global",
+      "domains": [
+        "wallstreetcn.com"
+      ],
+      "active": true,
+      "note": "财报电话会覆盖好"
+    },
+    {
+      "id": "tmtpost",
+      "name": "钛媒体",
+      "org": "media_tmtpost",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 0.9,
+      "channel": "rss",
+      "channel_ref": "https://www.tmtpost.com/feed",
+      "domains": [
+        "tmtpost.com"
+      ],
+      "active": true
+    },
+    {
+      "id": "guangzi",
+      "name": "光子星球",
+      "org": "media_guangzi",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [],
+      "active": true,
+      "note": "公众号为主，无直采通道"
+    },
+    {
+      "id": "huxiu",
+      "name": "虎嗅",
+      "org": "media_huxiu",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "rsshub",
+      "channel_ref": "/huxiu/article",
+      "domains": [
+        "huxiu.com"
+      ],
+      "active": true
+    },
+    {
+      "id": "pingwest",
+      "name": "品玩",
+      "org": "media_pingwest",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.8,
+      "channel": "rsshub",
+      "channel_ref": "/pingwest/status",
+      "domains": [
+        "pingwest.com"
+      ],
+      "active": true
+    },
+    {
+      "id": "sina_tech",
+      "name": "新浪科技",
+      "org": "media_sina",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.75,
+      "channel": "rsshub",
+      "channel_ref": "/sina/rollnews",
+      "domains": [
+        "sina.com.cn",
+        "sina.cn"
+      ],
+      "active": true,
+      "note": "门户，通稿高发，注意转载识别"
+    },
+    {
+      "id": "qbitai",
+      "name": "量子位",
+      "org": "media_qbitai",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "rss",
+      "channel_ref": "https://www.qbitai.com/feed",
+      "domains": [
+        "qbitai.com"
+      ],
+      "active": true
+    },
+    {
+      "id": "leiphone",
+      "name": "雷峰网",
+      "org": "media_leiphone",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "rss",
+      "channel_ref": "https://www.leiphone.com/feed",
+      "domains": [
+        "leiphone.com"
+      ],
+      "active": true,
+      "note": "含零售数智化垂类"
+    },
+    {
+      "id": "jiqizhixin",
+      "name": "机器之心",
+      "org": "media_jiqizhixin",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "rss",
+      "channel_ref": "https://wechat2rss.xlab.app/feed/51e92aad2728acdd1fda7314be32b16639353001.xml",
+      "domains": [
+        "jiqizhixin.com"
+      ],
+      "active": true,
+      "note": "官网有反爬，经 wechat2rss 公众号镜像挽回"
+    },
+    {
+      "id": "jiemian",
+      "name": "界面新闻",
+      "org": "media_jiemian",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "direct",
+      "channel_ref": "https://www.jiemian.com/lists/68.html",
+      "domains": [
+        "jiemian.com"
+      ],
+      "active": true,
+      "note": "实测 SSR 8409 字",
+      "article_url_pattern": "^/article/\\d+\\.html"
+    },
+    {
+      "id": "dsb",
+      "name": "电商报",
+      "org": "media_dsb",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.75,
+      "channel": "direct",
+      "channel_ref": "https://www.dsb.cn",
+      "domains": [
+        "dsb.cn"
+      ],
+      "active": true,
+      "article_url_pattern": "^/p/[a-z0-9]{20,}",
+      "note": "URL 形态 /p/<26位ID>，需专用 article_url_pattern"
+    },
+    {
+      "id": "ebrun",
+      "name": "亿邦动力",
+      "org": "media_ebrun",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.9,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "ebrun.com"
+      ],
+      "active": true,
+      "note": "⚠️ 电商垂类最专业但前端渲染 + RSSHub 无有效路由，依赖 Exa"
+    },
+    {
+      "id": "100ec",
+      "name": "网经社",
+      "org": "media_100ec",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.8,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "100ec.cn"
+      ],
+      "active": true,
+      "note": "检出付费墙特征"
+    },
+    {
+      "id": "lanjinger",
+      "name": "蓝鲸财经",
+      "org": "media_lanjinger",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.75,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "lanjinger.com"
+      ],
+      "active": true
+    },
+    {
+      "id": "tianxia_wangshang",
+      "name": "天下网商",
+      "org": "media_tianxia",
+      "source_class": "C",
+      "affiliated_with": "taobao",
+      "reliability": 0.7,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "iyiou.com",
+        "tianxiawangshang.com"
+      ],
+      "active": true,
+      "note": "阿里系媒体，报道淘天时不计独立信源"
+    },
+    {
+      "id": "sohu",
+      "name": "搜狐",
+      "org": "media_sohu",
+      "source_class": "D",
+      "affiliated_with": null,
+      "reliability": 0.4,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "sohu.com"
+      ],
+      "active": true,
+      "note": "通稿高发区，只做归并证据不抽事实"
+    },
+    {
+      "id": "toutiao",
+      "name": "今日头条",
+      "org": "media_toutiao",
+      "source_class": "D",
+      "affiliated_with": null,
+      "reliability": 0.4,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "toutiao.com"
+      ],
+      "active": true
+    },
+    {
+      "id": "163",
+      "name": "网易新闻",
+      "org": "media_163",
+      "source_class": "D",
+      "affiliated_with": null,
+      "reliability": 0.45,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "163.com"
+      ],
+      "active": true
+    },
+    {
+      "id": "qq_news",
+      "name": "腾讯新闻",
+      "org": "media_qq",
+      "source_class": "D",
+      "affiliated_with": null,
+      "reliability": 0.45,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "qq.com"
+      ],
+      "active": true
+    },
+    {
+      "id": "shuaishou",
+      "name": "甩手电商资讯",
+      "org": "media_shuaishou",
+      "source_class": "D",
+      "affiliated_with": null,
+      "reliability": 0.35,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "shuaishou.com"
+      ],
+      "active": true,
+      "note": "电商资讯聚合，转载为主"
+    },
+    {
+      "id": "42zhangjing",
+      "name": "42章经",
+      "org": "kol_42zhangjing",
+      "source_class": "E",
+      "affiliated_with": null,
+      "reliability": 0.7,
+      "channel": "rss",
+      "channel_ref": "https://wechat2rss.xlab.app/feed/31436fcc3bba8c2c2a9337a163afcb3b5a57a0a0.xml",
+      "domains": [],
+      "active": true,
+      "note": "只抽判断，禁止抽取事实"
+    },
+    {
+      "id": "kazik",
+      "name": "数字生命卡兹克",
+      "org": "kol_kazik",
+      "source_class": "E",
+      "affiliated_with": null,
+      "reliability": 0.7,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [],
+      "active": true,
+      "note": "不在 wechat2rss 免费列表，只抽判断"
+    },
+    {
+      "id": "zimubang",
+      "name": "字母榜",
+      "org": "kol_zimubang",
+      "source_class": "E",
+      "affiliated_with": null,
+      "reliability": 0.75,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [],
+      "active": true,
+      "note": "字节系报道强，公众号为主"
+    }
+  ],
+  "_original_source_patterns": {
+    "_comment": "原始出处归因（技术方案 §4.0）：从转载正文中识别真实源头，置信度按 effective_class 计算",
+    "latepost": [
+      "晚点LatePost",
+      "晚点 LatePost",
+      "据晚点",
+      "晚点报道"
+    ],
+    "caixin": [
+      "财新记者",
+      "据财新",
+      "财新网报道"
+    ],
+    "36kr": [
+      "36氪获悉",
+      "据36氪",
+      "36氪独家"
+    ],
+    "yicai": [
+      "第一财经记者",
+      "据第一财经"
+    ],
+    "zimubang": [
+      "字母榜",
+      "据字母榜"
+    ],
+    "kazik": [
+      "数字生命卡兹克",
+      "卡兹克"
+    ],
+    "guangzi": [
+      "光子星球",
+      "据光子星球"
+    ],
+    "ebrun": [
+      "亿邦动力",
+      "据亿邦"
+    ]
+  }
+}
