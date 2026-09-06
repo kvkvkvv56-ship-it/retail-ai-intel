@@ -124,3 +124,140 @@ footer.colophon {
   .stage-val { font-size: 28px; }
   section { padding: calc(var(--u) * 3) 0; }
 }
+
+/* ================= 表格：细线分隔，无色块 ================= */
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tbl th {
+  text-align: left; font-weight: 600; font-size: 11px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--ink-45);
+  padding: 0 calc(var(--u) * 1.5) var(--u) 0;
+  border-bottom: 1px solid var(--ink);
+}
+.tbl td {
+  padding: calc(var(--u) * 1.5) calc(var(--u) * 1.5) calc(var(--u) * 1.5) 0;
+  border-bottom: 1px solid var(--rule); vertical-align: top;
+}
+.tbl.compact td, .tbl.compact th { font-size: 13px; }
+.tbl tr.clickable { cursor: pointer; }
+.tbl tr.clickable:hover td { background: #fafafa; }
+.tbl tr.faded td { color: var(--ink-20); }
+.tbl .num, .tbl th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.ttl { font-weight: 500; }
+.dim { color: var(--ink-45); }
+.sm { font-size: 12px; }
+.mt { margin-top: calc(var(--u) * 6) !important; }
+.mt-s { margin-top: var(--u); }
+
+/* ================= 筛选：文字开关，不是彩色药丸 ================= */
+.filters { margin-bottom: calc(var(--u) * 4); }
+.search {
+  width: 100%; max-width: 380px; font: inherit; font-size: 14px;
+  padding: calc(var(--u) * 1.2) 0; border: 0; border-bottom: 1px solid var(--ink);
+  background: none; color: var(--ink); margin-bottom: calc(var(--u) * 2.5);
+}
+.search::placeholder { color: var(--ink-45); }
+.search:focus { outline: none; border-bottom-color: var(--accent); }
+.frow {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: 0 calc(var(--u) * 2); margin-bottom: var(--u);
+}
+.flabel {
+  font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--ink-45); min-width: 4.5em;
+}
+.fopt {
+  background: none; border: 0; padding: 2px 0; cursor: pointer;
+  font: inherit; font-size: 13px; color: var(--ink-45);
+  border-bottom: 1px solid transparent;
+}
+.fopt:hover { color: var(--ink); }
+.fopt[aria-pressed="true"] {
+  color: var(--ink); font-weight: 600; border-bottom-color: var(--accent);
+}
+.fopt b { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* ================= 置信度 / 状态：形状与字重区分，不滥用色彩 ================= */
+.conf { font-size: 12px; white-space: nowrap; }
+.conf-solid { color: var(--ink); font-weight: 600; }
+.conf-weak  { color: var(--ink-45); }
+.conf-weak::before { content: "○ "; }
+.conf-solid::before { content: "● "; }
+.st { font-size: 12px; }
+.st-new  { color: var(--accent); font-weight: 600; }
+.st-cont { color: var(--ink); }
+.st-old  { color: var(--ink-45); }
+.tmark { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ================= 详情页 ================= */
+.back {
+  background: none; border: 0; padding: 0; cursor: pointer; font: inherit;
+  font-size: 13px; color: var(--ink-45); margin-bottom: calc(var(--u) * 3);
+}
+.back:hover { color: var(--ink); }
+.detail-title {
+  margin: 0 0 calc(var(--u) * 2); font-size: 26px; font-weight: 600;
+  letter-spacing: -0.02em; line-height: 1.25; max-width: 24ch;
+}
+.meta-row {
+  display: flex; flex-wrap: wrap; gap: calc(var(--u) * 3);
+  font-size: 13px; color: var(--ink-70);
+  padding-bottom: calc(var(--u) * 2); border-bottom: 1px solid var(--rule);
+  margin-bottom: calc(var(--u) * 3);
+}
+.sub-title {
+  margin: calc(var(--u) * 5) 0 calc(var(--u) * 2);
+  font-size: 15px; font-weight: 600;
+}
+.sub-title .dim { font-size: 12px; font-weight: 400; margin-left: var(--u); }
+
+.callout {
+  display: flex; flex-wrap: wrap; gap: 0 calc(var(--u) * 2); align-items: baseline;
+  padding: calc(var(--u) * 1.5) 0; border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule); margin-bottom: calc(var(--u) * 2);
+}
+.callout-k {
+  font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--ink-45); min-width: 5em;
+}
+.callout-v { font-weight: 600; }
+.callout-note { font-size: 12px; color: var(--ink-45); }
+.callout.warn { border-color: var(--accent); }
+.callout.warn .callout-v { color: var(--accent); }
+
+/* ---- claims 三色区分（§7）：实线=事实 / 虚线=推断 / 独立块=建议 ---- */
+.claims { list-style: none; padding: 0; margin: 0; }
+.claim {
+  padding: calc(var(--u) * 1.5) 0 calc(var(--u) * 1.5) calc(var(--u) * 2);
+  border-left: 2px solid var(--ink-20); margin-bottom: var(--u);
+  max-width: var(--measure);
+}
+.claim p { margin: 0 0 4px; }
+.claim.fact  { border-left-style: solid; border-left-color: var(--ink); }
+.claim.infer { border-left-style: dashed; border-left-color: var(--ink-45); }
+.claim.rec   { border-left-style: double; border-left-color: var(--accent); border-left-width: 4px; }
+.claim .src, .claim .attr { font-size: 12px; color: var(--ink-45); }
+.claim .src .cls { margin: 0 calc(var(--u) * 0.8); }
+.claim .attr b { color: var(--accent); font-weight: 600; }
+
+.edges { list-style: none; padding: 0; margin: 0; }
+.edges li { padding: var(--u) 0; border-bottom: 1px solid var(--rule); max-width: var(--measure); }
+.link {
+  background: none; border: 0; padding: 0; cursor: pointer; font: inherit;
+  color: var(--ink); text-decoration: underline; text-underline-offset: 3px;
+}
+.empty { color: var(--ink-45); font-size: 13px; padding: var(--u) 0; }
+
+.stage:disabled { cursor: default; }
+.stage:disabled:hover { background: var(--paper); }
+.stage-more { font-size: 11px; color: var(--ink-45); margin-top: auto; }
+
+@media (max-width: 640px) {
+  .detail-title { font-size: 21px; }
+  .tbl, .tbl.compact { font-size: 12.5px; }
+  .tbl th:nth-child(n+4), .tbl td:nth-child(n+4) { display: none; }
+  .tbl.compact th:nth-child(n+3), .tbl.compact td:nth-child(n+3) { display: none; }
+}
+
+/* 日期与公司列不换行——「2026-」「09-03」拆两行会破坏纵向对齐 */
+.tbl td.num, .tbl td.nowrap { white-space: nowrap; }
+.tbl .conf, .tbl .st { white-space: nowrap; }
