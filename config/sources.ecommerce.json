@@ -343,9 +343,11 @@
         "ebrun.com"
       ],
       "active": true,
-      "note": "前端渲染且无 RSSHub 路由，经 Jina Reader 采集。注意其文章页对 Jina 出口 IP 返回 403，取回成功率低于晚点",
+      "note": "列表页与文章页均为前端渲染，且文章页对 Jina 出口 IP 返回 403。采「仅列表」模式：链接文字即标题、URL 路径带日期可解析。无正文，抽取偏薄；主要价值是作为独立信源为其他事件提供多源印证。",
       "article_url_pattern": "ebrun\\.com/\\d{8}/\\d+\\.shtml",
-      "jina_article_limit": 8
+      "jina_article_limit": 25,
+      "jina_listing_only": true,
+      "url_date_pattern": "/(20\\d{2})(\\d{2})(\\d{2})/"
     },
     {
       "id": "100ec",

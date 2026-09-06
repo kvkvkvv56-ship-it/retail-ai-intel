@@ -43,6 +43,7 @@ jobs:
         env:
           EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
           KB_LLM_API_KEY: ${{ secrets.KB_LLM_API_KEY }}
+          JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
           KB_LLM_BASE_URL: https://api.deepseek.com
           KB_SCOUT_MODEL: deepseek-chat
           KB_STRONG_MODEL: deepseek-chat

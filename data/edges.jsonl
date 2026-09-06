@@ -27,3 +27,8 @@
 {"from_event": "EV-c8056f58", "to_event": "EV-78183bbc", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-08-09 → 2026-08-10）", "created_by": "rule"}
 {"from_event": "EV-78183bbc", "to_event": "EV-ef524727", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-08-10 → 2026-08-10）", "created_by": "rule"}
 {"from_event": "EV-ef524727", "to_event": "EV-09e8f763", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-08-10 → 2026-08-12）", "created_by": "rule"}
+{"from_event": "EV-3a25df52", "to_event": "EV-15a17978", "relation": "follows", "basis": "2025年Q3可灵AI收入突破3亿元，后续2026年Q2营收超8.5亿元，后者为前者后续阶段的营收增长。", "created_by": "llm"}
+{"from_event": "EV-7d639e7c", "to_event": "EV-6101a35d", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2023-09-22 → 2025-08-15）", "created_by": "rule"}
+{"from_event": "EV-8e7852a0", "to_event": "EV-15a17978", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-08-09 → 2026-08-10）", "created_by": "rule"}
+{"from_event": "EV-9b54303d", "to_event": "EV-b9207350", "relation": "same_actor_track", "basis": "同为 xiaohongshu 的动作，时间相邻（2026-03-10 → 2026-04-30）", "created_by": "rule"}
+{"from_event": "EV-b9207350", "to_event": "EV-904bec61", "relation": "same_actor_track", "basis": "同为 xiaohongshu 的动作，时间相邻（2026-04-30 → 2026-08-12）", "created_by": "rule"}

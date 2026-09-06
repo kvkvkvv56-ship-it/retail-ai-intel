@@ -294,7 +294,7 @@ URL_RE = re.compile(r"""(https?://[^\s)\]"'<>]+)""")
 # 几分钟前 200、之后一直 403，与请求构造无关。
 # 免费 API key（jina.ai 注册即得）额度 200 RPM，足够本项目每天两轮。
 # 故：无 key 直接跳过该通道，不浪费 25 秒去撞 403。
-_JINA_MIN_INTERVAL = 3.2          # 秒，约 19 RPM（有 key 时可放宽）
+_JINA_MIN_INTERVAL = 0.4          # 有 key 时 200 RPM，0.4s 间隔留足余量
 _jina_last = [0.0]
 _jina_lock = threading.Lock()
 
@@ -361,6 +361,29 @@ def collect_jina(src: dict, cfg: dict) -> tuple[list[dict], str | None]:
             urls.append(u)
     if not urls:
         return [], f"{src['id']}: 列表页未匹配到文章链接"
+
+    # 仅列表模式：文章页取不到时的降级。亿邦动力即属此类——列表页与文章页
+    # 都是前端渲染，且文章页对 Jina 出口 IP 返回 403。但列表的链接文字就是
+    # 标题、URL 路径里带日期（/YYYYMMDD/），足以生成可追溯的条目。
+    # 没有正文，抽取会偏薄；其真正价值在于**作为独立信源为其他事件提供
+    # 多源印证**——置信度计算只看独立组织数，不要求每个源都有正文。
+    if src.get("jina_listing_only"):
+        pairs = re.findall(r"- \[([^\]]{4,90})\]\((https?://[^)]+)\)", page)
+        date_re = re.compile(src.get("url_date_pattern", r"/(20\d{2})(\d{2})(\d{2})/"))
+        out, seen2 = [], set()
+        for title, u in pairs:
+            if not art_re.search(u) or u in seen2:
+                continue
+            seen2.add(u)
+            m = date_re.search(u)
+            pub, tsrc = (None, None)
+            if m:
+                pub, tsrc = parse_time("-".join(m.groups()), exact=False)
+            out.append({"url": u, "title": strip_html(title)[:300], "content": "",
+                        "published_at": pub, "time_source": tsrc})
+        if not out:
+            return [], f"{src['id']}: 列表页未解析出「标题+链接」配对"
+        return out[:int(src.get("jina_article_limit", 25))], None
 
     limit = int(src.get("jina_article_limit", 8))
     out, errs = [], 0
