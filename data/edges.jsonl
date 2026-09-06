@@ -34,3 +34,4 @@
 {"from_event": "EV-b9207350", "to_event": "EV-904bec61", "relation": "same_actor_track", "basis": "同为 xiaohongshu 的动作，时间相邻（2026-04-30 → 2026-08-12）", "created_by": "rule"}
 {"from_event": "EV-09e8f763", "to_event": "EV-f790267b", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-08-12 → 2026-09-02）", "created_by": "rule"}
 {"from_event": "EV-f790267b", "to_event": "EV-fbe632d7", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-09-02 → 2026-09-03）", "created_by": "rule"}
+{"from_event": "EV-016f31a8", "to_event": "EV-de61874e", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-01 → 2026-09-01）", "created_by": "rule"}
