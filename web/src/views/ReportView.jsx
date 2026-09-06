@@ -19,15 +19,15 @@ export default function ReportView({ meta, nav }) {
 
   if (err) return <div className="error">加载失败：{err}</div>
   if (!list) return <div className="loading">载入中…</div>
-  if (!rep) return <Empty>尚无周报。每周一处理上一周事件后生成。</Empty>
+  if (!rep) return <Empty>尚无周报</Empty>
 
   const b = rep.body || {}
   const domName = Object.fromEntries(meta.domains.map((d) => [d.id, d.name]))
 
   return (
-    <section>
-      <h2 className="section-title">
-        洞察周报 · {rep.period_start} ~ {rep.period_end}
+    <div className="view">
+      <p className="sec-title">
+        {rep.period_start} ~ {rep.period_end}
         {list.total > 1 && (
           <select className="hist" value={rep.id}
                   onChange={(e) => api(`reports/${e.target.value}`).then(setRep)}>
@@ -36,23 +36,25 @@ export default function ReportView({ meta, nav }) {
             ))}
           </select>
         )}
-      </h2>
+      </p>
 
-      <p className="headline">{b.headline}</p>
+      <div className="headline-banner">
+        <div className="k">本期主线</div>
+        <h3>{b.headline}</h3>
+      </div>
 
       {/* -------- 关键发现：每条锚定证据事件，可点进去核对 -------- */}
       <h3 className="sub-title">
-        关键发现 <span className="dim">{(b.key_findings || []).length} 条 · 每条锚定证据事件</span>
+        关键发现 <span className="n">{(b.key_findings || []).length}</span>
       </h3>
       {(b.key_findings || []).map((f, i) => (
         <article className="finding" key={i}>
-          <h4>{String(i + 1).padStart(2, '0')} {f.title}</h4>
+          <span className="no">{String(i + 1).padStart(2, '0')}</span>
+          <h4>{f.title}</h4>
           <p>{f.detail}</p>
-          <div className="ev-row">
+          <div className="evi">
             {(f.evidence || []).map((id) => (
-              <button key={id} className="ev" onClick={() => nav(`/events/${id}`)}>
-                {id} ↗
-              </button>
+              <button key={id} className="ev" onClick={() => nav(`/events/${id}`)}>{id}</button>
             ))}
           </div>
         </article>
@@ -61,7 +63,7 @@ export default function ReportView({ meta, nav }) {
       {/* -------- 延续性检查：上期观察项是否兑现 -------- */}
       {(b.continuity || []).length > 0 && (
         <>
-          <h3 className="sub-title">延续性检查 <span className="dim">对照上期观察清单</span></h3>
+          <h3 className="sub-title">延续性检查</h3>
           <table className="tbl compact">
             <thead>
               <tr><th>上期观察项</th><th style={{ width: '6em' }}>本期</th><th>依据</th></tr>
@@ -71,7 +73,7 @@ export default function ReportView({ meta, nav }) {
                 <tr key={i}>
                   <td>{c.prev_watch}</td>
                   <td className="dim nowrap">{c.status}</td>
-                  <td className="dim sm">{c.note}</td>
+                  <td className="d">{c.note}</td>
                 </tr>
               ))}
             </tbody>
@@ -95,7 +97,7 @@ export default function ReportView({ meta, nav }) {
       {(b.implications || []).length > 0 && (
         <>
           <h3 className="sub-title">
-            借鉴建议 <span className="dim">本助手产出 · 不来自任何单一信源</span>
+            借鉴建议 <span className="n">助手产出</span>
           </h3>
           <ul className="claims">
             {b.implications.map((im, i) => (
@@ -105,7 +107,7 @@ export default function ReportView({ meta, nav }) {
                   适用：{im.audience || '未标注'}
                   {im.needs_internal_data && <b> · 需内部数据验证</b>}
                   {(im.based_on || []).map((id) => (
-                    <button key={id} className="ev sm" onClick={() => nav(`/events/${id}`)}>
+                    <button key={id} className="ev" onClick={() => nav(`/events/${id}`)}>
                       {id}
                     </button>
                   ))}
@@ -120,13 +122,13 @@ export default function ReportView({ meta, nav }) {
       {(b.watchlist || []).length > 0 && (
         <>
           <h3 className="sub-title">下期观察清单</h3>
-          <ul className="watchlist">
+          <ul className="wl">
             {b.watchlist.map((w, i) => (
               <li key={i}>
                 {w.text}
-                <span className="ev-row inline">
+                <span className="evi">
                   {(w.evidence || []).map((id) => (
-                    <button key={id} className="ev sm" onClick={() => nav(`/events/${id}`)}>
+                    <button key={id} className="ev" onClick={() => nav(`/events/${id}`)}>
                       {id}
                     </button>
                   ))}
@@ -140,7 +142,7 @@ export default function ReportView({ meta, nav }) {
       {/* -------- 方法论备注：可信度边界，主动暴露不确定性 -------- */}
       {b.method_notes && (
         <>
-          <h3 className="sub-title">方法论备注 <span className="dim">本期可信度边界</span></h3>
+          <h3 className="sub-title">方法论备注 <span className="n">可信度边界</span></h3>
           <p className="method">{b.method_notes}</p>
         </>
       )}
@@ -148,6 +150,6 @@ export default function ReportView({ meta, nav }) {
       <p className="dim sm mt">
         生成于 {fmtDate(rep.generated_at)} · 运行 {rep.run_id}
       </p>
-    </section>
+    </div>
   )
 }

@@ -8,6 +8,12 @@ import SourcesView from './views/SourcesView.jsx'
 import ReportView from './views/ReportView.jsx'
 import BriefView from './views/BriefView.jsx'
 
+const Tab = ({ on, go, n, children }) => (
+  <button className={`tab ${on ? 'on' : ''}`} onClick={go}>
+    {children}{n != null && <span className="n">{n}</span>}
+  </button>
+)
+
 export default function App() {
   const [meta, setMeta] = useState(null)
   const [run, setRun] = useState(null)
@@ -57,20 +63,29 @@ export default function App() {
     : path.startsWith('/brief') ? 'brief' : 'run'
 
   return (
-    <div className="shell">
-      <header className="masthead">
-        <h1><a href="/" onClick={(e) => { e.preventDefault(); nav('/') }}>
-          行业与竞对 AI 洞察助手
-        </a></h1>
-        <span className="sub">{meta ? `${meta.name}｜观察窗口 ${meta.window_days} 天` : ''}</span>
-        <span className="spacer" />
-        <nav className="tabs">
-          <button aria-current={tab === 'run'} onClick={() => nav('/')}>运行回放</button>
-          <button aria-current={tab === 'events'} onClick={() => nav('/events')}>事件库</button>
-          <button aria-current={tab === 'report'} onClick={() => nav('/report')}>周报</button>
-          <button aria-current={tab === 'brief'} onClick={() => nav('/brief')}>定制简报</button>
-          <button aria-current={tab === 'sources'} onClick={() => nav('/sources')}>信源</button>
-        </nav>
+    <div className="wrap">
+      <header className="site-header">
+        <div className="header-row">
+          <div>
+            <h1 onClick={() => nav('/')}>行业与竞对 AI 洞察助手</h1>
+            {meta && (
+              <div className="hstats">
+                <span className="s"><b>{meta.counts.events}</b>事件</span>
+                <span className="s"><b>{meta.counts.items}</b>条目</span>
+                <span className="s"><b>{meta.counts.claims}</b>事实/推断/建议</span>
+                <span className="s"><b>{meta.counts.rejects}</b>已记账淘汰</span>
+                <span className="s">观察窗口 {meta.window_days} 天</span>
+              </div>
+            )}
+          </div>
+          <nav className="tabs">
+            <Tab on={tab === 'run'} go={() => nav('/')}>运行回放</Tab>
+            <Tab on={tab === 'events'} go={() => nav('/events')} n={meta?.counts.events}>事件库</Tab>
+            <Tab on={tab === 'report'} go={() => nav('/report')}>周报</Tab>
+            <Tab on={tab === 'brief'} go={() => nav('/brief')}>定制简报</Tab>
+            <Tab on={tab === 'sources'} go={() => nav('/sources')} n={meta?.counts.sources}>信源</Tab>
+          </nav>
+        </div>
       </header>
       {isOffline && (
         <div className="offline-bar">

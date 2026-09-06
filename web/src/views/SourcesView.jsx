@@ -23,13 +23,8 @@ export default function SourcesView() {
   if (!d) return <div className="loading">载入中…</div>
 
   return (
-    <section>
-      <h2 className="section-title">信源体系 · {d.total} 个</h2>
-      <p className="lede">
-        分层轴是<strong>一手性</strong>——这条信息离事件现场有多近，而非发布主体的身份。
-        晚点的独家报道比公司的 AI 公关稿更接近一手。
-        通道分布：{Object.entries(d.by_channel).map(([k, v]) => `${k} ${v}`).join(' · ')}。
-      </p>
+    <div className="view">
+      <p className="sec-title">信源体系 · {d.total} 个</p>
       <table className="tbl compact">
         <thead>
           <tr>
@@ -49,14 +44,14 @@ export default function SourcesView() {
                 {s.name}
                 {s.affiliated_with && <span className="tag">自家媒体·不计独立源</span>}
               </td>
-              <td className="dim">{s.source_class} {CLASS_LABEL[s.source_class]}</td>
-              <td className="dim">{s.channel}</td>
+              <td className="d">{s.source_class} {CLASS_LABEL[s.source_class]}</td>
+              <td className="d">{s.channel}</td>
               <td className="num">{s.hits}</td>
               <td className="num">{s.accepted}</td>
               <td className="num dim">
                 {s.accept_rate == null ? '—' : `${Math.round(s.accept_rate * 100)}%`}
               </td>
-              <td className="dim sm">{s.note || ''}</td>
+              <td className="d">{s.note || ''}</td>
             </tr>
           ))}
         </tbody>
@@ -64,13 +59,8 @@ export default function SourcesView() {
 
       {rev && rev.total > 0 && (
         <>
-          <h2 className="section-title mt">
-            人工复核记录 · {rev.results.filter((r) => r.reviewer !== 'system').length} 次操作
-          </h2>
-          <p className="lede">
-            流水线刻意保守——单源不自动采信、疑似重复不自动合并——代价是留下需要人判断的
-            队列。复核在本地 CLI 完成，<strong>记录随数据一同版本化并在此展示</strong>，
-            每次操作可追溯。
+          <p className="sec-title mt">
+            人工复核记录 · {rev.results.filter((r) => r.reviewer !== 'system').length} 次
           </p>
           <table className="tbl compact">
             <thead>
@@ -87,13 +77,13 @@ export default function SourcesView() {
                   <td className="num dim">{fmtDate(r.created_at)}</td>
                   <td>{ACTION_LABEL[r.action] || r.action}</td>
                   <td className="dim num sm">{r.target_id}</td>
-                  <td className="dim sm">{r.note}</td>
+                  <td className="d">{r.note}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </>
       )}
-    </section>
+    </div>
   )
 }

@@ -75,15 +75,10 @@ export default function BriefView({ meta, nav }) {
   const curStep = steps.length ? steps[steps.length - 1] : null
 
   return (
-    <section>
-      <h2 className="section-title">定制简报</h2>
-      <p className="lede">
-        选定范围并描述你想看的内容，助手会检索知识库并流式生成简报。
-        <strong>执行步骤来自服务端真实事件</strong>，不是前端编造的假进度；
-        引用的事件均可点开核对。
-      </p>
+    <div className="view">
+      <p className="sec-title">定制简报</p>
 
-      <div className="filters">
+      <div className="filterbar">
         <FilterRow label="公司" opts={meta.companies.map((c) => [c.id, c.name])}
                    cur={companies} on={toggle(companies, setCompanies)} />
         <FilterRow label="领域" opts={meta.domains.map((d) => [d.id, d.name])}
@@ -100,7 +95,7 @@ export default function BriefView({ meta, nav }) {
                 disabled={state === 'running' || prompt.trim().length < 2}>
           {state === 'running' ? '生成中…' : '生成简报'}
         </button>
-        <span className="dim sm">⌘/Ctrl + Enter</span>
+        <span className="d">⌘/Ctrl + Enter</span>
       </div>
 
       {(state !== 'idle') && (
@@ -112,7 +107,7 @@ export default function BriefView({ meta, nav }) {
                     state={STEPS.find((x) => x.k === curStep?.step)?.orb || 'working'} />
                   <span className="shimmer">{curStep?.text || '准备中'}</span>
                 </>
-              : <span className="dim">
+              : <span className="d">
                   思考过程 · {steps.length} 步 · 耗时 {(elapsed / 1000).toFixed(1)}s
                   {expanded ? ' ▲' : ' ▼'}
                 </span>}
@@ -131,10 +126,10 @@ export default function BriefView({ meta, nav }) {
             </ol>
           )}
           {cited.length > 0 && (
-            <div className="ev-row">
-              <span className="dim sm">引用事件 {cited.length} 个：</span>
+            <div className="evi">
+              <span className="d">引用事件 {cited.length} 个：</span>
               {cited.map((id) => (
-                <button key={id} className="ev sm" onClick={() => nav(`/events/${id}`)}>{id}</button>
+                <button key={id} className="ev" onClick={() => nav(`/events/${id}`)}>{id}</button>
               ))}
             </div>
           )}
@@ -143,7 +138,7 @@ export default function BriefView({ meta, nav }) {
 
       {err && <div className="error">{err}</div>}
       {text && <article className="brief-body">{renderMarkdown(text, nav)}</article>}
-    </section>
+    </div>
   )
 }
 
@@ -156,7 +151,7 @@ function FilterRow({ label, opts, cur, on }) {
           {name}
         </button>
       ))}
-      {cur.length === 0 && <span className="dim sm">未选＝全部</span>}
+      {cur.length === 0 && <span className="d">未选＝全部</span>}
     </div>
   )
 }
@@ -217,7 +212,7 @@ function inline(s, nav) {
     if (m.index > i) parts.push(s.slice(i, m.index))
     if (m[2]) parts.push(<b key={m.index}>{m[2]}</b>)
     else parts.push(
-      <button className="ev sm" key={m.index} onClick={() => nav(`/events/${m[3]}`)}>{m[3]}</button>)
+      <button className="ev" key={m.index} onClick={() => nav(`/events/${m[3]}`)}>{m[3]}</button>)
     i = m.index + m[0].length
   }
   if (i < s.length) parts.push(s.slice(i))

@@ -26,19 +26,14 @@ export default function RejectsView({ runId, nav }) {
   if (!d) return <div className="loading">载入中…</div>
 
   return (
-    <section>
+    <div className="view">
       <button className="back" onClick={() => nav('/')}>← 运行回放</button>
-      <h2 className="section-title">拒绝台账 · {runId}</h2>
-      <p className="lede">
-        本轮被淘汰的全部 {d.total} 条信息及各自的淘汰理由。
-        <strong>识别出旧闻与重复转载本身就是产出</strong>——若在流程里悄悄丢掉，
-        就无法证明识别过。每条都保留原始链接，可逐条核对。
-      </p>
+      <p className="sec-title">拒绝台账 · {runId}</p>
 
-      <div className="frow">
-        <span className="flabel">拒绝原因</span>
+      <div className="frow" style={{ marginBottom: 20 }}>
+        
         {Object.entries(d.by_reason).sort((a, b) => b[1] - a[1]).map(([k, n]) => (
-          <button key={k} className="fopt" aria-pressed={reason === k}
+          <button key={k} className="fchip" 
                   onClick={() => setReason(reason === k ? '' : k)}>
             {REASON_LABEL[k] || k} <b className="num">{n}</b>
           </button>
@@ -58,14 +53,14 @@ export default function RejectsView({ runId, nav }) {
           <tbody>
             {rows.slice(0, 400).map((r, i) => (
               <tr key={i}>
-                <td className="dim">{REASON_LABEL[r.reason_code] || r.reason_code}</td>
+                <td className="d">{REASON_LABEL[r.reason_code] || r.reason_code}</td>
                 <td>
                   {r.url
                     ? <a href={r.url} target="_blank" rel="noopener noreferrer">{r.title} ↗</a>
                     : <span>{r.title}</span>}
                 </td>
-                <td className="dim">{r.source_name}</td>
-                <td className="dim sm">
+                <td className="d">{r.source_name}</td>
+                <td className="d">
                   {r.reason_detail}
                   {r.merged_into && (
                     <button className="link" onClick={() => nav(`/events/${r.merged_into}`)}>
@@ -78,7 +73,7 @@ export default function RejectsView({ runId, nav }) {
           </tbody>
         </table>
       )}
-      {rows.length > 400 && <p className="dim sm">仅显示前 400 条，完整台账见仓库 data/rejects.jsonl</p>}
-    </section>
+      {rows.length > 400 && <p className="d">仅显示前 400 条</p>}
+    </div>
   )
 }
