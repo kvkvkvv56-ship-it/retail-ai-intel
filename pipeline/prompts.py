@@ -11,25 +11,59 @@
 不分流的后果：模型会把「我认为字节明年会 all in Agent」当成事实抽出来。
 """
 
+# ============================================================ 配置驱动
+#
+# 公司与领域枚举一律从 config 生成，不在提示词里硬编码。
+# 早先是写死的「淘宝天猫 / 抖音电商 / 快手电商 / 小红书电商」，
+# 结果往 config 里加主体不会影响 LLM 阶段——扩充是假的，
+# 「换行业只改配置」的可复用性承诺也落不了地。
+
+
+def _enum(items: list[dict]) -> str:
+    return " / ".join(f"{x['id']}({x['name']})" for x in items)
+
+
+def _domain_enum(domains: list[dict]) -> str:
+    return "\n".join(f"  - {d['id']}({d['name']})：{d['desc']}" for d in domains)
+
+
+def _company_lines(companies: list[dict]) -> str:
+    out = []
+    for c in companies:
+        al = "、".join(c.get("aliases") or [])
+        out.append(f"  - {c['id']}({c['name']})" + (f"：别名 {al}" if al else ""))
+    return "\n".join(out)
+
+
 # ============================================================ S2 预筛
-PRESCREEN_SYS = """你是「行业与竞对 AI 洞察助手」的信息预筛员。
+def prescreen_sys(cfg: dict) -> str:
+    return f"""你是「行业与竞对 AI 洞察助手」的信息预筛员。
 
-任务：判断每条信息是否属于观察范围。观察范围是——
-中国电商平台（淘宝天猫 / 抖音电商 / 快手电商 / 小红书电商）及行业监管，
-在 **AI 相关** 的产品、功能、工具、运营动作、技术路径、组织信号上的动态。
+任务：判断每条信息是否属于观察范围。
 
-判为相关（keep）的条件（需同时满足）：
-1. 主体是上述电商平台之一，或是影响整个电商行业的监管/行业动态
-2. 内容与 AI 有实质关联——不是仅仅提到「AI」这个词
+观察主体：
+{_company_lines(cfg["companies"])}
+
+观察领域：
+{_domain_enum(cfg["domains"])}
+
+判为相关（keep）的条件，满足任一即可：
+1. 主体是上述观察主体之一，且内容与 AI 有实质关联
+2. 影响整个电商/零售行业的 AI 监管与行业动态
+3. **图像/视频/多模态模型或生成工具的发布、能力跃迁、定价变化**——
+   这类上游供给直接决定电商侧素材生产与交互体验的能力上限，
+   即使报道本身没提电商，也应保留（归入 ai_vendor + ai_supply）
 
 判为不相关（drop）的典型：
 - 纯财经快讯、股价异动、宏观政策，与 AI 无实质关联
-- 通用 AI 技术新闻（模型发布、论文、芯片），未落到电商/零售场景
+- 与电商/零售/内容生产均无关的垂直行业 AI（医疗、自动驾驶、芯片制造等）
 - 营销软文、广告、招商推广、课程推广
-- 只在文中顺带提及平台名，主题无关
+- 只在文中顺带提及主体名，主题无关
+
+宁可放过，不要错杀：拿不准的判 keep，后续抽取阶段还有一道判断。
 
 只输出 JSON 数组，每项对应输入的一条：
-[{"i": 序号, "keep": true/false, "why": "12字以内理由"}]
+[{{"i": 序号, "keep": true/false, "why": "12字以内理由"}}]
 不要输出任何其他内容。"""
 
 
@@ -42,15 +76,21 @@ def prescreen_user(batch: list[dict]) -> str:
 
 
 # ============================================================ S3 抽取
-_COMMON = """你是「行业与竞对 AI 洞察助手」的信息抽取员，把一条报道抽成结构化事件。
+def _common(cfg: dict) -> str:
+    return f"""你是「行业与竞对 AI 洞察助手」的信息抽取员，把一条报道抽成结构化事件。
 
 分类体系：
-- company: taobao(淘宝天猫) / douyin(抖音电商) / kuaishou(快手电商) /
-           xiaohongshu(小红书电商) / industry(行业·监管)
-- domains: retail_ops(商品与零售运营) / marketing(营销与内容生成) /
-           merchant_tools(商家工具与服务) / data_bi(数据与商业分析) /
-           service_fulfillment(客服与履约)，可多选
-- stage: 概念宣传 / 试点探索 / 已上线 / 规模化应用
+- company（单选）：
+{_company_lines(cfg["companies"])}
+- domains（可多选）：
+{_domain_enum(cfg["domains"])}
+- stage: {" / ".join(cfg["stages"])}
+
+company 归属规则：
+- 平台旗下的 AI 产品归到该平台（可灵→kuaishou、豆包与即梦→douyin、
+  通义与千问→taobao、言犀→jd、混元→wechat）
+- 独立模型厂商与工具（OpenAI、Midjourney、Runway、智谱、MiniMax 等）→ ai_vendor
+- 跨平台的监管、国标、行业级动态 → industry
 
 event_key 规则：同一件事在不同报道中必须得到相同的 event_key。
 用「公司-产品或动作-核心名词」的英文小写连字符形式，例如
@@ -62,7 +102,11 @@ tmall-ai-business-manager、xiaohongshu-search-diandian、kuaishou-semantic-id-s
 
 只输出 JSON，不要任何其他内容。"""
 
-EXTRACT_A = _COMMON + """
+
+def extract_sys(cfg: dict, cls: str) -> str:
+    return _common(cfg) + _CLASS_TAIL.get(cls, _CLASS_TAIL["C"])
+
+_TAIL_A = """
 
 本条信息来自【当事方官方渠道】（公告 / 财报 / 官网 / 官方账号）。
 
@@ -81,7 +125,7 @@ EXTRACT_A = _COMMON + """
  "facts": ["每条一个可核查的事实，必须来自本文"],
  "inferences": [], "note": "如信息不足以判断可留空"}"""
 
-EXTRACT_B = _COMMON + """
+_TAIL_B = """
 
 本条信息来自【原创深度报道】（有独立采访 / 内部信源 / 调查）。
 
@@ -101,7 +145,7 @@ EXTRACT_B = _COMMON + """
  "facts": ["..."],
  "inferences": [{"text": "...", "attributed_to": "媒体名"}]}"""
 
-EXTRACT_C = _COMMON + """
+_TAIL_C = """
 
 本条信息来自【常规媒体报道】（基于公开信息的日常报道、快讯）。
 
@@ -120,7 +164,7 @@ EXTRACT_C = _COMMON + """
  "facts": ["..."], "inferences": [],
  "original_source_hint": "媒体名 或 null", "note": "..."}"""
 
-EXTRACT_E = _COMMON + """
+_TAIL_E = """
 
 本条信息来自【个人观点 / KOL 评论】。
 
@@ -137,7 +181,7 @@ EXTRACT_E = _COMMON + """
  "stage": null, "facts": [],
  "inferences": [{"text": "...", "attributed_to": "作者名"}]}"""
 
-EXTRACT_BY_CLASS = {"A": EXTRACT_A, "B": EXTRACT_B, "C": EXTRACT_C, "E": EXTRACT_E}
+_CLASS_TAIL = {"A": _TAIL_A, "B": _TAIL_B, "C": _TAIL_C, "E": _TAIL_E}
 
 
 def extract_user(item: dict, source_name: str) -> str:

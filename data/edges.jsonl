@@ -34,3 +34,17 @@
 {"from_event": "EV-b9207350", "to_event": "EV-904bec61", "relation": "same_actor_track", "basis": "同为 xiaohongshu 的动作，时间相邻（2026-04-30 → 2026-08-12）", "created_by": "rule"}
 {"from_event": "EV-09e8f763", "to_event": "EV-f790267b", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-08-12 → 2026-09-02）", "created_by": "rule"}
 {"from_event": "EV-f790267b", "to_event": "EV-fbe632d7", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-09-02 → 2026-09-03）", "created_by": "rule"}
+{"from_event": "EV-806dfc07", "to_event": "EV-5aa82101", "relation": "follows", "basis": "京小智于今年5月接入言犀大模型，618测试后双十一规模化应用，而JDD大会发布言犀大模型相关应用（含数字人、京点点等），京小智的规模化应用是言犀大模型技术落地的一个后续阶段，但两者为不同产品事件。", "created_by": "llm"}
+{"from_event": "EV-806dfc07", "to_event": "EV-d7da60b4", "relation": "follows", "basis": "京犀APP在JDD大会发布，与JDD大会发布的三大AI产品同场发布，但京犀APP是独立的新产品（超级入口），且基于Oxygen架构和JoyAgent技术，与言犀大模型应用（数字人、京点点）不同，属于JDD大会发布动作的延伸或后续产品。", "created_by": "llm"}
+{"from_event": "EV-2bf30825", "to_event": "EV-90985503", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-08-13 → 2026-08-15）", "created_by": "rule"}
+{"from_event": "EV-90985503", "to_event": "EV-016f31a8", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-08-15 → 2026-09-01）", "created_by": "rule"}
+{"from_event": "EV-016f31a8", "to_event": "EV-5d759c6f", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-01 → 2026-09-01）", "created_by": "rule"}
+{"from_event": "EV-b56abbd6", "to_event": "EV-0c6b1be6", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-05-11 → 2026-05-11）", "created_by": "rule"}
+{"from_event": "EV-0c6b1be6", "to_event": "EV-6ac3bfd2", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-05-11 → 2026-08-09）", "created_by": "rule"}
+{"from_event": "EV-59b2835c", "to_event": "EV-8e7852a0", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-07-03 → 2026-08-09）", "created_by": "rule"}
+{"from_event": "EV-15a17978", "to_event": "EV-159d1417", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-08-10 → 2026-08-23）", "created_by": "rule"}
+{"from_event": "EV-43491a2d", "to_event": "EV-c9c312c2", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-08-08 → 2026-08-18）", "created_by": "rule"}
+{"from_event": "EV-9c25aeca", "to_event": "EV-1665b047", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-03-25 → 2026-08-31）", "created_by": "rule"}
+{"from_event": "EV-a2366692", "to_event": "EV-9acda175", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2025-11-04 → 2026-06-09）", "created_by": "rule"}
+{"from_event": "EV-806dfc07", "to_event": "EV-d7da60b4", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2025-09-25 → 2025-09-25）", "created_by": "rule"}
+{"from_event": "EV-d7da60b4", "to_event": "EV-5aa82101", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2025-09-25 → 2026-08-10）", "created_by": "rule"}

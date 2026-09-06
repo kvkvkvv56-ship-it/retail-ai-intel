@@ -365,12 +365,12 @@ def main() -> int:
         llm = LLM(mock=args.mock)
 
         print("\n[S2] LLM 预筛（便宜档，吃最大调用量）")
-        ps = PR.stage_prescreen(store, llm, run_id)
+        ps = PR.stage_prescreen(store, llm, cfg, run_id)
         print(f"  → 保留 {ps['keep']}，淘汰 {ps['drop']}"
               + (f"，异常 {ps['error']}" if ps["error"] else ""))
 
         print("\n[S3] 结构化抽取（强档，提示词按信源一手性分流）")
-        ex = PR.stage_extract(store, llm, run_id, srccfg)
+        ex = PR.stage_extract(store, llm, cfg, run_id, srccfg)
         print(f"  → 抽出 {ex['extracted']} 条事件草稿"
               f"（fact {ex['facts']} / inference {ex['inferences']}），"
               f"D类跳过 {ex['skipped_D']}，判无关 {ex['irrelevant']}")

@@ -22,7 +22,7 @@ def _now() -> str:
 
 
 # ==================================================================== S2
-def stage_prescreen(store, llm, run_id: str, batch_size: int = 12) -> dict:
+def stage_prescreen(store, llm, cfg: dict, run_id: str, batch_size: int = 12) -> dict:
     """便宜模型批量预筛。吃最大调用量，所以用便宜档。"""
     items = [dict(r) for r in store.q(
         "SELECT * FROM items WHERE status='pending' ORDER BY id")]
@@ -35,7 +35,7 @@ def stage_prescreen(store, llm, run_id: str, batch_size: int = 12) -> dict:
     def one(batch):
         try:
             res = llm.chat_json([
-                {"role": "system", "content": P.PRESCREEN_SYS},
+                {"role": "system", "content": P.prescreen_sys(cfg)},
                 {"role": "user", "content": P.prescreen_user(batch)},
             ], max_tokens=1200)
             if isinstance(res, dict):
@@ -73,7 +73,7 @@ def stage_prescreen(store, llm, run_id: str, batch_size: int = 12) -> dict:
 
 
 # ==================================================================== S3
-def stage_extract(store, llm, run_id: str, srccfg: dict) -> dict:
+def stage_extract(store, llm, cfg: dict, run_id: str, srccfg: dict) -> dict:
     """强模型结构化抽取。提示词按信源一手性分流（技术方案 §3.2）。"""
     src_by_id = {s["id"]: s for s in srccfg["sources"]}
     items = [dict(r) for r in store.q(
@@ -86,9 +86,9 @@ def stage_extract(store, llm, run_id: str, srccfg: dict) -> dict:
         cls = it.get("effective_class") or "D"
         if cls == "D":
             return it, None, "skip_D"
-        sys_prompt = P.EXTRACT_BY_CLASS.get(cls)
-        if not sys_prompt:
+        if cls not in ("A", "B", "C", "E"):
             return it, None, "skip_D"
+        sys_prompt = P.extract_sys(cfg, cls)
         sname = src_by_id.get(it["source_id"], {}).get("name", "未登记来源")
         try:
             return it, llm.chat_json([
