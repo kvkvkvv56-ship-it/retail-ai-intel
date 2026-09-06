@@ -1,14 +1,24 @@
 import React, { useEffect, useState } from 'react'
-import { api, CLASS_LABEL } from '../api.js'
+import { api, CLASS_LABEL, fmtDate } from '../api.js'
 
 /**
  * 信源健康度（技术方案 §3.4）
  * 直接对应「信息源是否多元、可靠」的评分说明，也是汰换信源的依据。
  */
+const ACTION_LABEL = {
+  same: '判定为同一事件并合并', split: '判定为不同事件',
+  confirm: '确认采信', reject: '驳回', watch: '转持续观察',
+  retier: '信源分级调整', flag: '系统标记疑似重复',
+}
+
 export default function SourcesView() {
   const [d, setD] = useState(null)
+  const [rev, setRev] = useState(null)
   const [err, setErr] = useState(null)
-  useEffect(() => { api('sources').then(setD).catch((e) => setErr(String(e))) }, [])
+  useEffect(() => {
+    api('sources').then(setD).catch((e) => setErr(String(e)))
+    api('reviews').then(setRev).catch(() => {})
+  }, [])
   if (err) return <div className="error">加载失败：{err}</div>
   if (!d) return <div className="loading">载入中…</div>
 
@@ -51,6 +61,39 @@ export default function SourcesView() {
           ))}
         </tbody>
       </table>
+
+      {rev && rev.total > 0 && (
+        <>
+          <h2 className="section-title mt">
+            人工复核记录 · {rev.results.filter((r) => r.reviewer !== 'system').length} 次操作
+          </h2>
+          <p className="lede">
+            流水线刻意保守——单源不自动采信、疑似重复不自动合并——代价是留下需要人判断的
+            队列。复核在本地 CLI 完成，<strong>记录随数据一同版本化并在此展示</strong>，
+            每次操作可追溯。
+          </p>
+          <table className="tbl compact">
+            <thead>
+              <tr>
+                <th style={{ width: '6.5em' }}>时间</th>
+                <th style={{ width: '9em' }}>操作</th>
+                <th style={{ width: '11em' }}>对象</th>
+                <th>依据</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rev.results.filter((r) => r.reviewer !== 'system').map((r, i) => (
+                <tr key={i}>
+                  <td className="num dim">{fmtDate(r.created_at)}</td>
+                  <td>{ACTION_LABEL[r.action] || r.action}</td>
+                  <td className="dim num sm">{r.target_id}</td>
+                  <td className="dim sm">{r.note}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
     </section>
   )
 }
