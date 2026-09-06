@@ -2,6 +2,10 @@ name: 情报流水线
 
 # 每日两轮采集。北京时间 08:30 / 20:30（UTC 00:30 / 12:30）。
 #
+# 成本设计：Exa 每轮固定 $0.133（20 组查询，与返回量无关），RSS/RSSHub/直抓
+# 三条通道零成本。实测增量轮只新增 ~10 条，两轮都跑 Exa 是浪费。
+# 故：早轮跑全通道，晚轮只跑免费通道。Exa 月成本从 ~$8 降到 ~$4。
+#
 # 刻意只跑 Python：v1 的 CI 是被 `npm ci` 挂死 44 分钟烧满作业超时拖垮的，
 # 前端构建与部署已从关键路径上摘除，改为手动或独立 workflow。
 on:
@@ -43,7 +47,13 @@ jobs:
           KB_SCOUT_MODEL: deepseek-chat
           KB_STRONG_MODEL: deepseek-chat
         run: |
-          python pipeline/run.py ${{ inputs.no_exa && '--no-exa' || '' }}
+          # 20:30 那轮（UTC 12:30）只跑免费通道；手动触发可用 no_exa 覆盖
+          if [ "${{ github.event.schedule }}" = "30 12 * * *" ] || [ "${{ inputs.no_exa }}" = "true" ]; then
+            echo "本轮跳过 Exa（免费通道轮）"
+            python pipeline/run.py --no-exa
+          else
+            python pipeline/run.py
+          fi
 
       - name: 提交数据变更
         run: |
