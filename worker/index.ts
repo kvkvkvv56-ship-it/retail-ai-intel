@@ -15,6 +15,7 @@ interface Env {
   KB_LLM_API_KEY?: string
   KB_LLM_BASE_URL?: string
   KB_BRIEF_MODEL?: string
+  EXA_API_KEY?: string
 }
 
 const JSON_HEADERS = {
@@ -146,47 +147,132 @@ export default {
 
 
 // ==================================================================== 定制简报
+//
+// 三阶段（有用户提示词时）：
+//   ① 意图分析  —— 便宜档 LLM 把自然语言解析成结构化检索意图
+//   ② 双源检索  —— 知识库全量（已核验、带 EV 与置信度）
+//                 + 互联网实时（新鲜但未经本系统核验）
+//   ③ 深度报告  —— 两类信息分开标注，冲突时说明分歧而非强行统一
+//
+// 无提示词时退化为「最近 15 条知识库内容的综述」，不发起互联网检索。
+//
+// 为什么坚持把两类信息分开：知识库的事实走过采集→去重→核验→置信度全链路，
+// 互联网检索结果没有。混在一起写，等于把未核验内容伪装成已核验结论。
 
-const BRIEF_SYS = `你是「行业与竞对 AI 洞察助手」的简报撰写智能体，基于知识库上下文生成定制简报。
+const INTENT_SYS = `你是检索意图解析器。把用户的简报需求解析成结构化检索条件。
+
+只输出 JSON，不要任何其他内容：
+{
+  "intent": "一句话复述用户想要什么，≤30字",
+  "companies": ["从给定枚举里选，没有明确指向就留空"],
+  "domains": ["从给定枚举里选，没有明确指向就留空"],
+  "keywords": ["3-6个中文检索词，用于知识库词面匹配"],
+  "needs_web": true/false,
+  "web_queries": ["2-3条互联网检索式，中文，具体到主体与动作"],
+  "report_type": "对比 | 追踪 | 综述 | 深度"
+}
+
+needs_web 判断标准：
+- 用户问「最新」「现在」「最近有没有」等时效性问题 → true
+- 用户问知识库覆盖范围之外的主体或行业 → true
+- 用户只是要对已有事件做归纳、对比、解读 → false`
+
+const BRIEF_SYS = `你是「行业与竞对 AI 洞察助手」的深度简报撰写智能体。
+
+你会拿到两类材料，**必须分开对待，不得混为一谈**：
+
+【A 知识库事实】走过本系统的采集→去重→核验→置信度全链路。每条带 EV 编号
+与置信度等级，可追溯到原始信源。引用时写出 EV 编号。
+
+【B 互联网检索】本轮实时检索所得，**未经本系统核验**：未做多源交叉、
+未判重、未区分一手与转载。引用时必须标注来源媒体，并明确其未经核验。
+
+写作要求：
+- 结论优先建立在 A 上；B 用于补充时效性与背景，或提示 A 的盲区
+- A 与 B 冲突时，**说明分歧并给出各自依据**，不要强行统一到一个说法
+- 事实与推断分开：来自材料的是事实，你的分析是推断，推断用「判断」「推测」标注
+- 材料覆盖不到的部分，直接说明信息缺口，不补全、不编造
 
 输出格式：
-- Markdown：## 二级标题分节、要点列表、关键数字加粗
-- 数据对比优先用 Markdown 表格
-- 长度克制：信息密度优先，不注水、不复述上下文原文
+- Markdown。## 一级分节、### 二级分节
+- 数据对比优先用表格
+- 关键数字加粗
+- 末尾固定一节 \`## 材料边界\`，说明：本次用了几条知识库事件、几条互联网结果，
+  哪些结论受单源限制，哪些需要内部数据才能验证
+- 涉及我方借鉴建议时，标注适用受众（零售运营/商分/营销）与是否需内部数据验证
 
-内容边界：
-- 只使用「知识库上下文」中的事件与数据，不编造知识库外的事实
-- 事实（来自事件）与推断（你的分析）分开表述，推断用「判断」「推测」明确标注
-- 引用事件时写出 EV 编号，便于读者核对
-- 知识库无法覆盖的部分，直接说明信息缺口，不强行补全
-- 涉及借鉴建议时，标注适用受众（零售运营/商分/营销）与是否需要内部数据验证
+语气：专业、克制、直接。信息密度优先，不注水。`
 
-语气：专业、克制、直接。`
+async function llmJson(env: Env, messages: any[], maxTokens = 700): Promise<any> {
+  const r = await fetch(`${env.KB_LLM_BASE_URL || 'https://api.deepseek.com'}/chat/completions`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${env.KB_LLM_API_KEY}` },
+    body: JSON.stringify({
+      model: env.KB_BRIEF_MODEL || 'deepseek-chat',
+      messages, temperature: 0.1, max_tokens: maxTokens,
+    }),
+  })
+  if (!r.ok) throw new Error(`意图解析失败 ${r.status}`)
+  const j: any = await r.json()
+  let t = String(j.choices?.[0]?.message?.content || '').trim()
+  const fence = /```(?:json)?\s*([\s\S]*?)\s*```/.exec(t)
+  if (fence) t = fence[1].trim()
+  const a = t.indexOf('{'), b = t.lastIndexOf('}')
+  return JSON.parse(a >= 0 && b > a ? t.slice(a, b + 1) : t)
+}
 
-/**
- * 消息三层组装（技术方案 §9.2）
- *   system : 固定行为约束，永不被变量污染
- *   user 前段 : 服务端渲染的简报范围与知识库上下文
- *   user 末段 : 用户原始提示词，永远放最后 —— 离指令出口最近，遵从权重最高
- */
+/** 滑动二元组。非重叠切分会因偏移不同导致相同词对不上（归并阶段踩过同样的坑）。 */
+function grams(t: string): Set<string> {
+  const cn = (t || '').replace(/[^一-鿿]/g, '')
+  const g = new Set<string>()
+  for (let i = 0; i < cn.length - 1; i++) g.add(cn.slice(i, i + 2))
+  for (const w of (t || '').toLowerCase().match(/[a-z]{2,}/g) || []) g.add(w)
+  return g
+}
+
+async function searchWeb(env: Env, queries: string[]): Promise<{ hits: any[]; cost: number }> {
+  if (!env.EXA_API_KEY) return { hits: [], cost: 0 }
+  const hits: any[] = []
+  let cost = 0
+  const seen = new Set<string>()
+  for (const q of queries.slice(0, 3)) {
+    try {
+      const r = await fetch('https://api.exa.ai/search', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-api-key': env.EXA_API_KEY },
+        body: JSON.stringify({
+          query: q, category: 'news', numResults: 4,
+          contents: { text: { maxCharacters: 900 } },
+        }),
+      })
+      if (!r.ok) continue
+      const j: any = await r.json()
+      cost += Number(j.costDollars?.total || 0)
+      for (const x of j.results || []) {
+        if (!x.url || seen.has(x.url)) continue
+        seen.add(x.url)
+        hits.push({
+          title: x.title, url: x.url,
+          published: (x.publishedDate || '').slice(0, 10),
+          host: (() => { try { return new URL(x.url).hostname } catch { return '' } })(),
+          text: (x.text || '').slice(0, 700),
+          query: q,
+        })
+      }
+    } catch { /* 单条查询失败不阻断 */ }
+  }
+  return { hits, cost: Math.round(cost * 1e4) / 1e4 }
+}
+
 async function generateBrief(request: Request, env: Env): Promise<Response> {
   let body: any
-  try {
-    body = await request.json()
-  } catch {
-    return problem(400, 'invalid_body', '请求体需为 JSON')
-  }
+  try { body = await request.json() } catch { return problem(400, 'invalid_body', '请求体需为 JSON') }
 
   const prompt = String(body?.prompt || '').trim()
-  if (prompt.length < 2 || prompt.length > 800) {
-    return problem(400, 'invalid_parameter', 'prompt 长度需在 2-800 之间')
-  }
-  const companies: string[] = Array.isArray(body?.companies) ? body.companies : []
-  const domains: string[] = Array.isArray(body?.domains) ? body.domains : []
-
-  if (!env.KB_LLM_API_KEY) {
-    return problem(503, 'llm_unavailable', '模型密钥未配置，简报功能暂不可用')
-  }
+  if (prompt.length > 800) return problem(400, 'invalid_parameter', 'prompt 不超过 800 字')
+  const pickedCompanies: string[] = Array.isArray(body?.companies) ? body.companies : []
+  const pickedDomains: string[] = Array.isArray(body?.domains) ? body.domains : []
+  if (!env.KB_LLM_API_KEY) return problem(503, 'llm_unavailable', '模型密钥未配置')
 
   const enc = new TextEncoder()
   const stream = new TransformStream()
@@ -197,122 +283,143 @@ async function generateBrief(request: Request, env: Env): Promise<Response> {
   ;(async () => {
     const t0 = Date.now()
     try {
-      await send('thinking', { step: 'analyze', text: '分析简报范围与筛选条件' })
-
       const all = await snapshot(env, 'events')
       const meta = await snapshot(env, 'meta')
       if (!all || !meta) throw new Error('事件快照不可用')
       let evs = all.results as any[]
 
-      // ── 从提示词识别检索意图 ───────────────────────────────
-      // 早先只按勾选框筛选，提示词完全不参与检索：用户打「只讲快手」
-      // 却没勾快手，系统就把最近 15 条全喂给模型，写出来自然跑题。
-      const hitCompanies = new Set<string>(companies)
-      for (const c of meta.companies || []) {
-        const names = [c.name, ...(c.aliases || [])]
-        if (names.some((n: string) => n && prompt.includes(n))) hitCompanies.add(c.id)
-      }
-      const hitDomains = new Set<string>(domains)
-      for (const d of meta.domains || []) {
-        if (d.name && prompt.includes(d.name)) hitDomains.add(d.id)
+      const compNames = (meta.companies || []).map((c: any) => `${c.id}(${c.name})`).join(' / ')
+      const domNames = (meta.domains || []).map((d: any) => `${d.id}(${d.name})`).join(' / ')
+
+      // ---------------- ① 意图分析 ----------------
+      let intent: any = null
+      if (prompt) {
+        await send('thinking', { step: 'analyze', text: '解析检索意图' })
+        try {
+          intent = await llmJson(env, [
+            { role: 'system', content: INTENT_SYS },
+            { role: 'user', content:
+              `可选公司：${compNames}\n可选领域：${domNames}\n\n用户需求：${prompt}` },
+          ])
+          await send('thinking', {
+            step: 'analyze',
+            text: `意图：${intent.intent || prompt.slice(0, 24)}`,
+            meta: { intent },
+          })
+        } catch {
+          await send('thinking', { step: 'analyze', text: '意图解析失败，退回词面匹配' })
+        }
+      } else {
+        await send('thinking', { step: 'analyze', text: '未指定需求，生成本期知识库综述' })
       }
 
-      if (hitCompanies.size) evs = evs.filter((e) => hitCompanies.has(e.company))
-      if (hitDomains.size) {
-        evs = evs.filter((e) => (e.domains || []).some((d: string) => hitDomains.has(d)))
-      }
+      // ---------------- ② 知识库检索 ----------------
+      const comps = new Set<string>([...pickedCompanies, ...(intent?.companies || [])])
+      const doms = new Set<string>([...pickedDomains, ...(intent?.domains || [])])
+      if (comps.size) evs = evs.filter((e) => comps.has(e.company))
+      if (doms.size) evs = evs.filter((e) => (e.domains || []).some((d: string) => doms.has(d)))
 
-      // ── 词面相关性排序 ────────────────────────────────────
-      // 主体/领域筛不出来时（或筛完仍很多），按提示词与标题概述的词面重合度排序。
-      // 用滑动二元组：非重叠切分会因偏移不同而对不上（S4b 踩过同样的坑）。
-      const grams = (t: string) => {
-        const cn = (t || '').replace(/[^\u4e00-\u9fff]/g, '')
-        const g = new Set<string>()
-        for (let i = 0; i < cn.length - 1; i++) g.add(cn.slice(i, i + 2))
-        for (const w of (t || '').toLowerCase().match(/[a-z]{2,}/g) || []) g.add(w)
-        return g
-      }
-      const pg = grams(prompt)
+      const terms = prompt
+        ? grams([prompt, ...(intent?.keywords || [])].join(' '))
+        : new Set<string>()
       const score = (e: any) => {
-        const eg = grams(`${e.title} ${e.summary || ''}`)
         let n = 0
-        for (const g of pg) if (eg.has(g)) n++
-        // 本期动态优先于历史背景，但不排除后者——用户可能就是要问历史
+        if (terms.size) {
+          const eg = grams(`${e.title} ${e.summary || ''}`)
+          for (const g of terms) if (eg.has(g)) n++
+        }
         return n + (e.status === '新增' ? 2 : e.status === '延续' ? 1 : 0)
       }
-      evs = evs.map((e) => ({ e, s: score(e) }))
-        .sort((a, b) => b.s - a.s)
-        .slice(0, 18)
-        .map((x) => x.e)
+      evs = evs.map((e) => ({ e, s: score(e) })).sort((a, b) => b.s - a.s)
+        .slice(0, 15).map((x) => x.e)
 
-      const scope: string[] = []
-      if (hitCompanies.size) {
-        scope.push('公司：' + [...hitCompanies]
-          .map((id) => (meta.companies || []).find((c: any) => c.id === id)?.name || id)
-          .join('、'))
-      }
-      if (hitDomains.size) {
-        scope.push('领域：' + [...hitDomains]
-          .map((id) => (meta.domains || []).find((d: any) => d.id === id)?.name || id)
-          .join('、'))
-      }
+      const scopeText = [
+        comps.size ? '公司：' + [...comps].map((id) =>
+          (meta.companies || []).find((c: any) => c.id === id)?.name || id).join('、') : '',
+        doms.size ? '领域：' + [...doms].map((id) =>
+          (meta.domains || []).find((d: any) => d.id === id)?.name || id).join('、') : '',
+      ].filter(Boolean).join('　')
 
       await send('thinking', {
         step: 'retrieve',
-        text: scope.length
-          ? `按「${scope.join('　')}」检索 · 命中 ${evs.length} 条`
-          : `按提示词相关性排序 · 取前 ${evs.length} 条`,
-        meta: { hits: evs.length, scope },
+        text: scopeText
+          ? `知识库检索「${scopeText}」· 命中 ${evs.length} 条`
+          : `知识库检索 · 取${prompt ? '相关性' : '最新'}前 ${evs.length} 条`,
+        meta: { hits: evs.length, scope: scopeText },
       })
-
-      if (evs.length === 0) {
-        await send('error', { message: '所选范围内没有本期事件，请放宽筛选条件' })
-        await w.close()
-        return
+      if (!evs.length) {
+        await send('error', { message: '所选范围内没有事件，请放宽条件' })
+        await w.close(); return
       }
 
-      await send('thinking', { step: 'facts', text: '提取事实要点与信源' })
-      const ctx: string[] = []
+      const kb: string[] = []
       const cited: string[] = []
       for (const e of evs) {
         const d = await snapshot(env, `events/${e.id}`)
         if (!d) continue
         cited.push(e.id)
-        const facts = (d.facts || []).slice(0, 5).map((f: any) => `  · ${f.text}`).join('\n')
-        ctx.push(
-          `${e.id} | ${e.company} | ${e.status} | ${e.confidence} | 阶段：${e.stage || '未判定'} | 日期：${e.event_date || '未知'}\n` +
-          `  标题：${e.title}\n${facts}`,
-        )
+        kb.push(
+          `${e.id} | ${e.company} | ${e.status} | 置信度：${e.confidence} | ` +
+          `阶段：${e.stage || '未判定'} | 日期：${e.event_date || '未知'}\n` +
+          `  ${e.title}\n` +
+          (d.facts || []).slice(0, 5).map((f: any) => `  · ${f.text}`).join('\n'))
+      }
+      await send('sources', { events: cited, count: cited.length })
+
+      // ---------------- ③ 互联网检索 ----------------
+      let web: any[] = []
+      let webCost = 0
+      if (prompt && intent?.needs_web && (intent?.web_queries || []).length) {
+        await send('thinking', {
+          step: 'web',
+          text: `互联网检索 · ${intent.web_queries.slice(0, 3).join('；')}`,
+        })
+        const r = await searchWeb(env, intent.web_queries)
+        web = r.hits; webCost = r.cost
+        await send('thinking', {
+          step: 'web',
+          text: `互联网检索 · 取回 ${web.length} 条（未经本系统核验）`,
+          meta: { hits: web.length, cost: webCost },
+        })
+        await send('web_sources', {
+          count: web.length, cost: webCost,
+          items: web.map((x) => ({ title: x.title, url: x.url, host: x.host, published: x.published })),
+        })
       }
 
-      await send('sources', { events: cited, count: cited.length })
-      await send('thinking', { step: 'compose', text: '生成洞察并组装内容' })
+      // ---------------- ④ 撰写 ----------------
+      await send('thinking', { step: 'compose', text: '组装材料与洞察' })
+
+      const parts = [
+        `简报范围\n${scopeText || (prompt ? '未限定，按相关性排序' : '本期最新')}`,
+        `\n【A 知识库事实】${kb.length} 个事件，已走过采集→去重→核验→置信度全链路：\n\n${kb.join('\n\n')}`,
+      ]
+      if (web.length) {
+        parts.push(`\n【B 互联网检索】${web.length} 条，本轮实时检索，**未经本系统核验**：\n\n` +
+          web.map((x, i) =>
+            `W${i + 1} | ${x.host} | ${x.published || '时间未知'}\n  ${x.title}\n  ${x.text}\n  ${x.url}`
+          ).join('\n\n'))
+      } else if (prompt) {
+        parts.push('\n【B 互联网检索】本次未发起（意图分析判定无需时效性补充）')
+      }
 
       const messages = [
         { role: 'system', content: BRIEF_SYS },
-        { role: 'user', content:
-          `简报范围\n${scope.length ? scope.join('　') : '未限定，按提示词相关性取前 ' + ctx.length + ' 条'}\n\n` +
-          `知识库上下文（${ctx.length} 个事件，已按与提示词的相关性排序）：\n\n${ctx.join('\n\n')}` },
-        { role: 'user', content: prompt },
+        { role: 'user', content: parts.join('\n') },
+        { role: 'user', content: prompt || '生成本期知识库综述：本期有哪些值得注意的动态，对零售运营/商分/营销有什么启发。' },
       ]
+
+      await send('thinking', { step: 'write', text: '撰写正文' })
 
       const r = await fetch(`${env.KB_LLM_BASE_URL || 'https://api.deepseek.com'}/chat/completions`, {
         method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          authorization: `Bearer ${env.KB_LLM_API_KEY}`,
-        },
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${env.KB_LLM_API_KEY}` },
         body: JSON.stringify({
           model: env.KB_BRIEF_MODEL || 'deepseek-chat',
-          messages,
-          stream: true,
-          temperature: 0.3,
-          max_tokens: 2600,
+          messages, stream: true, temperature: 0.3, max_tokens: 3200,
         }),
       })
       if (!r.ok || !r.body) throw new Error(`模型接口 ${r.status}`)
-
-      await send('thinking', { step: 'write', text: '撰写正文' })
 
       const reader = r.body.getReader()
       const dec = new TextDecoder()
@@ -338,7 +445,10 @@ async function generateBrief(request: Request, env: Env): Promise<Response> {
           } catch { /* 跳过不完整分片 */ }
         }
       }
-      await send('done', { elapsed_ms: Date.now() - t0, events: cited.length })
+      await send('done', {
+        elapsed_ms: Date.now() - t0,
+        events: cited.length, web: web.length, web_cost: webCost,
+      })
     } catch (e: any) {
       await send('error', { message: String(e?.message || e) })
     } finally {

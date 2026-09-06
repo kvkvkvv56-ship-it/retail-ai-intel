@@ -5,11 +5,11 @@ import { BorderBeam } from 'border-beam'
 // 步骤 → orb 动画状态。让动画语义对应真实阶段，而不是当装饰用：
 // searching 是扫描地球仪、connecting 是连线成星座、composing 是起伏的绸带。
 const STEPS = [
-  { k: 'analyze',  t: '分析参数', orb: 'working' },
-  { k: 'retrieve', t: '检索事件', orb: 'searching' },
-  { k: 'facts',    t: '提取事实', orb: 'connecting' },
-  { k: 'compose',  t: '生成洞察', orb: 'weaving' },
-  { k: 'write',    t: '撰写正文', orb: 'composing' },
+  { k: 'analyze',  t: '解析意图',   orb: 'solving' },
+  { k: 'retrieve', t: '知识库检索', orb: 'searching' },
+  { k: 'web',      t: '互联网检索', orb: 'connecting' },
+  { k: 'compose',  t: '组装材料',   orb: 'weaving' },
+  { k: 'write',    t: '撰写正文',   orb: 'composing' },
 ]
 
 export default function BriefView({ meta, nav }) {
@@ -20,6 +20,7 @@ export default function BriefView({ meta, nav }) {
   const [steps, setSteps] = useState([])
   const [text, setText] = useState('')
   const [cited, setCited] = useState([])
+  const [webSrc, setWebSrc] = useState(null)
   const [err, setErr] = useState(null)
   const [elapsed, setElapsed] = useState(0)
   const [expanded, setExpanded] = useState(true)
@@ -29,8 +30,8 @@ export default function BriefView({ meta, nav }) {
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v])
 
   async function run() {
-    if (prompt.trim().length < 2 || state === 'running') return
-    setState('running'); setSteps([]); setText(''); setCited([]); setErr(null)
+    if (state === 'running') return
+    setState('running'); setSteps([]); setText(''); setCited([]); setWebSrc(null); setErr(null)
     setExpanded(true)
     const ctrl = new AbortController()
     abort.current = ctrl
@@ -62,6 +63,7 @@ export default function BriefView({ meta, nav }) {
           const d = JSON.parse(dt)
           if (ev === 'thinking') setSteps((s) => [...s, d])
           else if (ev === 'sources') setCited(d.events || [])
+          else if (ev === 'web_sources') setWebSrc(d)
           else if (ev === 'token') setText((t) => t + d.t)
           else if (ev === 'done') { setElapsed(d.elapsed_ms); setState('done'); setExpanded(false) }
           else if (ev === 'error') { setErr(d.message); setState('error') }
@@ -112,8 +114,8 @@ export default function BriefView({ meta, nav }) {
 
       <div className="brief-bar">
         <button className="btn" onClick={run}
-                disabled={state === 'running' || prompt.trim().length < 2}>
-          {state === 'running' ? '生成中…' : '生成简报'}
+                disabled={state === 'running'}>
+          {state === 'running' ? '生成中…' : prompt.trim() ? '生成简报' : '生成本期综述'}
         </button>
         <span className="fhint">⌘/Ctrl + Enter</span>
       </div>
@@ -146,11 +148,33 @@ export default function BriefView({ meta, nav }) {
             </ol>
           )}
           {cited.length > 0 && (
-            <div className="evi">
-              <span className="d">引用事件 {cited.length} 个：</span>
-              {cited.map((id) => (
-                <button key={id} className="ev" onClick={() => nav(`/events/${id}`)}>{id}</button>
-              ))}
+            <div className="mat">
+              <div className="mat-h">
+                <span className="mat-tag a">A</span>
+                知识库事实 {cited.length} 条<span className="d"> · 已核验，可点开核对</span>
+              </div>
+              <div className="evi">
+                {cited.map((id) => (
+                  <button key={id} className="ev" onClick={() => nav(`/events/${id}`)}>{id}</button>
+                ))}
+              </div>
+            </div>
+          )}
+          {webSrc && webSrc.count > 0 && (
+            <div className="mat">
+              <div className="mat-h">
+                <span className="mat-tag b">B</span>
+                互联网检索 {webSrc.count} 条
+                <span className="d"> · 未经本系统核验 · ${webSrc.cost}</span>
+              </div>
+              <ul className="weblist">
+                {webSrc.items.map((x) => (
+                  <li key={x.url}>
+                    <a href={x.url} target="_blank" rel="noopener noreferrer">{x.title} ↗</a>
+                    <span className="d"> {x.host}{x.published ? ` · ${x.published}` : ''}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
