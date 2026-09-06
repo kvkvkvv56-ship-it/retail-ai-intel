@@ -23,6 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline import collect as C                                  # noqa: E402
+from pipeline import insight as IN                                 # noqa: E402
 from pipeline import process as PR                                 # noqa: E402
 from pipeline.llm import LLM                                       # noqa: E402
 from pipeline.store import ROOT, Store                             # noqa: E402
@@ -367,7 +368,22 @@ def main() -> int:
         vf = PR.stage_verify(store, cfg, srccfg)
         print(f"  → {vf['events']} 个事件完成置信度/阶段/状态判定")
 
+        print("\n[S6] 关系边补全（规则）")
+        eg = IN.stage_edges(store)
+        print(f"  → 新增 same_actor_track 边 {eg['rule_edges']}")
+
+        print("\n[S7] 洞察合成（周报）")
+        ins = IN.stage_insight(store, llm, cfg, run_id)
+        if ins.get("error"):
+            print(f"  → {ins['error']}")
+        else:
+            print(f"  → 窗口 {ins['period']}，输入 {ins['events_in']} 事件")
+            print(f"     关键发现 {ins['key_findings']} · 借鉴建议 {ins['implications']}"
+                  f" · 观察清单 {ins['watchlist']} · 延续性检查 {ins.get('continuity', 0)}")
+            print(f"     主线：{ins.get('headline', '')}")
+
         llm_stats = {"prescreen": ps, "extract": ex, "merge": mg, "verify": vf,
+                     "edges": eg, "insight": ins,
                      "llm_usage": llm.usage, "llm_cost_cny": llm.cost_estimate()}
 
     store.upsert("runs", {

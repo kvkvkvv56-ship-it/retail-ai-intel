@@ -273,6 +273,141 @@ def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
     return stats
 
 
+def stage_merge_cross(store, llm, run_id: str) -> dict:
+    """S4b 跨公司归并复核。
+
+    S4 按公司分组归并有一个结构性盲区：同一事件若被抽取成不同 company，
+    两者永远不会被放在一起比较。首轮实跑就命中了——「千问AI Arena」被判为
+    taobao、「阿里云通义AI竞技场」被判为 industry，实为同一件事。
+    （讽刺的是，这个漏归并是周报的 method_notes 自己发现并报告的。）
+
+    本阶段对全部事件做一次整体扫描，事件量级为百级，一次调用即可。
+    """
+    evs = store.q("SELECT id, company, event_key, title, summary FROM events")
+    stats = {"scanned": len(evs), "cross_merged": 0, "suspects": 0, "error": 0}
+    if len(evs) < 2:
+        return stats
+
+    # 只给标题不够：实测「千问AI Arena」与「阿里云通义AI竞技场」标题词重合度
+    # 仅 0.088，产品名完全不同（千问/通义、Arena/竞技场），必须给摘要与事实
+    # 才能判断是同一件事。周报的 method_notes 能发现这个漏归并，正是因为它
+    # 拿到了事实要点。
+    lines = []
+    for i, e in enumerate(evs):
+        facts = store.q("""SELECT text FROM claims WHERE event_id=?
+                           AND kind='fact' LIMIT 2""", (e["id"],))
+        lines.append(
+            f'[{i}] {e["company"]} | {e["event_key"]}\n'
+            f'    标题：{e["title"]}\n'
+            f'    概述：{(e["summary"] or "")[:100]}\n'
+            + "".join(f'    · {f["text"][:90]}\n' for f in facts))
+    try:
+        res = llm.chat_json([
+            {"role": "system", "content": P.MERGE_CROSS_SYS},
+            {"role": "user", "content": "全部事件：\n\n" + "\n\n".join(lines)},
+        ], strong=True, max_tokens=1500)
+    except Exception:                                         # noqa: BLE001
+        stats["error"] = 1
+        return stats
+
+    for g in res.get("duplicates") or []:
+        idx = [i for i in g.get("members", [])
+               if isinstance(i, int) and 0 <= i < len(evs)]
+        if len(idx) < 2:
+            continue
+        members = [evs[i] for i in idx]
+        # 保留信源最多的那个作为主事件
+        counts = {m["id"]: store.one(
+            "SELECT COUNT(*) FROM items WHERE event_id=?", (m["id"],)) or 0
+            for m in members}
+        keep = max(members, key=lambda m: counts[m["id"]])
+        for m in members:
+            if m["id"] == keep["id"]:
+                continue
+            store.db.execute("UPDATE items SET event_id=? WHERE event_id=?",
+                             (keep["id"], m["id"]))
+            store.db.execute("UPDATE claims SET event_id=? WHERE event_id=?",
+                             (keep["id"], m["id"]))
+            store.db.execute("DELETE FROM edges WHERE from_event=? OR to_event=?",
+                             (m["id"], m["id"]))
+            store.db.execute("DELETE FROM events WHERE id=?", (m["id"],))
+            store.insert("rejects", {
+                "run_id": run_id, "item_id": None, "url": None,
+                "title": m["title"], "source_name": "—",
+                "stage": "merge_cross", "reason_code": "merged",
+                "reason_detail": f"跨公司复核：与 {keep['id']} 为同一事件。"
+                                 f"{g.get('reason', '')}",
+                "merged_into": keep["id"], "created_at": _now()})
+            stats["cross_merged"] += 1
+    # 模型表达的不确定性 → 人工复核队列（不自动合并）
+    for g in res.get("suspects") or []:
+        idx = [i for i in g.get("members", [])
+               if isinstance(i, int) and 0 <= i < len(evs)]
+        if len(idx) < 2:
+            continue
+        ms = [evs[i] for i in idx]
+        for m in ms:
+            store.db.execute(
+                "UPDATE events SET review_state='suspect_duplicate' "
+                "WHERE id=? AND review_state IN ('none','')", (m["id"],))
+        store.insert("reviews", {
+            "target_type": "merge", "target_id": "|".join(m["id"] for m in ms),
+            "action": "flag",
+            "note": "模型标记疑似重复，证据不足未自动合并：" + g.get("reason", "")
+                    + "｜涉及：" + " / ".join(f'{m["title"][:26]}({m["company"]})'
+                                              for m in ms),
+            "reviewer": "system", "created_at": _now()})
+        stats["suspects"] += 1
+
+    stats["suspects"] += _flag_suspect_duplicates(store)
+    store.commit()
+    return stats
+
+
+def _flag_suspect_duplicates(store, jaccard: float = 0.34) -> int:
+    """标记疑似重复事件，进人工复核队列。
+
+    S4b 的提示词要求「宁可漏掉也不要误合并」——误合并会不可逆地毁掉信息，
+    漏合并只是冗余且可修。所以自动归并刻意保守，代价是会留下漏网。
+
+    此处用零成本的标题词重合度做疑似标记，不自动合并，只挂进人工队列。
+    这是 HITL「归并纠错」节点（技术方案 §12）的输入来源。
+    """
+    import re
+    evs = store.q("SELECT id, title, company FROM events")
+
+    def toks(t: str) -> set[str]:
+        """滑动窗口二元组。
+
+        注意：不能用 re.findall(r"[一-鿿]{2}") —— 那取的是**不重叠**二元组，
+        偏移不同的两个标题即使含相同词也对不上。实测「聚焦跨境」在一个标题里
+        切成 聚焦|跨境，另一个切成 场聚|焦跨|境电，交集为零。
+        """
+        cn = re.sub(r"[^\u4e00-\u9fff]", "", t)
+        grams = {cn[i:i + 2] for i in range(len(cn) - 1)}
+        return grams | {w.lower() for w in re.findall(r"[A-Za-z]{3,}", t)}
+    n = 0
+    for i, a in enumerate(evs):
+        for b in evs[i + 1:]:
+            A, B = toks(a["title"]), toks(b["title"])
+            if not A or not B:
+                continue
+            if len(A & B) / len(A | B) >= jaccard:
+                for e in (a, b):
+                    store.db.execute(
+                        "UPDATE events SET review_state='suspect_duplicate' "
+                        "WHERE id=? AND review_state IN ('none','')", (e["id"],))
+                store.insert("reviews", {
+                    "target_type": "merge", "target_id": f"{a['id']}|{b['id']}",
+                    "action": "flag",
+                    "note": f"疑似重复待人工判定：「{a['title'][:30]}」({a['company']}) "
+                            f"与「{b['title'][:30]}」({b['company']}) 标题词高度重合，"
+                            f"自动归并未合并（保守策略）",
+                    "reviewer": "system", "created_at": _now()})
+                n += 1
+    return n
+
+
 def _write_claims(store, event_id: str, data: dict) -> None:
     """写入 claims，**程序层强制约束**（技术方案 §7）。
 

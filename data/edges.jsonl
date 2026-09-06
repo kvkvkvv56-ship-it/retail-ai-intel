@@ -1,4 +1,24 @@
 {"from_event": "EV-230aef29", "to_event": "EV-43491a2d", "relation": "follows", "basis": "豆包先接入抖音商城实现跳转导购，后内测App内直接下单功能，后者是前者基础上的功能升级，属于同一产品线的后续进展。", "created_by": "llm"}
 {"from_event": "EV-6452e9b6", "to_event": "EV-536888b3", "relation": "follows", "basis": "2023年618前平台AI工具官宣是早期探索，2025年双11AI应用集中落地是后续规模化应用，同一趋势（电商平台AI工具落地）的先后阶段。", "created_by": "llm"}
-{"from_event": "EV-536888b3", "to_event": "EV-008df526", "relation": "follows", "basis": "2025年双11平台AI应用集中落地，到2026年618演变为千问入淘与豆包闭环的AI入口之争，是同一AI电商竞争主题的后续升级。", "created_by": "llm"}
 {"from_event": "EV-904bec61", "to_event": "EV-eb423905", "relation": "follows", "basis": "两条目均涉及小红书AI业务布局，但为不同产品线（导购 vs 搜索），且时间上导购功能报道在先，搜索整合在后，存在先后关系。", "created_by": "llm"}
+{"from_event": "EV-ba8b1ca4", "to_event": "EV-230aef29", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2023-07-13 → 2025-10-15）", "created_by": "rule"}
+{"from_event": "EV-230aef29", "to_event": "EV-43491a2d", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2025-10-15 → 2026-08-08）", "created_by": "rule"}
+{"from_event": "EV-6452e9b6", "to_event": "EV-69a86407", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2023-05-23 → 2025-09-01）", "created_by": "rule"}
+{"from_event": "EV-69a86407", "to_event": "EV-536888b3", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2025-09-01 → 2025-10-20）", "created_by": "rule"}
+{"from_event": "EV-536888b3", "to_event": "EV-0611debb", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2025-10-20 → 2025-11-16）", "created_by": "rule"}
+{"from_event": "EV-a0dadb7e", "to_event": "EV-2bf30825", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-08-09 → 2026-08-13）", "created_by": "rule"}
+{"from_event": "EV-2bf30825", "to_event": "EV-016f31a8", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-08-13 → 2026-09-01）", "created_by": "rule"}
+{"from_event": "EV-9b54303d", "to_event": "EV-904bec61", "relation": "same_actor_track", "basis": "同为 xiaohongshu 的动作，时间相邻（2026-03-10 → 2026-08-12）", "created_by": "rule"}
+{"from_event": "EV-904bec61", "to_event": "EV-eb423905", "relation": "same_actor_track", "basis": "同为 xiaohongshu 的动作，时间相邻（2026-08-12 → 2026-09-03）", "created_by": "rule"}
+{"from_event": "EV-6101a35d", "to_event": "EV-5ccaca02", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2025-08-15 → 2025-10-15）", "created_by": "rule"}
+{"from_event": "EV-5ccaca02", "to_event": "EV-8712cfd6", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2025-10-15 → 2025-10-30）", "created_by": "rule"}
+{"from_event": "EV-8712cfd6", "to_event": "EV-e4830bdc", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2025-10-30 → 2026-03-02）", "created_by": "rule"}
+{"from_event": "EV-e4830bdc", "to_event": "EV-9177fa45", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-03-02 → 2026-03-20）", "created_by": "rule"}
+{"from_event": "EV-9177fa45", "to_event": "EV-b56abbd6", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-03-20 → 2026-05-11）", "created_by": "rule"}
+{"from_event": "EV-b56abbd6", "to_event": "EV-c8056f58", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-05-11 → 2026-08-09）", "created_by": "rule"}
+{"from_event": "EV-c8056f58", "to_event": "EV-6ac3bfd2", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-08-09 → 2026-08-09）", "created_by": "rule"}
+{"from_event": "EV-6ac3bfd2", "to_event": "EV-ef524727", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-08-09 → 2026-08-10）", "created_by": "rule"}
+{"from_event": "EV-ef524727", "to_event": "EV-78183bbc", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-08-10 → 2026-08-10）", "created_by": "rule"}
+{"from_event": "EV-78183bbc", "to_event": "EV-09e8f763", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-08-10 → 2026-08-12）", "created_by": "rule"}
+{"from_event": "EV-0611debb", "to_event": "EV-a0dadb7e", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2025-11-16 → 2026-08-09）", "created_by": "rule"}
+{"from_event": "EV-09e8f763", "to_event": "EV-fbe632d7", "relation": "same_actor_track", "basis": "同为 taobao 的动作，时间相邻（2026-08-12 → 2026-09-03）", "created_by": "rule"}
