@@ -6,6 +6,7 @@ import EventDetail from './views/EventDetail.jsx'
 import RejectsView from './views/RejectsView.jsx'
 import SourcesView from './views/SourcesView.jsx'
 import ReportView from './views/ReportView.jsx'
+import ReportsIndex from './views/ReportsIndex.jsx'
 import BriefView from './views/BriefView.jsx'
 
 const Tab = ({ on, go, n, children }) => (
@@ -48,10 +49,13 @@ export default function App() {
   else {
     const ev = path.match(/^\/events\/([A-Za-z0-9\-]+)$/)
     const rj = path.match(/^\/runs\/([A-Za-z0-9\-]+)\/rejects$/)
+    const rp = path.match(/^\/report\/([A-Za-z0-9\-]+)$/)
     if (ev) body = <EventDetail id={ev[1]} meta={meta} nav={nav} />
     else if (rj) body = <RejectsView runId={rj[1]} nav={nav} />
     else if (path.startsWith('/events')) body = <EventsView meta={meta} nav={nav} />
     else if (path.startsWith('/sources')) body = <SourcesView />
+    else if (path.startsWith('/reports')) body = <ReportsIndex nav={nav} />
+    else if (rp) body = <ReportView meta={meta} nav={nav} id={rp[1]} />
     else if (path.startsWith('/report')) body = <ReportView meta={meta} nav={nav} />
     else if (path.startsWith('/brief')) body = <BriefView meta={meta} nav={nav} />
     else body = <RunView meta={meta} run={run} nav={nav} />

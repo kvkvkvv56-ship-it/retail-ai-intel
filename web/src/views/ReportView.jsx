@@ -2,20 +2,26 @@ import React, { useEffect, useState } from 'react'
 import { api, fmtDate } from '../api.js'
 import { Empty } from '../components/Bits.jsx'
 
-export default function ReportView({ meta, nav }) {
+/** 侧栏最多列这么多期。再多就进「全部周报」页——周报是持续产出物，
+ *  期数只会单调增长，列表必须有个不随时间膨胀的上界 */
+const SIDE_MAX = 10
+
+export default function ReportView({ meta, nav, id }) {
   const [list, setList] = useState(null)
   const [rep, setRep] = useState(null)
   const [err, setErr] = useState(null)
 
   useEffect(() => {
+    setRep(null); setErr(null)
     api('reports')
       .then((d) => {
         setList(d)
-        return d.results.length ? api(`reports/${d.results[0].id}`) : null
+        const target = id || d.results[0]?.id
+        return target ? api(`reports/${target}`) : null
       })
       .then(setRep)
       .catch((e) => setErr(String(e)))
-  }, [])
+  }, [id])
 
   if (err) return <div className="error">加载失败：{err}</div>
   if (!list) return <div className="loading">载入中…</div>
@@ -23,28 +29,37 @@ export default function ReportView({ meta, nav }) {
 
   const b = rep.body || {}
   const domName = Object.fromEntries(meta.domains.map((d) => [d.id, d.name]))
+  const idx = list.results.findIndex((r) => r.id === rep.id)
 
   return (
-    <div className="view">
-      {/* 历史存档：往期一行排开，当前期高亮。周报是持续产出物，
-          「能翻到上几期」本身就是可持续运行的证据 */}
-      {list.total > 1 && (
-        <div className="archive">
-          <span className="arch-k">往期</span>
-          {list.results.map((r) => (
-            <button key={r.id}
-                    className={`arch-item ${r.id === rep.id ? 'on' : ''}`}
-                    onClick={() => api(`reports/${r.id}`).then(setRep)}>
-              <span className="num">{r.period_start.slice(5)}</span>
-              <span className="arch-hl">{r.headline}</span>
-            </button>
+    <div className="view rep-layout">
+      {/* 往期列表常驻左侧。原来横排在正文之上，期数一多就会把正文顶下去，
+          而且没有可扩展的落点 */}
+      <aside className="rep-side">
+        <p className="side-k">往期周报</p>
+        <ul className="side-list">
+          {list.results.slice(0, SIDE_MAX).map((r, i) => (
+            <li key={r.id}>
+              <button className={`side-item ${r.id === rep.id ? 'on' : ''}`}
+                      onClick={() => nav(`/report/${r.id}`)}>
+                <span className="side-d tnum">
+                  第 {list.total - i} 期 · {r.period_start.slice(5).replace('-', '/')}
+                </span>
+                <span className="side-hl">{r.headline}</span>
+              </button>
+            </li>
           ))}
-        </div>
-      )}
+        </ul>
+        <button className="side-more" onClick={() => nav('/reports')}>
+          查看全部周报
+          {list.total > SIDE_MAX && <span className="side-rest">另 {list.total - SIDE_MAX} 期</span>}
+        </button>
+      </aside>
 
+      <div className="rep-main">
       <p className="sec-title">
         {rep.period_start} ~ {rep.period_end}
-        <span className="d"> · 第 {list.results.length - list.results.findIndex((r) => r.id === rep.id)} 期 / 共 {list.total} 期</span>
+        <span className="d"> · 第 {list.total - idx} 期 / 共 {list.total} 期</span>
       </p>
 
       <div className="headline-banner">
@@ -159,6 +174,7 @@ export default function ReportView({ meta, nav }) {
       <p className="dim sm mt">
         生成于 {fmtDate(rep.generated_at)} · 运行 {rep.run_id}
       </p>
+      </div>
     </div>
   )
 }

@@ -49,7 +49,8 @@ export default function RunView({ meta, run, nav }) {
         <Stat k="事实/推断/建议" v={meta.counts.claims} />
         <Stat k="关系边" v={meta.counts.edges} />
         <Stat k="拒绝台账" v={meta.counts.rejects} />
-        <Stat k="待人工复核" v={v.pending_review ?? 0} />
+        <Stat k="待人工复核" v={meta.counts.pending_review ?? 0} />
+        <Stat k="持续观察中" v={meta.counts.watching ?? 0} />
       </div>
 
       <p className="sec-title mt">本轮成本</p>

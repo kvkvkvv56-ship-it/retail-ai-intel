@@ -26,80 +26,35 @@ export default function SourcesView() {
     <div className="view">
       <p className="sec-title">信源体系 · {d.total} 个</p>
 
-      {/* 概览条：一手性与通道的分布，直接回应「信息源是否多元」 */}
-      <div className="src-overview">
-        <div className="ov-group">
-          <span className="ov-k">一手性</span>
-          {['A', 'B', 'C', 'D', 'E'].map((c) => {
-            const n = d.results.filter((s) => s.source_class === c).length
-            return n ? (
-              <span className="ov-item" key={c}>
+      {/* 只列名字，按一手性分组横排。
+          采集量、采纳率是内部运维指标——摊在页面上会把「这套信源覆盖了谁」
+          这条真正的信息淹掉；分级本身才是这套体系的说明。 */}
+      <div className="src-groups">
+        {['A', 'B', 'C', 'D', 'E'].map((c) => {
+          const g = d.results.filter((s) => s.source_class === c)
+          if (!g.length) return null
+          return (
+            <section className="src-group" key={c}>
+              <div className="sg-head">
                 <span className={`cls c${c}`}>{c}</span>
-                <span className="d">{CLASS_SHORT[c]}</span><b>{n}</b>
-              </span>
-            ) : null
-          })}
-        </div>
-        <div className="ov-group">
-          <span className="ov-k">通道</span>
-          {Object.entries(d.by_channel).filter(([, n]) => n).map(([k, n]) => (
-            <span className="ov-item" key={k}>
-              <span className="chan">{k}</span><b>{n}</b>
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <table className="tbl src-tbl">
-        <colgroup>
-          <col style={{ width: '24%' }} /><col style={{ width: '15%' }} />
-          <col style={{ width: '10%' }} /><col style={{ width: '8%' }} />
-          <col style={{ width: '8%' }} /><col style={{ width: '17%' }} />
-          <col style={{ width: '18%' }} />
-        </colgroup>
-        <thead>
-          <tr>
-            <th>信源</th>
-            <th>一手性</th>
-            <th>通道</th>
-            <th className="num">命中</th>
-            <th className="num">采纳</th>
-            <th>采纳率</th>
-            <th>最近命中</th>
-          </tr>
-        </thead>
-        <tbody>
-          {d.results.map((s) => (
-            <tr key={s.id} className={s.hits ? '' : 'faded'}>
-              <td className="src-name" title={s.name}>
-                {s.name}
-                {s.affiliated_with && <span className="pill warn mini">自家媒体</span>}
-                {!s.active && <span className="pill mini">已停用</span>}
-              </td>
-              <td className="nowrap" title={CLASS_LABEL[s.source_class]}>
-                <span className={`cls c${s.source_class}`}>{s.source_class}</span>
-                <span className="d"> {CLASS_SHORT[s.source_class]}</span>
-              </td>
-              <td><span className="chan">{s.channel}</span></td>
-              <td className="num">{s.hits || '—'}</td>
-              <td className="num">{s.accepted || '—'}</td>
-              <td>
-                {s.accept_rate == null ? <span className="d">—</span> : (
-                  <span className="rate">
-                    <span className="rate-bar">
-                      <i style={{ width: `${Math.round(s.accept_rate * 100)}%` }} />
-                    </span>
-                    <span className="num d">{Math.round(s.accept_rate * 100)}%</span>
+                <span className="sg-name">{CLASS_LABEL[c] || CLASS_SHORT[c]}</span>
+                <span className="sg-n tnum">{g.length}</span>
+              </div>
+              <div className="sg-items">
+                {g.map((s) => (
+                  <span key={s.id} className={`src-chip ${s.active ? '' : 'off'}`}>
+                    {s.name}
+                    {/* A 类是当事方自己的渠道，标「自家媒体」是同义反复；
+                        这个标记只在媒体上才有信息量——比如天下网商报道阿里 */}
+                    {s.affiliated_with && c !== 'A' && <i>自家媒体</i>}
+                    {!s.active && <i>已停用</i>}
                   </span>
-                )}
-              </td>
-              <td className="tnum d">
-                {s.last_hit ? fmtDate(s.last_hit) : <span className="d">未命中</span>}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                ))}
+              </div>
+            </section>
+          )
+        })}
+      </div>
 
       {rev && rev.total > 0 && (
         <>

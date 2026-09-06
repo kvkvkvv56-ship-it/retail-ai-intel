@@ -58,6 +58,12 @@ def export(store: Store, cfg: dict, srccfg: dict) -> dict:
     counts = {t: store.one(f"SELECT COUNT(*) FROM {t}") for t in
               ("items", "events", "claims", "edges", "rejects", "sources",
                "reviews", "reports")}
+    # 待复核数必须取**当前**状态，不能用运行时快照——人工复核发生在跑批之后，
+    # 用 run.stats 里的数字会一直显示复核前的旧值（实测显示 56 而实际已清零）
+    counts["pending_review"] = store.one(
+        "SELECT COUNT(*) FROM events WHERE review_state IN ('pending','suspect_duplicate')") or 0
+    counts["watching"] = store.one(
+        "SELECT COUNT(*) FROM events WHERE review_state='watching'") or 0
 
     total += _w("meta.json", {
         "dataset": cfg["dataset"], "name": cfg["name"],
