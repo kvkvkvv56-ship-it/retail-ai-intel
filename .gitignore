@@ -21,3 +21,9 @@ __pycache__/
 # ===== 杂项 =====
 *.log
 .DS_Store
+
+# 前端构建产物与依赖
+web/dist/
+web/node_modules/
+# 导出的 API 快照由 pipeline/export.py 生成，不入库
+web/public/api/
