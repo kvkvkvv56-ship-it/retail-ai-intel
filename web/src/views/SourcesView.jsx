@@ -27,9 +27,10 @@ export default function SourcesView() {
       <p className="sec-title">信源体系 · {d.total} 个</p>
       <table className="tbl src-tbl">
         <colgroup>
-          <col /><col style={{ width: '6.5em' }} /><col style={{ width: '5.5em' }} />
-          <col style={{ width: '4em' }} /><col style={{ width: '4em' }} />
-          <col style={{ width: '8.5em' }} />
+          <col style={{ width: '15em' }} /><col style={{ width: '7em' }} />
+          <col style={{ width: '5.5em' }} /><col style={{ width: '4em' }} />
+          <col style={{ width: '4em' }} /><col style={{ width: '9em' }} />
+          <col />
         </colgroup>
         <thead>
           <tr>
@@ -39,6 +40,7 @@ export default function SourcesView() {
             <th className="num">命中</th>
             <th className="num">采纳</th>
             <th>采纳率</th>
+            <th />
           </tr>
         </thead>
         <tbody>
@@ -66,6 +68,7 @@ export default function SourcesView() {
                   </span>
                 )}
               </td>
+              <td />
             </tr>
           ))}
         </tbody>
@@ -76,21 +79,30 @@ export default function SourcesView() {
           <p className="sec-title mt">
             人工复核记录 · {rev.results.filter((r) => r.reviewer !== 'system').length} 次
           </p>
-          <table className="tbl compact">
+          <table className="tbl rev-tbl">
+            <colgroup>
+              <col style={{ width: '7.5em' }} />
+              <col style={{ width: '8em' }} />
+              <col style={{ width: '9em' }} />
+              <col />
+            </colgroup>
             <thead>
               <tr>
-                <th style={{ width: '6.5em' }}>时间</th>
-                <th style={{ width: '9em' }}>操作</th>
-                <th style={{ width: '11em' }}>对象</th>
-                <th>依据</th>
+                <th>时间</th><th>操作</th><th>对象</th><th>依据</th>
               </tr>
             </thead>
             <tbody>
               {rev.results.filter((r) => r.reviewer !== 'system').map((r, i) => (
                 <tr key={i}>
-                  <td className="num dim">{fmtDate(r.created_at)}</td>
-                  <td>{ACTION_LABEL[r.action] || r.action}</td>
-                  <td className="dim num sm">{r.target_id}</td>
+                  {/* 时间与对象靠左：早先误用了 .num 类，而 .num 带
+                      text-align: right，把这两列推到了右边 */}
+                  <td className="tnum d nowrap">{fmtDate(r.created_at)}</td>
+                  <td className="nowrap">{ACTION_LABEL[r.action] || r.action}</td>
+                  <td className="tnum d">
+                    {String(r.target_id || '').split('|').filter(Boolean).map((id) => (
+                      <span className="evline" key={id}>{id}</span>
+                    ))}
+                  </td>
                   <td className="d">{r.note}</td>
                 </tr>
               ))}

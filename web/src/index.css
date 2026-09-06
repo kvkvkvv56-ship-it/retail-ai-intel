@@ -413,6 +413,12 @@ a { color: inherit; text-decoration: none; }
    列宽用 colgroup 固定：早先「信源」列自动撑满、把「一手性」挤到
    折行成两行，行高被撑到 100px+。现在名称列吃剩余宽度，其余定宽不折行。 */
 .src-tbl { table-layout: fixed; }
+/* 等宽数字但不改变对齐 —— .num 同时带了 text-align: right，
+   用在左对齐的列上会把内容推到右边 */
+.tnum { font-variant-numeric: tabular-nums; }
+.evline { display: block; line-height: 1.6; white-space: nowrap; }
+.rev-tbl { table-layout: fixed; }
+.rev-tbl td { vertical-align: top; }
 .src-tbl td { padding: 11px 10px 11px 0; vertical-align: middle; }
 .src-tbl .src-name {
   font-weight: 500; white-space: nowrap;
