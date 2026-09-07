@@ -6,39 +6,23 @@ import { MetalFx } from 'metal-fx'
 // 步骤 → orb 动画状态。让动画语义对应真实阶段，而不是当装饰用：
 // searching 是扫描地球仪、connecting 是连线成星座、composing 是起伏的绸带。
 /**
- * 输入框的三种状态各用一种边框，让「现在在干什么」不必读文字就能看出来：
- *   idle     液态金属环 —— 静止时唯一的视觉焦点，暗示这里可以输入
- *   running  border beam —— 只在生成过程中跑，光带即进度
- *   done/err 普通线条框 —— 结果已出，边框退回背景，注意力交给正文
+ * 输入框恒定用液态金属环——它标识的是「这里可以输入」，与生成状态无关。
+ * 状态变化交给下面的思考过程框表达（生成中跑光带，结束后淡回灰色框线）。
+ *
+ * 金属环画在 canvas 上，而 canvas 是 position:absolute 排在宿主内容**之前**，
+ * 宿主只要有不透明底色就会把环整个盖住。所以底色与边框都放在 .metal-wrap
+ * （canvas 后面那一层），宿主本身保持全透明。
+ * 环宽 2px：1px 的默认值在 900px 宽的输入框上看不见，5px 又显得笨重。
  */
-function PromptFrame({ state, children }) {
-  if (state === 'running') {
-    return (
-      <div className="beam-wrap">
-        <BorderBeam size="md" colorVariant="colorful" theme="light"
-                    borderRadius={12} active>
-          <div className="prompt-wrap bare">{children}</div>
-        </BorderBeam>
-      </div>
-    )
-  }
-  if (state === 'idle') {
-    return (
-      <div className="metal-wrap">
-        {/* 金属环画在 canvas 上，而 canvas 是 position:absolute 排在宿主内容
-            **之前**——宿主自己只要有不透明底色，就会把环整个盖住。
-            所以底色与边框都移到 .metal-wrap（canvas 之后面那一层），
-            宿主本身保持全透明。normalizeHostStyles 也交还给组件默认值，
-            让它自己去处理宿主的外框样式冲突。
-            环宽 2px：1px 的默认值在 900px 宽的输入框上看不见，5px 又显得笨重。 */}
-        <MetalFx variant="button" preset="chromatic" theme="light"
-                 strength={1} ringCssPx={2} borderRadius={12}>
-          <div className="prompt-wrap bare">{children}</div>
-        </MetalFx>
-      </div>
-    )
-  }
-  return <div className="prompt-wrap plain">{children}</div>
+function PromptFrame({ children }) {
+  return (
+    <div className="metal-wrap">
+      <MetalFx variant="button" preset="chromatic" theme="light"
+               strength={1} ringCssPx={2} borderRadius={12}>
+        <div className="prompt-wrap bare">{children}</div>
+      </MetalFx>
+    </div>
+  )
 }
 
 const SUPPORTS_FIELD_SIZING =
@@ -163,7 +147,7 @@ export default function BriefView({ meta, nav }) {
         </div>
       </div>
 
-      <PromptFrame state={state}>
+      <PromptFrame>
         <textarea
           rows={1}
           ref={autoGrow}
@@ -185,8 +169,12 @@ export default function BriefView({ meta, nav }) {
         </span>
       </div>
 
+      {/* 生成中跑光带，结束后 BorderBeam 自带的淡出把光晕收掉，
+          露出 .think 一直都在的灰色框线——状态由这里表达，输入框不再参与 */}
       {(state !== 'idle') && (
-        <div className="think">
+        <BorderBeam size="md" colorVariant="colorful" theme="light"
+                    borderRadius={12} active={state === 'running'}>
+          <div className="think">
           <button className="think-head" onClick={() => setExpanded(!expanded)}>
             {state === 'running'
               ? <>
@@ -246,6 +234,7 @@ export default function BriefView({ meta, nav }) {
             </div>
           )}
         </div>
+        </BorderBeam>
       )}
 
       {err && <div className="error">{err}</div>}
