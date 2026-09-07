@@ -280,6 +280,11 @@ def export(store: Store, cfg: dict, srccfg: dict) -> dict:
     # 事件向量在这里算好进快照，线上只对用户 query 调一次 embedding 接口，
     # 余弦在 Worker 里算——这样线上不必挂向量库，也不必为检索多存一份数据。
     from pipeline import embed as EMB
+    if not EMB.available():
+        # 静默降级是最难发现的故障：页面照常渲染、接口照常 200，
+        # 只是检索质量悄悄退回词面匹配。必须记进 stats 并打印。
+        stats["vectors"] = 0
+        stats["_warn_vectors"] = "缺 JINA_API_KEY，未生成事件向量，线上语义检索降级为词面匹配"
     if EMB.available():
         texts, ids = [], []
         for e in ev_rows:
@@ -296,7 +301,7 @@ def export(store: Store, cfg: dict, srccfg: dict) -> dict:
 
     # 文档站快照与数据走同一条链路，跑批时一起刷新
     from pipeline.docs_export import export_docs
-    d = export_docs()
+    d = export_docs(store, cfg)
     stats["docs"] = d["docs"]
     total += d["kb"] * 1024
 
@@ -313,5 +318,9 @@ if __name__ == "__main__":
     r = export(st, cfg, srccfg)
     st.close()
     print("已导出 API 快照 → web/public/api/v1/")
-    print("  " + "  ".join(f"{k}={v}" for k, v in r.items() if k != "bytes"))
+    print("  " + "  ".join(f"{k}={v}" for k, v in r.items()
+                           if k != "bytes" and not k.startswith("_")))
+    for k, v in r.items():
+        if k.startswith("_warn"):
+            print(f"  ⚠️  {v}")
     print(f"  总体积 {r['bytes'] / 1024:.0f} KB")

@@ -113,6 +113,11 @@ jobs:
       # Worker 读的是 web/public/api/ 里的快照，不是 JSONL
       - name: 生成前端 API 快照
         if: steps.gate.outputs.run == 'true'
+        # JINA_API_KEY 必须在这一步也给到：导出会重算事件向量，缺 key 时
+        # vectors.json 不会生成，而 export 开头又会清空整个目录——
+        # 结果是每轮跑批把线上的语义检索静默降级回词面匹配
+        env:
+          JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
         run: python -m pipeline.export
 
       - name: 提交数据变更

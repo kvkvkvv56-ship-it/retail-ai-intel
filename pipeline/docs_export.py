@@ -12,7 +12,7 @@ import json
 import re
 from pathlib import Path
 
-from pipeline.store import ROOT
+from pipeline.store import ROOT, Store
 
 DOCS = ROOT / "docs"
 OUT = ROOT / "web" / "public" / "api" / "v1" / "docs"
@@ -31,6 +31,114 @@ REGISTRY = [
 ]
 
 _H = re.compile(r"^(#{1,3})\s+(.+?)\s*$")
+_LIVE = re.compile(r"(<!-- live:(\w+) -->\n)(.*?)(<!-- /live -->)", re.S)
+
+
+# ==================================================================== 活数字
+#
+# 文档里的统计数字每跑一轮就过期。手工改跟不上，写死又会越来越假。
+# 所以把这些数字圈进 <!-- live:xxx --> ... <!-- /live --> 区块，
+# 每次导出时按当前库重算并**写回 .md 文件本身**——
+# 这样 GitHub 上看到的原文和站上看到的渲染结果始终一致。
+
+def _tbl(rows: list[tuple[str, object]]) -> str:
+    return "| | |\n|---|---|\n" + "".join(f"| {k} | {v} |\n" for k, v in rows)
+
+
+def _dist(store, sql: str, label: str, order: list[str] | None = None) -> str:
+    d = {r[0]: r[1] for r in store.db.execute(sql)}
+    keys = [k for k in (order or []) if k in d] or sorted(d, key=lambda k: -d[k])
+    keys += [k for k in sorted(d, key=lambda k: -d[k]) if k not in keys]
+    return (f"| {label} | 事件数 |\n|---|---|\n"
+            + "".join(f"| {k or '未判定'} | {d[k]} |\n" for k in keys))
+
+
+def live_blocks(store, cfg: dict | None = None) -> dict[str, str]:
+    n = lambda t: store.one(f"SELECT COUNT(*) FROM {t}") or 0          # noqa: E731
+    kind = {r[0]: r[1] for r in store.db.execute(
+        "SELECT kind, COUNT(*) FROM claims GROUP BY 1")}
+    cname = {c["id"]: c["name"] for c in (cfg or {}).get("companies", [])}
+    comp = {cname.get(r[0], r[0]): r[1] for r in store.db.execute(
+        "SELECT company, COUNT(*) FROM events GROUP BY 1 ORDER BY 2 DESC")}
+    rev = {r[0]: r[1] for r in store.db.execute(
+        "SELECT review_state, COUNT(*) FROM events GROUP BY 1")}
+    orgs = {r[0]: r[1] for r in store.db.execute(
+        "SELECT independent_orgs, COUNT(*) FROM events GROUP BY 1")}
+    ev = n("events")
+    single = orgs.get(1, 0)
+    date_hi = store.one("SELECT MAX(event_date) FROM events") or "—"
+    date_lo = store.one("SELECT MIN(event_date) FROM events") or "—"
+    with_out = store.one("SELECT COUNT(DISTINCT source_id) FROM items") or 0
+
+    return {
+        "counts": _tbl([
+            ("事件", ev),
+            ("原始条目", n("items")),
+            (f"断言（事实 {kind.get('fact', 0)} / 推断 {kind.get('inference', 0)}"
+             f" / 建议 {kind.get('recommendation', 0)}）", n("claims")),
+            ("事件关系边", n("edges")),
+            ("拒绝台账", f"{n('rejects'):,}"),
+            (f"登记信源（其中 {with_out} 个有实际产出）", n("sources")),
+            ("周报", f"{n('reports')} 期"),
+            ("复核记录", n("reviews")),
+            ("运行轮次", n("runs")),
+        ]) + f"\n事件日期跨度 {date_lo} ~ {date_hi}。",
+
+        "companies": "**观察主体分布**：" + " · ".join(
+            f"{k} {v}" for k, v in list(comp.items())[:8]),
+
+        "confidence": _dist(
+            store, "SELECT confidence, COUNT(*) FROM events GROUP BY 1", "置信度",
+            ["官方确认·多源印证", "官方一手", "多源已验证", "深度单源", "单源待确认"])
+        + f"\n独立组织数为 1 的有 {single} 个，占 "
+          f"{round(single / ev * 100) if ev else 0}%。",
+
+        "stage": _dist(store, "SELECT stage, COUNT(*) FROM events GROUP BY 1", "落地阶段",
+                       ["概念宣传", "试点探索", "已上线", "规模化应用"]),
+
+        "rejects": "| 拦截层 | 条数 |\n|---|---|\n" + "".join(
+            f"| `{r[0]}` | {r[1]:,} |\n" for r in store.db.execute(
+                "SELECT stage, COUNT(*) FROM rejects GROUP BY 1 ORDER BY 2 DESC")),
+
+        "review": (f"复核态：持续观察 {rev.get('watching', 0)} · "
+                   f"已确认 {rev.get('confirmed', 0)} · "
+                   f"无需复核 {rev.get('none', 0)} · "
+                   f"**待复核 {rev.get('pending', 0) + rev.get('suspect_duplicate', 0)}**"),
+
+        "channels": "**采集通道分布**：" + " · ".join(
+            f"{r[0]} {r[1]}" for r in store.db.execute(
+                "SELECT channel, COUNT(*) FROM items GROUP BY 1 ORDER BY 2 DESC")),
+
+        "classes": "**原始条目一手性分布**：" + " · ".join(
+            f"{r[0]} {r[1]}" for r in store.db.execute(
+                "SELECT effective_class, COUNT(*) FROM items GROUP BY 1 ORDER BY 1")),
+    }
+
+
+def refresh_live(store, cfg=None) -> int:
+    """把 live 区块按当前库重写回 .md 文件。返回改动的区块数。"""
+    blocks = live_blocks(store, cfg)
+    changed = 0
+    for f in list(DOCS.glob("*.md")) + [ROOT / "README.md"]:
+        if not f.exists():
+            continue
+        src = f.read_text(encoding="utf-8")
+
+        def sub(m):
+            nonlocal changed
+            name, old = m.group(2), m.group(3)
+            new = blocks.get(name)
+            if new is None:
+                return m.group(0)
+            new = new.rstrip("\n") + "\n"
+            if new != old:
+                changed += 1
+            return m.group(1) + new + m.group(4)
+
+        out = _LIVE.sub(sub, src)
+        if out != src:
+            f.write_text(out, encoding="utf-8")
+    return changed
 _FM = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 _FENCE = re.compile(r"^\s*```")
 
@@ -72,7 +180,10 @@ def outline(md: str) -> list[dict]:
     return items
 
 
-def export_docs() -> dict:
+def export_docs(store=None, cfg=None) -> dict:
+    # 先把文档里的活数字按当前库刷一遍，再导出
+    live = refresh_live(store or Store(), cfg)
+
     if OUT.exists():
         for f in OUT.glob("*.json"):
             f.unlink()
@@ -106,12 +217,14 @@ def export_docs() -> dict:
            "results": index}
     txt = json.dumps(idx, ensure_ascii=False, separators=(",", ":"))
     (OUT.parent / "docs.json").write_text(txt, encoding="utf-8")
-    return {"docs": len(index), "missing": missing,
+    return {"docs": len(index), "missing": missing, "live": live,
             "kb": round((total + len(txt)) / 1024)}
 
 
 if __name__ == "__main__":
     r = export_docs()
     print(f"已导出文档快照 {r['docs']} 份 → web/public/api/v1/docs/  ({r['kb']} KB)")
+    if r["live"]:
+        print(f"  活数字区块已刷新 {r['live']} 处")
     if r["missing"]:
         print(f"  ⚠️ 缺失：{'、'.join(r['missing'])}")
