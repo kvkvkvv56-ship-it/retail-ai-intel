@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import { api, fmtDate } from '../api.js'
+import { api } from '../api.js'
 import { Empty } from '../components/Bits.jsx'
 
 /**
- * 全部周报存档。侧栏只留最近 10 期，其余从这里进。
+ * 全部周报存档。侧栏只留最近 5 期，其余从这里进。
  * 每行给「期数 + 窗口 + 主线判断」——只给日期的话，读者无从判断值不值得点。
+ * 不列生成时间：周报是可重出的，全量重出后这一列会变成一模一样的日期，
+ * 占着版面却不带信息。要看某期何时生成，进详情页页脚。
  */
 export default function ReportsIndex({ nav }) {
   const [list, setList] = useState(null)
@@ -32,7 +34,6 @@ export default function ReportsIndex({ nav }) {
               <span className="rep-no tnum">第 {list.total - i} 期</span>
               <span className="rep-win tnum d">{r.period_start} ~ {r.period_end}</span>
               <span className="rep-hl">{r.headline}</span>
-              <span className="rep-gen tnum d">{fmtDate(r.generated_at)}</span>
             </button>
           </li>
         ))}
