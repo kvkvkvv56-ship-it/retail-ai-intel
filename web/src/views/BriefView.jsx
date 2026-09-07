@@ -75,6 +75,7 @@ export default function BriefView({ meta, nav }) {
     setExpanded(true)
     const ctrl = new AbortController()
     abort.current = ctrl
+    const startedAt = Date.now()
 
     try {
       const r = await fetch('/api/v1/briefs/generate', {
@@ -105,11 +106,27 @@ export default function BriefView({ meta, nav }) {
           else if (ev === 'sources') setCited(d.events || [])
           else if (ev === 'web_sources') setWebSrc(d)
           else if (ev === 'token') setText((t) => t + d.t)
-          else if (ev === 'done') { setElapsed(d.elapsed_ms); setState('done'); setExpanded(false) }
+          else if (ev === 'done') {
+            // 服务端没带 elapsed_ms 时用本地计时兜底，否则 undefined/1000
+            // 会在界面上显示成「耗时 NaNs」
+            setElapsed(Number.isFinite(d.elapsed_ms) ? d.elapsed_ms
+                                                     : Date.now() - startedAt)
+            setState('done'); setExpanded(false)
+          }
           else if (ev === 'error') { setErr(d.message); setState('error') }
         }
       }
-      setState((s) => (s === 'running' ? 'done' : s))
+      // 流在没发 done 事件的情况下结束（连接中断、标签页被挂起）：
+      // 有正文就当完成，什么都没有就是失败，不能默默标成「已完成」
+      setState((prev) => {
+        if (prev !== 'running') return prev
+        setElapsed((e) => e || Date.now() - startedAt)
+        return 'done'
+      })
+      setText((t) => {
+        if (!t.trim()) setErr('生成中断：连接提前结束，未收到内容。请重试。')
+        return t
+      })
     } catch (e) {
       if (e.name !== 'AbortError') { setErr(String(e.message || e)); setState('error') }
     }
@@ -178,7 +195,10 @@ export default function BriefView({ meta, nav }) {
                   <span className="shimmer">{curStep?.text || '准备中'}</span>
                 </>
               : <span className="d">
-                  思考过程 · {steps.length} 步 · 耗时 {(elapsed / 1000).toFixed(1)}s
+                  思考过程
+                  {steps.length > 0 && ` · ${steps.length} 步`}
+                  {Number.isFinite(elapsed) && elapsed > 0
+                    && ` · 耗时 ${(elapsed / 1000).toFixed(1)}s`}
                   {expanded ? ' ▲' : ' ▼'}
                 </span>}
           </button>
