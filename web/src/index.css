@@ -628,11 +628,16 @@ a { color: inherit; text-decoration: none; }
 /* ==================================================================== 文档站
    三栏：文档目录 / 正文 / 本页目录。正文限宽 72ch —— 长行会显著拖慢阅读，
    开发者文档尤其，因为读者要在代码块与散文之间反复跳。 */
+/* 挣脱 .wrap 的 960px：正文保持与顶栏同宽（912px）居中，
+   章节栏与目录栏用掉两侧的剩余空间，一直铺到屏幕边缘 */
 .docs-layout {
+  width: 100vw; margin-left: calc(50% - 50vw);
+  padding-left: 28px; padding-right: 28px;
   display: grid;
-  grid-template-columns: 208px minmax(0, 1fr) 172px;
-  gap: 40px; align-items: start;
+  grid-template-columns: minmax(196px, 1fr) minmax(0, 912px) minmax(176px, 1fr);
+  gap: 40px; align-items: start; justify-content: center;
 }
+.docs-main { min-width: 0; }
 .docs-nav, .docs-toc { position: sticky; top: 112px; max-height: calc(100vh - 140px); overflow-y: auto; }
 .docs-nav::-webkit-scrollbar, .docs-toc::-webkit-scrollbar { width: 0; }
 
@@ -675,12 +680,15 @@ a { color: inherit; text-decoration: none; }
 .docs-crumb code { font-size: 10.5px; }
 
 /* -------------------------------------------------- Markdown 正文排版 */
-.md { max-width: 72ch; }
+/* 正文与顶栏同宽，不再另设 ch 限宽 */
+.md { max-width: 100%; }
 .md > *:first-child { margin-top: 0; }
 .md h1, .md h2, .md h3, .md h4 { position: relative; scroll-margin-top: 108px; }
 .md h1 {
-  font-family: var(--title); font-size: 26px; font-weight: 400;
-  letter-spacing: .01em; margin: 0 0 20px;
+  /* 正文标题一律用 OPPO Sans。京东朗正体是 4KB 子集，只覆盖站名那几个字，
+     用在别处会逐字回退到系统字体，同一行里混两种字面 */
+  font-family: var(--sans); font-size: 25px; font-weight: 600;
+  letter-spacing: -.01em; margin: 0 0 20px;
 }
 .md h2 {
   font-size: 17px; font-weight: 600; margin: 44px 0 14px;
@@ -764,8 +772,11 @@ a { color: inherit; text-decoration: none; }
 .pg-k { font-size: 10.5px; color: var(--faint); }
 .pg-t { font-size: 12.5px; color: var(--text); }
 
-@media (max-width: 1100px) {
-  .docs-layout { grid-template-columns: 190px minmax(0, 1fr); }
+@media (max-width: 1360px) {
+  .docs-layout { grid-template-columns: minmax(190px, 1fr) minmax(0, 3fr) minmax(168px, 1fr); }
+}
+@media (max-width: 1080px) {
+  .docs-layout { grid-template-columns: 186px minmax(0, 1fr); gap: 32px; }
   .docs-toc { display: none; }
 }
 @media (max-width: 780px) {
@@ -811,3 +822,61 @@ a { color: inherit; text-decoration: none; }
   font-size: 11.5px; line-height: 1.7; color: var(--muted); max-width: 72ch;
 }
 .funnel-note b { color: var(--text-2); font-weight: 600; }
+
+
+/* ==================================================================== 折叠菜单
+   顶部导航 / 周报往期 / 文档章节在窄屏下的统一形态。
+   桌面端一律隐藏——常驻列表信息量更大，没必要多一次点击。 */
+.collapse { display: none; position: relative; }
+.collapse-head {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 10px 14px; cursor: pointer;
+  background: var(--bg); border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  font-family: var(--sans); font-size: 12.5px; color: var(--text); text-align: left;
+}
+.ch-k { font-size: 10.5px; color: var(--faint); flex: none; }
+.ch-cur {
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-weight: 500;
+}
+.ch-arrow { flex: none; color: var(--muted); font-size: 10px; transition: transform var(--duration-fast) var(--ease-smooth-out); }
+.collapse.open .ch-arrow { transform: rotate(180deg); }
+.collapse.open .collapse-head { border-color: var(--muted); }
+.collapse-body {
+  position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; right: 0;
+  max-height: 60vh; overflow-y: auto;
+  background: var(--bg); border: 1px solid var(--line);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-elevated);
+  padding: 6px;
+}
+.cb-item {
+  display: flex; flex-direction: column; gap: 2px; width: 100%;
+  padding: 9px 12px; cursor: pointer; border: 0; border-radius: var(--radius-sm);
+  background: none; font-family: var(--sans); font-size: 12.5px;
+  color: var(--text-2); text-align: left;
+}
+.cb-item:hover { background: var(--bg-warm); }
+.cb-item.on { background: var(--bg-warm); color: var(--text); font-weight: 600; }
+.cb-item .n { font-size: 10px; color: var(--faint); margin-left: 6px; }
+.cb-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cb-d {
+  font-size: 10.5px; color: var(--faint); line-height: 1.45;
+  overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.cb-item.lv3 .cb-t { padding-left: 12px; color: var(--muted); font-size: 11.5px; }
+
+@media (max-width: 780px) {
+  .collapse { display: block; }
+  .tabs { display: none; }
+  .nav-collapse { margin: 0 0 14px; }
+  .header-row { align-items: stretch; flex-direction: column; gap: 0; }
+  .site-header { padding-bottom: 0; }
+
+  /* 周报与文档：桌面的常驻侧栏收起，换成折叠菜单 */
+  .rep-side, .docs-nav, .docs-toc { display: none; }
+  .rep-collapse, .docs-collapse { margin-bottom: 14px; }
+  .rep-layout, .docs-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .docs-layout { width: auto; margin-left: 0; padding-left: 0; padding-right: 0; }
+}

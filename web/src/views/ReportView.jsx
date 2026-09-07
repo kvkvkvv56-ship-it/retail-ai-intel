@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { api, fmtDate } from '../api.js'
-import { Empty } from '../components/Bits.jsx'
+import { Collapse, Empty } from '../components/Bits.jsx'
 
 /** 侧栏最多列这么多期。再多就进「全部周报」页——周报是持续产出物，
  *  期数只会单调增长，列表必须有个不随时间膨胀的上界 */
@@ -35,6 +35,19 @@ export default function ReportView({ meta, nav, id }) {
     <div className="view rep-layout">
       {/* 往期列表常驻左侧。原来横排在正文之上，期数一多就会把正文顶下去，
           而且没有可扩展的落点 */}
+      {/* 窄屏：折叠成一行「第 N 期 · 日期」，点开选期。
+          原来是横向滚动条，看不全也不知道自己在第几期 */}
+      <Collapse className="rep-collapse" label="往期周报"
+                current={`第 ${list.total - idx} 期 · ${rep.period_start.slice(5)}`}>
+        {list.results.map((r, i) => (
+          <button key={r.id} className={`cb-item ${r.id === rep.id ? 'on' : ''}`}
+                  onClick={() => nav(`/report/${r.id}`)}>
+            <span className="cb-t">第 {list.total - i} 期 · {r.period_start.slice(5)}</span>
+            <span className="cb-d">{r.headline}</span>
+          </button>
+        ))}
+      </Collapse>
+
       <aside className="rep-side">
         <p className="side-k">往期周报</p>
         <ul className="side-list">

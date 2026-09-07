@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { api, offline, onOffline } from './api.js'
+import { Collapse } from './components/Bits.jsx'
 import RunView from './views/RunView.jsx'
 import EventsView from './views/EventsView.jsx'
 import EventDetail from './views/EventDetail.jsx'
@@ -9,6 +10,15 @@ import ReportView from './views/ReportView.jsx'
 import ReportsIndex from './views/ReportsIndex.jsx'
 import BriefView from './views/BriefView.jsx'
 import DocsView from './views/DocsView.jsx'
+
+const VIEWS = [
+  { k: 'run', to: '/', label: '运行回放' },
+  { k: 'events', to: '/events', label: '事件库', n: 'events' },
+  { k: 'report', to: '/report', label: '周报' },
+  { k: 'brief', to: '/brief', label: '定制简报' },
+  { k: 'sources', to: '/sources', label: '信源', n: 'sources' },
+  { k: 'docs', to: '/docs', label: '文档' },
+]
 
 const Tab = ({ on, go, n, children }) => (
   <button className={`tab ${on ? 'on' : ''}`} onClick={go}>
@@ -78,14 +88,23 @@ export default function App() {
           <div>
             <h1 onClick={() => nav('/')}>行业与竞对 AI 洞察情报站</h1>
           </div>
+          {/* 桌面常驻横排；窄屏由 CSS 换成下面的折叠菜单 */}
           <nav className="tabs">
-            <Tab on={tab === 'run'} go={() => nav('/')}>运行回放</Tab>
-            <Tab on={tab === 'events'} go={() => nav('/events')} n={meta?.counts.events}>事件库</Tab>
-            <Tab on={tab === 'report'} go={() => nav('/report')}>周报</Tab>
-            <Tab on={tab === 'brief'} go={() => nav('/brief')}>定制简报</Tab>
-            <Tab on={tab === 'sources'} go={() => nav('/sources')} n={meta?.counts.sources}>信源</Tab>
-            <Tab on={tab === 'docs'} go={() => nav('/docs')}>文档</Tab>
+            {VIEWS.map((v) => (
+              <Tab key={v.k} on={tab === v.k} go={() => nav(v.to)}
+                   n={v.n ? meta?.counts[v.n] : undefined}>{v.label}</Tab>
+            ))}
           </nav>
+          <Collapse className="nav-collapse" label="视图"
+                    current={VIEWS.find((v) => v.k === tab)?.label || '运行回放'}>
+            {VIEWS.map((v) => (
+              <button key={v.k} className={`cb-item ${tab === v.k ? 'on' : ''}`}
+                      onClick={() => nav(v.to)}>
+                {v.label}
+                {v.n && <span className="n">{meta?.counts[v.n]}</span>}
+              </button>
+            ))}
+          </Collapse>
         </div>
       </header>
       {isOffline && (

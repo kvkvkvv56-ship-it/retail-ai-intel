@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 const CONF_CLS = {
   '官方确认·多源印证': 'conf-v', '多源已验证': 'conf-v',
@@ -47,3 +47,45 @@ export function TimeMark({ at, source }) {
 }
 
 export const Empty = ({ children }) => <p className="empty">{children}</p>
+
+/**
+ * 窄屏折叠菜单。
+ *
+ * 顶部导航、周报往期、文档章节在手机上原本都是横向滚动条——横滚看不全，
+ * 也不知道自己在第几项。统一改成「显示当前项 + 点开选择」：
+ * 收起时只占一行，展开时是一份完整清单。
+ *
+ * 桌面端由 CSS 隐藏本组件、显示原来的常驻列表，两套结构互不干扰。
+ */
+export function Collapse({ label, current, children, className = '' }) {
+  const [open, setOpen] = useState(false)
+  const box = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const away = (e) => { if (!box.current?.contains(e.target)) setOpen(false) }
+    const esc = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('pointerdown', away)
+    document.addEventListener('keydown', esc)
+    return () => {
+      document.removeEventListener('pointerdown', away)
+      document.removeEventListener('keydown', esc)
+    }
+  }, [open])
+
+  return (
+    <div className={`collapse ${open ? 'open' : ''} ${className}`} ref={box}>
+      <button className="collapse-head" onClick={() => setOpen(!open)}
+              aria-expanded={open}>
+        <span className="ch-k">{label}</span>
+        <span className="ch-cur">{current}</span>
+        <span className="ch-arrow" aria-hidden>▾</span>
+      </button>
+      {open && (
+        <div className="collapse-body" onClick={() => setOpen(false)}>
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}

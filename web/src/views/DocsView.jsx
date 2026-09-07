@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { marked } from 'marked'
 import { api } from '../api.js'
-import { Empty } from '../components/Bits.jsx'
+import { Collapse, Empty } from '../components/Bits.jsx'
 
 /**
  * 站内文档站。
@@ -177,6 +177,31 @@ export default function DocsView({ id, nav }) {
 
   return (
     <div className="view docs-layout">
+      {/* 窄屏：文档选择与本页目录都折叠成一行 */}
+      <Collapse className="docs-collapse" label="文档"
+                current={doc?.title.split('·').pop().trim() || '载入中'}>
+        {index.results.map((dd) => (
+          <button key={dd.id} className={`cb-item ${dd.id === docId ? 'on' : ''}`}
+                  onClick={() => nav(`/docs/${dd.id}`)}>
+            <span className="cb-t">{dd.title.split('·').pop().trim()}</span>
+            <span className="cb-d">{dd.description}</span>
+          </button>
+        ))}
+      </Collapse>
+      {toc.length > 0 && (
+        <Collapse className="docs-collapse toc-collapse" label="本页目录"
+                  current={toc.find((h) => h.id === active)?.text || toc[0].text}>
+          {toc.map((h) => (
+            <button key={h.id} className={`cb-item lv${h.level} ${active === h.id ? 'on' : ''}`}
+                    onClick={() => bodyRef.current
+                      ?.querySelector(`[id="${CSS.escape(h.id)}"]`)
+                      ?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              <span className="cb-t">{h.text}</span>
+            </button>
+          ))}
+        </Collapse>
+      )}
+
       {/* ------------------------------- 左：文档目录 */}
       <aside className="docs-nav">
         {index.groups.map((g) => (
