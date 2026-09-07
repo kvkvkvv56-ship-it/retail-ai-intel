@@ -352,11 +352,14 @@ a { color: inherit; text-decoration: none; }
 .prompt-wrap textarea {
   display: block; width: 100%; border: 0; outline: none; background: transparent;
   font-family: var(--sans); font-size: 14px; line-height: 1.7; color: var(--text);
-  /* 单行起步，随内容自增，到上限后内部滚动。
+  /* 单行起步，随内容自增，到 300px 后内部滚动。
      field-sizing 在新版 Chrome 原生支持；旧内核由 JS 兜底（BriefView 里 autoGrow）。
+     **不能写 height**——显式高度会盖过 field-sizing: content，
+     结果是输入框永远停在一行、文字直接横向划走（实测就是这个症状）。
+     只给 min/max，中间交给 field-sizing 或 JS 兜底。
      不给 resize 手柄——拖拽把手会破坏版面。 */
   resize: none; overflow-y: auto;
-  min-height: 24px; height: 24px; max-height: 300px;
+  min-height: 24px; max-height: 300px;
   field-sizing: content;
 }
 .prompt-wrap textarea::placeholder { color: var(--faint); }
