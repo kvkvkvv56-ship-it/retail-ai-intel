@@ -30,9 +30,9 @@ function PromptFrame({ state, children }) {
             所以底色与边框都移到 .metal-wrap（canvas 之后面那一层），
             宿主本身保持全透明。normalizeHostStyles 也交还给组件默认值，
             让它自己去处理宿主的外框样式冲突。
-            环默认 1px，在 900px 宽的输入框上看不见，加到 5px。 */}
+            环宽 2px：1px 的默认值在 900px 宽的输入框上看不见，5px 又显得笨重。 */}
         <MetalFx variant="button" preset="chromatic" theme="light"
-                 strength={1} ringCssPx={5} borderRadius={12}>
+                 strength={1} ringCssPx={2} borderRadius={12}>
           <div className="prompt-wrap bare">{children}</div>
         </MetalFx>
       </div>
