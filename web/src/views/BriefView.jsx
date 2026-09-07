@@ -25,11 +25,14 @@ function PromptFrame({ state, children }) {
   if (state === 'idle') {
     return (
       <div className="metal-wrap">
-        {/* button 变体的环默认只有 1px，在这么宽的输入框上几乎看不见，
-            加到 2px 才有金属边的观感 */}
+        {/* 金属环画在 canvas 上，而 canvas 是 position:absolute 排在宿主内容
+            **之前**——宿主自己只要有不透明底色，就会把环整个盖住。
+            所以底色与边框都移到 .metal-wrap（canvas 之后面那一层），
+            宿主本身保持全透明。normalizeHostStyles 也交还给组件默认值，
+            让它自己去处理宿主的外框样式冲突。
+            环默认 1px，在 900px 宽的输入框上看不见，加到 5px。 */}
         <MetalFx variant="button" preset="chromatic" theme="light"
-                 strength={0.9} ringCssPx={2} borderRadius={12}
-                 normalizeHostStyles={false}>
+                 strength={1} ringCssPx={5} borderRadius={12}>
           <div className="prompt-wrap bare">{children}</div>
         </MetalFx>
       </div>

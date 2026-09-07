@@ -325,10 +325,21 @@ a { color: inherit; text-decoration: none; }
 /* 被 beam 包着时不要自己的边框——光带就是边，两层会显得脏 */
 .prompt-wrap.bare { border-color: transparent; }
 .prompt-wrap.bare:focus-within { box-shadow: none; }
-/* metal 例外：金属环是**游走的高光**，任一瞬间只点亮一段周长，
-   底下没有稳定边框的话，输入框看上去就是个断掉的方框。
-   保留一条常规细线，金属光晕叠在它外面 */
-.metal-wrap .prompt-wrap.bare { border-color: var(--line); }
+/* metal 状态下仍保留自己的细边框。
+   试过把边框去掉、只靠金属环定义边缘——结果是 WebGL 一旦没画（标签页
+   后台、rAF 被挂起、显卡不支持），输入框会整个消失，连placeholder都找不到边。
+   边界不能交给一个可能不渲染的东西。金属环是叠加层，不是唯一的边。 */
+/* 底色与边框放在 canvas 后面的这一层。宿主自己必须全透明，
+   否则会把金属环盖掉（canvas 是 absolute，排在宿主内容之前）。
+   边框留在这里还有个作用：WebGL 不渲染时（标签页后台、rAF 挂起、
+   显卡不支持）输入框仍有可见边界，不会整个消失。 */
+.metal-wrap {
+  background: var(--bg); border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+.metal-wrap .prompt-wrap.bare {
+  border-color: transparent; background: transparent;
+}
 /* 生成结束：退回普通黑色线条框，注意力交给正文 */
 .prompt-wrap.plain { border-color: var(--text); }
 .prompt-wrap:focus-within { box-shadow: var(--shadow-elevated); }
