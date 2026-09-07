@@ -395,8 +395,6 @@ def main() -> int:
               f"（fact {ex['facts']} / inference {ex['inferences']}），"
               f"D类跳过 {ex['skipped_D']}，判无关 {ex['irrelevant']}")
 
-        PR.cache_drafts(store)
-
         print("\n[S4] 事件归并（按公司通读聚类）")
         mg = PR.stage_merge(store, llm, cfg, run_id)
         print(f"  → {mg['candidates']} 条候选归并为 {mg['events']} 个事件"

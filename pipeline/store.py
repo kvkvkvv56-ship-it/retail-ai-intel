@@ -53,7 +53,8 @@ CREATE TABLE IF NOT EXISTS items (
   channel         TEXT,
   simhash         TEXT,
   status          TEXT DEFAULT 'pending',
-  event_id        TEXT
+  event_id        TEXT,
+  draft_stage     TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_items_run    ON items(run_id);
 CREATE INDEX IF NOT EXISTS idx_items_status ON items(status);
@@ -144,7 +145,8 @@ TABLES: dict[str, list[str]] = {
                 "affiliated_with", "reliability", "partial_content", "active", "note"],
     "items": ["id", "url", "url_canonical", "title", "content", "source_id", "source_class",
               "original_source", "effective_class", "published_at", "time_source",
-              "discovered_at", "run_id", "channel", "simhash", "status", "event_id"],
+              "discovered_at", "run_id", "channel", "simhash", "status", "event_id",
+              "draft_stage"],
     "events": ["id", "event_key", "title", "summary", "company", "domains", "stage",
                "stage_basis", "confidence", "status", "first_seen_at", "last_update_at",
                "event_date", "independent_orgs", "review_state"],
@@ -168,7 +170,16 @@ class Store:
         self.db = sqlite3.connect(db_path)
         self.db.row_factory = sqlite3.Row
         self.db.executescript(SCHEMA)
+        self._migrate()
         self.db.commit()
+
+    def _migrate(self) -> None:
+        """CREATE TABLE IF NOT EXISTS 不会给已存在的表补列。
+        新增列必须在这里显式补，否则老库跑新代码会静默走空值分支。"""
+        for table, col, ddl in (("items", "draft_stage", "TEXT"),):
+            have = {r[1] for r in self.db.execute(f"PRAGMA table_info({table})")}
+            if col not in have:
+                self.db.execute(f"ALTER TABLE {table} ADD COLUMN {col} {ddl}")
 
     # ---------------------------------------------------------------- 基础
     def close(self) -> None:

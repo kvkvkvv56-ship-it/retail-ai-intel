@@ -123,10 +123,15 @@ def stage_extract(store, llm, cfg: dict, run_id: str, srccfg: dict) -> dict:
                 stats["irrelevant"] += 1
                 continue
 
-            # 抽取结果暂存在 items 上，S4 归并后才建 event
+            # 抽取结果暂存在 items 上，S4 归并后才建 event。
+            # draft_stage 单独落一列：event_id 上的 draft 前缀会被 S4 覆盖，
+            # 而 S5 每轮都要对**全库**事件重算阶段——只留在内存里，
+            # 老事件下一轮就会被重算成「信息不足」。
             store.db.execute(
-                "UPDATE items SET status='extracted', event_id=? WHERE id=?",
-                ("draft:" + json.dumps(res, ensure_ascii=False), it["id"]))
+                "UPDATE items SET status='extracted', event_id=?, draft_stage=? WHERE id=?",
+                ("draft:" + json.dumps(res, ensure_ascii=False),
+                 res.get("stage") if res.get("stage") in STAGE_ORDER else None,
+                 it["id"]))
             stats["extracted"] += 1
             stats["facts"] += len(res.get("facts") or [])
             stats["inferences"] += len(res.get("inferences") or [])
@@ -476,9 +481,6 @@ def stage_verify(store, cfg: dict, srccfg: dict) -> dict:
              "stage_discounted": 0, "backdated": 0}
 
     for ev in store.q("SELECT * FROM events"):
-        items = store.q("""SELECT i.*, c.text AS ctext FROM items i
-                           LEFT JOIN claims c ON 0 GROUP BY i.id
-                           HAVING i.event_id=?""", (ev["id"],))
         items = store.q("SELECT * FROM items WHERE event_id=?", (ev["id"],))
         if not items:
             continue
@@ -519,8 +521,7 @@ def stage_verify(store, cfg: dict, srccfg: dict) -> dict:
         # ---------- 阶段打折（技术方案 §6.2）----------
         official_stage = evidence_stage = None
         for it in items:
-            d = _draft_of(store, it["id"])
-            st = (d or {}).get("stage")
+            st = it["draft_stage"]
             if st not in STAGE_ORDER:
                 continue
             if (it["effective_class"] or "") == "A":
@@ -579,24 +580,6 @@ def stage_verify(store, cfg: dict, srccfg: dict) -> dict:
 
     store.commit()
     return stats
-
-
-def _draft_of(store, item_id: str) -> dict | None:
-    """抽取草稿在归并前暂存于 items.event_id，归并后被事件 ID 覆盖。
-    此处从 claims 反推不可行，故 S3 的 stage 单独缓存在内存表。"""
-    return _DRAFTS.get(item_id)
-
-
-_DRAFTS: dict[str, dict] = {}
-
-
-def cache_drafts(store) -> None:
-    """在 S4 覆盖 event_id 之前，把抽取草稿缓存起来供 S5 使用。"""
-    for r in store.q("SELECT id, event_id FROM items WHERE event_id LIKE 'draft:%'"):
-        try:
-            _DRAFTS[r["id"]] = json.loads(r["event_id"][6:])
-        except json.JSONDecodeError:
-            continue
 
 
 def _after(ts: str | None, ref: datetime) -> bool:
