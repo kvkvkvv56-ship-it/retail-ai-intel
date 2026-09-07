@@ -37,6 +37,12 @@ function render(md) {
       `<$1 id="${id}"><a class="anchor" href="#${id}" aria-label="链接到本节">#</a>`,
     )
   }
+  const table = renderer.table.bind(renderer)
+  renderer.table = function (token) {
+    // 包一层再滚动。直接给 table 设 display:block 会让列宽退化成
+    // 收缩到内容宽度，首列被压成一两个字一行（实测「线上地/址」竖排）
+    return `<div class="md-table">${table(token)}</div>`
+  }
   const link = renderer.link.bind(renderer)
   renderer.link = function (token) {
     const html = link(token)
@@ -85,6 +91,18 @@ export default function DocsView({ id, nav }) {
       .map((h) => ({ ...h, id: slug(h.text, seen) }))
       .filter((h) => h.level >= 2)
   }, [doc])
+
+  // Markdown 里常用「| | |」写无表头的键值表，渲染出来是一行空 th
+  // 加一条分隔线，视觉上像多了个空行
+  useEffect(() => {
+    if (!html || !bodyRef.current) return
+    bodyRef.current.querySelectorAll('table').forEach((t) => {
+      const th = [...t.querySelectorAll('thead th')]
+      if (th.length && th.every((x) => !x.textContent.trim())) {
+        t.classList.add('no-head')
+      }
+    })
+  }, [html])
 
   // 滚动高亮当前小节
   useEffect(() => {
@@ -158,6 +176,7 @@ export default function DocsView({ id, nav }) {
               <span>{doc.group}</span>
               <span className="sep">/</span>
               <code>{doc.source}</code>
+              {doc.updated && <><span className="sep">/</span><span className="tnum">{doc.updated}</span></>}
             </div>
             <div className="md" ref={bodyRef} onClick={onBodyClick}
                  dangerouslySetInnerHTML={{ __html: html }} />

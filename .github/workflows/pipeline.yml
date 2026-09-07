@@ -105,6 +105,12 @@ jobs:
                             f"旧闻 {v.get('旧闻/背景',0)}")
                   print(f"Exa ${(r.get('cost') or {}).get('total',0)}  "
                         f"LLM ¥{s.get('llm_cost_cny',0)}")
+                  # 阶段级失败已被 run.py 兜住不中断，但必须在这里露出来，
+                  # 否则「作业绿灯」会掩盖掉半条流水线没跑
+                  for e in s.get("stage_errors") or []:
+                      print(f"!! 阶段失败 {e}")
+                  for e in s.get("collect_errors") or []:
+                      print(f" ~ 采集告警 {e}")
           PY
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

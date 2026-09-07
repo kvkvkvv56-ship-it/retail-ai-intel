@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta, timezone
 
 from pipeline.llm import parse_json
 
-WEEKLY_SYS = """你是「行业与竞对 AI 洞察助手」的首席分析官，为零售业务团队产出情报洞察周报。
+WEEKLY_SYS = """你是「行业与竞对 AI 洞察情报站」的首席分析官，为零售业务团队产出情报洞察周报。
 
 角色与边界：
 - 只基于输入的事件清单判断，**不引入清单之外的信息**；单源事件支撑的结论必须标注置信边界

@@ -35,7 +35,26 @@ REGISTRY = [
 ]
 
 _H = re.compile(r"^(#{1,3})\s+(.+?)\s*$")
+_FM = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 _FENCE = re.compile(r"^\s*```")
+
+
+def strip_frontmatter(md: str) -> tuple[str, dict]:
+    """剥离 YAML frontmatter。
+
+    不剥的话它会被 Markdown 当普通文本渲染成一段散乱的 tags/created/status，
+    出现在正文最上面（线上实测就是这样）。这里只做扁平 key: value 的解析，
+    docs/ 里的 frontmatter 都是这个形状，不引入 YAML 依赖。
+    """
+    m = _FM.match(md)
+    if not m:
+        return md, {}
+    meta: dict[str, str] = {}
+    for line in m.group(1).splitlines():
+        if ":" in line and not line.startswith((" ", "-", "\t")):
+            k, v = line.split(":", 1)
+            meta[k.strip()] = v.strip()
+    return md[m.end():], meta
 
 
 def outline(md: str) -> list[dict]:
@@ -69,12 +88,13 @@ def export_docs() -> dict:
         if not src.exists():
             missing.append(fname)
             continue
-        md = src.read_text(encoding="utf-8")
+        md, fm = strip_frontmatter(src.read_text(encoding="utf-8"))
         ol = outline(md)
         # 首个一级标题作为文档标题，没有就退回文件名
         title = next((i["text"] for i in ol if i["level"] == 1), src.stem)
         body = {"id": did, "title": title, "group": group, "description": desc,
-                "source": f"docs/{fname}", "outline": ol, "markdown": md}
+                "source": f"docs/{fname}", "outline": ol, "markdown": md,
+                "updated": fm.get("created"), "status": fm.get("status")}
         txt = json.dumps(body, ensure_ascii=False, separators=(",", ":"))
         (OUT / f"{did}.json").write_text(txt, encoding="utf-8")
         total += len(txt)

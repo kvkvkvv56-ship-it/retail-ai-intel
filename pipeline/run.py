@@ -297,14 +297,17 @@ def print_funnel(stats: dict, cost: dict, errors: list[str], store: Store,
         print("  时间口径：" + "  ".join(f"{r['t']}={r['n']}" for r in rows))
 
     if llm_stats:
-        v = llm_stats["verify"]
-        print(f"\n  事件 {v['events']} 个")
+        # 阶段失败时对应的 stats 是空 dict —— 这里全部走 .get，
+        # 否则回放打印自己会抛异常，把后面的 dump() 一起带走，
+        # 等于「为了不丢数据加的容错」反倒成了丢数据的原因
+        v = llm_stats.get("verify") or {}
+        print(f"\n  事件 {v.get('events', 0)} 个")
         print("  置信度：" + "  ".join(
             f"{k}={v[k]}" for k in ("官方确认·多源印证", "官方一手", "多源已验证",
                                     "深度单源", "单源待确认") if v.get(k)))
         print("  状态：  " + "  ".join(
             f"{k}={v[k]}" for k in ("新增", "延续", "静默", "旧闻/背景") if v.get(k)))
-        m = llm_stats["merge"]
+        m = llm_stats.get("merge") or {}
         if m.get("orphan_rescued"):
             print(f"  孤儿挽回：{m['orphan_rescued']} 条未被模型分组的候选独立成事件")
         if v.get("backdated"):
@@ -314,9 +317,12 @@ def print_funnel(stats: dict, cost: dict, errors: list[str], store: Store,
             print(f"  阶段打折：{v['stage_discounted']} 个事件的官方口径被第三方下修")
         if v.get("pending_review"):
             print(f"  待人工复核：{v['pending_review']} 个单源事件")
-        u = llm_stats["llm_usage"]
-        print(f"\n  LLM：{u['calls']} 次调用（缓存命中 {u['cache_hits']}），"
-              f"in {u['in_tokens']} / out {u['out_tokens']} tokens，约 ¥{llm_stats['llm_cost_cny']}")
+        u = llm_stats.get("llm_usage") or {}
+        print(f"\n  LLM：{u.get('calls', 0)} 次调用（缓存命中 {u.get('cache_hits', 0)}），"
+              f"in {u.get('in_tokens', 0)} / out {u.get('out_tokens', 0)} tokens，"
+              f"约 ¥{llm_stats.get('llm_cost_cny', 0)}")
+        for e in llm_stats.get("stage_errors") or []:
+            print(f"\n  ✗ 阶段失败：{e}")
     if cost["queries"]:
         print(f"  Exa 成本：${cost['total']} / {cost['queries']} 组查询")
     if errors:
@@ -380,39 +386,62 @@ def main() -> int:
     print(f"  → 入库 {stats['accepted']}，拒绝 "
           f"{stats['raw'] - stats['accepted']}（全部留痕于 rejects 台账）")
 
-    llm_stats = {}
+    llm_stats: dict = {}
+    stage_errors: list[str] = []
+
+    def stage(name: str, fn, *a, **kw) -> dict:
+        """跑一个阶段，异常记账但不中断。
+
+        流水线是无人值守的：任一阶段抛异常，下面的 store.dump() 就到不了，
+        本轮采到的东西全部丢失，CI 也不会提交任何数据。单点故障（模型 429、
+        网络抖动、某条数据触发的边界情况）不该让整轮作废——各阶段本来就
+        相互独立，S5 更是对全库重算的纯规则，前面失败它照样该跑。
+        """
+        try:
+            return fn(*a, **kw) or {}
+        except Exception as e:                                   # noqa: BLE001
+            msg = f"{name}: {type(e).__name__}: {e}"
+            stage_errors.append(msg)
+            print(f"  ✗ 阶段失败（已记账，继续后续阶段）：{msg}")
+            return {}
+
     if args.stage == "all":
         llm = LLM(mock=args.mock)
 
         print("\n[S2] LLM 预筛（便宜档，吃最大调用量）")
-        ps = PR.stage_prescreen(store, llm, cfg, run_id)
-        print(f"  → 保留 {ps['keep']}，淘汰 {ps['drop']}"
-              + (f"，异常 {ps['error']}" if ps["error"] else ""))
+        ps = stage("S2", PR.stage_prescreen, store, llm, cfg, run_id)
+        if ps:
+            print(f"  → 保留 {ps['keep']}，淘汰 {ps['drop']}"
+                  + (f"，异常 {ps['error']}" if ps["error"] else ""))
 
         print("\n[S3] 结构化抽取（强档，提示词按信源一手性分流）")
-        ex = PR.stage_extract(store, llm, cfg, run_id, srccfg)
-        print(f"  → 抽出 {ex['extracted']} 条事件草稿"
-              f"（fact {ex['facts']} / inference {ex['inferences']}），"
-              f"D类跳过 {ex['skipped_D']}，判无关 {ex['irrelevant']}")
+        ex = stage("S3", PR.stage_extract, store, llm, cfg, run_id, srccfg)
+        if ex:
+            print(f"  → 抽出 {ex['extracted']} 条事件草稿"
+                  f"（fact {ex['facts']} / inference {ex['inferences']}），"
+                  f"D类跳过 {ex['skipped_D']}，判无关 {ex['irrelevant']}")
 
         print("\n[S4] 事件归并（按公司通读聚类）")
-        mg = PR.stage_merge(store, llm, cfg, run_id)
-        print(f"  → {mg['candidates']} 条候选归并为 {mg['events']} 个事件"
-              f"（合并掉 {mg['merged_away']} 条重复报道），关系边 {mg['relations']}")
+        mg = stage("S4", PR.stage_merge, store, llm, cfg, run_id)
+        if mg:
+            print(f"  → {mg['candidates']} 条候选归并为 {mg['events']} 个事件"
+                  f"（合并掉 {mg['merged_away']} 条重复报道），关系边 {mg['relations']}")
 
         print("\n[S5] 核验（纯规则）")
-        vf = PR.stage_verify(store, cfg, srccfg)
-        print(f"  → {vf['events']} 个事件完成置信度/阶段/状态判定")
+        vf = stage("S5", PR.stage_verify, store, cfg, srccfg)
+        if vf:
+            print(f"  → {vf['events']} 个事件完成置信度/阶段/状态判定")
 
         print("\n[S6] 关系边补全（规则）")
-        eg = IN.stage_edges(store)
-        print(f"  → 新增 same_actor_track 边 {eg['rule_edges']}")
+        eg = stage("S6", IN.stage_edges, store)
+        if eg:
+            print(f"  → 新增 same_actor_track 边 {eg['rule_edges']}")
 
         print("\n[S7] 洞察合成（周报）")
-        ins = IN.stage_insight(store, llm, cfg, run_id)
+        ins = stage("S7", IN.stage_insight, store, llm, cfg, run_id)
         if ins.get("error"):
             print(f"  → {ins['error']}")
-        else:
+        elif ins:
             print(f"  → 窗口 {ins['period']}，输入 {ins['events_in']} 事件")
             print(f"     关键发现 {ins['key_findings']} · 借鉴建议 {ins['implications']}"
                   f" · 观察清单 {ins['watchlist']} · 延续性检查 {ins.get('continuity', 0)}")
@@ -421,6 +450,8 @@ def main() -> int:
         llm_stats = {"prescreen": ps, "extract": ex, "merge": mg, "verify": vf,
                      "edges": eg, "insight": ins,
                      "llm_usage": llm.usage, "llm_cost_cny": llm.cost_estimate()}
+        if stage_errors:
+            llm_stats["stage_errors"] = stage_errors
 
     store.upsert("runs", {
         "id": run_id, "started_at": started, "finished_at": now_iso(),
