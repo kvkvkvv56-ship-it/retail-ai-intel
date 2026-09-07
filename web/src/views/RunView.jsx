@@ -22,6 +22,9 @@ export default function RunView({ meta, run, nav }) {
       note: `合并掉 ${s.merge?.merged_away ?? 0} 条重复报道`, to: 'merged' },
   ]
   const incremental = (s.duplicate_url ?? 0) > 0
+  // 抽取的输入多于本轮预筛保留数 = 有上轮遗留的条目被这轮捡起处理。
+  // 不说明的话漏斗会自相矛盾：「过 LLM 预筛 0」却「新增事件 6」。
+  const carried = (s.extract?.input ?? 0) - (s.prescreen?.keep ?? 0)
 
   return (
     <div className="view">
@@ -41,6 +44,13 @@ export default function RunView({ meta, run, nav }) {
           </button>
         ))}
       </div>
+      {carried > 0 && (
+        <p className="funnel-note">
+          本轮抽取的 {s.extract?.input} 条候选中，有 <b>{carried}</b> 条是上一轮
+          留在队列里、当时未能完成处理的条目——所以「新增事件」会多于本轮
+          预筛的保留数。条目不会因为某一轮失败而丢失，会在下一轮被重新捡起。
+        </p>
+      )}
 
       <p className="sec-title mt">知识库累计</p>
       <div className="statrow">
