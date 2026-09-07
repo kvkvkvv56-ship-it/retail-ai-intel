@@ -188,3 +188,5 @@
 {"from_event": "EV-948794bb", "to_event": "EV-6c318d06", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-06-11 → 2026-06-29）", "created_by": "rule"}
 {"from_event": "EV-6c318d06", "to_event": "EV-ce74c67a", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-06-29 → 2026-06-30）", "created_by": "rule"}
 {"from_event": "EV-ce74c67a", "to_event": "EV-78e11336", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-06-30 → 2026-07-27）", "created_by": "rule"}
+{"from_event": "EV-9ede7c2b", "to_event": "EV-0559f683", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-07 → 2026-09-07）", "created_by": "rule"}
+{"from_event": "EV-bb9e4563", "to_event": "EV-0dc9d6ea", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-06 → 2026-09-07）", "created_by": "rule"}

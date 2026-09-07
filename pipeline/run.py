@@ -341,6 +341,8 @@ def main() -> int:
     ap.add_argument("--mock", action="store_true",
                     help="仅用 LLM 缓存回放，零 API key 复现")
     ap.add_argument("--rebuild", action="store_true", help="从 JSONL 重建 intel.db 后退出")
+    ap.add_argument("--force-weekly", action="store_true",
+                    help="强制重出本期周报（默认：该周已有周报则跳过）")
     ap.add_argument("--no-exa", action="store_true", help="跳过 Exa 通道（零成本）")
     args = ap.parse_args()
 
@@ -439,8 +441,11 @@ def main() -> int:
             print(f"  → 新增 same_actor_track 边 {eg['rule_edges']}")
 
         print("\n[S7] 洞察合成（周报）")
-        ins = stage("S7", IN.stage_insight, store, llm, cfg, run_id)
-        if ins.get("error"):
+        ins = stage("S7", IN.stage_insight, store, llm, cfg, run_id,
+                    force=args.force_weekly)
+        if ins.get("skipped"):
+            print(f"  → {ins['skipped']}")
+        elif ins.get("error"):
             print(f"  → {ins['error']}")
         elif ins:
             print(f"  → 窗口 {ins['period']}，输入 {ins['events_in']} 事件")

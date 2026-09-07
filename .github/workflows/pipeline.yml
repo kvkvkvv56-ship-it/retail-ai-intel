@@ -167,6 +167,11 @@ jobs:
                         f"LLM ¥{s.get('llm_cost_cny',0)}")
                   # 阶段级失败已被 run.py 兜住不中断，但必须在这里露出来，
                   # 否则「作业绿灯」会掩盖掉半条流水线没跑
+                  ins = s.get("insight") or {}
+                  if ins.get("skipped"):
+                      print(f"周报 {ins.get('period','')}：{ins['skipped']}")
+                  elif ins.get("headline"):
+                      print(f"周报 {ins.get('period','')} 已生成：{ins['headline']}")
                   for e in s.get("stage_errors") or []:
                       print(f"!! 阶段失败 {e}")
                   for e in s.get("collect_errors") or []:

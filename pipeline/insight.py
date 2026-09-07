@@ -148,7 +148,7 @@ def _prev_watchlist(store, before: str | None = None) -> list[str]:
 
 
 def stage_insight(store, llm, cfg: dict, run_id: str,
-                  period_start: str | None = None) -> dict:
+                  period_start: str | None = None, force: bool = False) -> dict:
     """周报合成。输入本期事件清单 + 上期 watchlist。
 
     周期口径是**事件发生周**（event_date 落在该自然周内），不是「本轮观察到」。
@@ -170,6 +170,20 @@ def stage_insight(store, llm, cfg: dict, run_id: str,
                      ORDER BY company, event_date DESC""", (p_start, p_end))
     stats = {"period": f"{p_start}~{p_end}", "events_in": len(evs),
              "key_findings": 0, "implications": 0, "watchlist": 0, "error": None}
+
+    # 一周只出一份。流水线每天跑两轮，若不设这道闸，同一周的周报会被反复
+    # 重算并覆盖十几次——既白花模型钱，内容还每轮都在变，读者昨天看到的
+    # 结论今天可能就没了。
+    #
+    # 判据用「该周的周报是否已存在」而不是「今天是不是周一」：
+    # 效果同样是周一第一轮出上周报告，但多了自愈——某轮被 GitHub 的
+    # schedule 丢掉、或那天模型调用失败，下一轮会自动补上，
+    # 而按星期判断的话就永久错过了。
+    if not force and store.one("SELECT COUNT(*) FROM reports WHERE id=?",
+                               ("W-" + p_start,)):
+        stats["skipped"] = "本周周报已生成，跳过（--force-weekly 可重出）"
+        return stats
+
     if not evs:
         stats["error"] = f"{p_start}~{p_end} 无事件，跳过"
         return stats
