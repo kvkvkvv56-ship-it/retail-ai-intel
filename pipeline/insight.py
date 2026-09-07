@@ -206,6 +206,10 @@ def stage_insight(store, llm, cfg: dict, run_id: str,
     res = _sanitize(res, valid_ids)
 
     rid = "W-" + p_start
+    # 重出本期时先清掉上一版的建议——它们已不在任何一期周报里，
+    # 留着只会让事件详情堆积无出处的建议
+    store.db.execute("DELETE FROM claims WHERE kind='recommendation' AND attributed_to=?",
+                     (rid,))
     store.upsert("reports", {
         "id": rid, "period_start": p_start, "period_end": p_end,
         "headline": res.get("headline", ""), "body": res,
@@ -223,6 +227,10 @@ def stage_insight(store, llm, cfg: dict, run_id: str,
             store.upsert("claims", {
                 "id": cid, "event_id": eid, "kind": "recommendation",
                 "text": txt[:500], "source_item_id": None,
+                # 标上产出它的周报编号。S3 的 implication 与这里用的是同一套
+                # id 方案（sha1(event_id + "r" + text)），不打标就分不出来，
+                # 周报重出时旧版建议会永远留在事件详情里
+                "attributed_to": rid,
                 "audience": imp.get("audience"),
                 "needs_internal_data": 1 if imp.get("needs_internal_data") else 0})
 
