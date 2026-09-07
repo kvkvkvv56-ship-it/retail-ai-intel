@@ -155,12 +155,9 @@ def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
     comp_name = {c["id"]: c["name"] for c in cfg["companies"]}
     valid = set(comp_name)
     # 模型会输出体系外的主体（如 1688、阿里云），归到所属集团；无法归属的进 industry
-    alias = {"1688": "alibaba", "taobao": "alibaba", "aliyun": "alibaba",
-             "tmall": "alibaba", "taotian": "alibaba", "ali": "alibaba",
-             "qwen": "alibaba", "tongyi": "alibaba", "alimama": "alibaba",
-             "bytedance": "douyin", "doubao": "douyin", "jinritemai": "douyin",
-             "kwai": "kuaishou", "xhs": "xiaohongshu", "rednote": "xiaohongshu",
-             "jingdong": "jd", "wechat_shop": "wechat", "tencent": "wechat"}
+    # 别名同样来自 config：每个行业的子品牌归属完全不同，
+    # 硬编码等于把这套流水线焊死在电商上
+    alias = {k.lower(): v for k, v in (cfg.get("_别名") or {}).items()}
     rows = store.q("SELECT * FROM items WHERE status='extracted' ORDER BY id")
 
     by_company: dict[str, list[dict]] = {}

@@ -502,6 +502,38 @@
   "_我方": {
     "company": "jd",
     "name": "京东零售",
-    "note": "本情报站服务于京东零售。所有事件都要给出对我方的启示；京东自身的动态同样观察——追踪自家公开足迹是竞对情报的常规做法。"
-  }
+    "note": "本情报站服务于京东零售。所有事件都要给出对我方的启示；京东自身的动态同样观察——追踪自家公开足迹是竞对情报的常规做法。",
+    "audiences": [
+      "运营",
+      "商分",
+      "营销",
+      "技术",
+      "供应链"
+    ]
+  },
+  "_别名": {
+    "1688": "alibaba",
+    "taobao": "alibaba",
+    "aliyun": "alibaba",
+    "tmall": "alibaba",
+    "taotian": "alibaba",
+    "ali": "alibaba",
+    "qwen": "alibaba",
+    "tongyi": "alibaba",
+    "alimama": "alibaba",
+    "bytedance": "douyin",
+    "doubao": "douyin",
+    "jinritemai": "douyin",
+    "kwai": "kuaishou",
+    "xhs": "xiaohongshu",
+    "rednote": "xiaohongshu",
+    "jingdong": "jd",
+    "wechat_shop": "wechat",
+    "tencent": "wechat"
+  },
+  "_归属规则": [
+    "平台旗下的 AI 产品归到该平台（可灵→kuaishou、豆包与即梦→douyin、通义与千问→alibaba、言犀→jd、混元→wechat）",
+    "独立模型厂商与工具（OpenAI、Midjourney、Runway、智谱、MiniMax 等）→ ai_vendor",
+    "跨平台的监管、国标、行业级动态 → industry"
+  ]
 }

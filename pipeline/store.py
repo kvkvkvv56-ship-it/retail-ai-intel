@@ -18,6 +18,19 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 DB_PATH = ROOT / "intel.db"
 
+
+def paths_for(dataset: str | None) -> tuple[Path, Path]:
+    """数据集 → (JSONL 目录, SQLite 路径)。
+
+    主数据集（ecommerce）留在 data/ 与 intel.db —— 它是交付主体，
+    文档和 README 里的链接都指向 data/items.jsonl，不该为了对称去搬。
+    其余数据集各自落 data/<dataset>/ 与 intel-<dataset>.db，
+    两套数据完全隔离，互不污染。
+    """
+    if not dataset or dataset == "ecommerce":
+        return DATA, DB_PATH
+    return DATA / dataset, ROOT / f"intel-{dataset}.db"
+
 SCHEMA = """
 PRAGMA journal_mode = WAL;
 
@@ -165,8 +178,12 @@ APPEND_TABLES = {"edges", "rejects", "reviews"}
 
 
 class Store:
-    def __init__(self, db_path: Path = DB_PATH):
+    def __init__(self, db_path: Path | None = None, dataset: str | None = None):
+        data_dir, default_db = paths_for(dataset)
+        self.data = data_dir
+        db_path = db_path or default_db
         self.path = db_path
+        db_path.parent.mkdir(parents=True, exist_ok=True)
         self.db = sqlite3.connect(db_path)
         self.db.row_factory = sqlite3.Row
         self.db.executescript(SCHEMA)
@@ -215,7 +232,7 @@ class Store:
     # ---------------------------------------------------- JSONL 真相源同步
     def dump(self) -> dict[str, int]:
         """SQLite → data/*.jsonl。每轮运行结束调用。"""
-        DATA.mkdir(parents=True, exist_ok=True)
+        self.data.mkdir(parents=True, exist_ok=True)
         counts = {}
         for table, cols in TABLES.items():
             rows = self.db.execute(f"SELECT * FROM {table}").fetchall()
@@ -225,7 +242,7 @@ class Store:
             if order:
                 recs.sort(key=lambda x: str(x.get("id", "")))
             lines = [json.dumps(r, ensure_ascii=False, sort_keys=False) for r in recs]
-            (DATA / f"{table}.jsonl").write_text(
+            (self.data / f"{table}.jsonl").write_text(
                 "\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
             counts[table] = len(recs)
         return counts
@@ -234,7 +251,7 @@ class Store:
         """data/*.jsonl → SQLite。clone 后或人工复核前调用。"""
         counts = {}
         for table in TABLES:
-            f = DATA / f"{table}.jsonl"
+            f = self.data / f"{table}.jsonl"
             self.db.execute(f"DELETE FROM {table}")
             n = 0
             if f.exists():

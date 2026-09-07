@@ -1,0 +1,467 @@
+{
+  "_comment": "新能源汽车数据集的信源表。**通用科技/财经媒体直接从电商表复用**（它们同样报道汽车），只新增汽车垂类与整车厂官方渠道——这正是「换行业只改配置」要证明的：可复用的部分不必重做。垂类 RSS 实测大面积失效（第一电动/盖世/汽车之家/车东西/42号车库/RSSHub 路由全部 HTTPError），与电商数据集的结论一致，故绝大多数垂类走 Exa。",
+  "rsshub_instances": [
+    "https://rsshub.rssforever.com",
+    "https://hub.slarker.me"
+  ],
+  "sources": [
+    {
+      "id": "latepost",
+      "name": "晚点 LatePost",
+      "org": "media_latepost",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 1.0,
+      "channel": "jina",
+      "channel_ref": "https://r.jina.ai/https://www.latepost.com",
+      "domains": [
+        "latepost.com"
+      ],
+      "active": true,
+      "note": "三条常规通道全堵，经 Jina Reader 服务端渲染取全文（实测文章页 11288 中文字）。站点不给发布时间，event_date 由抽取阶段从正文获得。晚点覆盖机器人/汽车/芯片/云等全赛道，故先按标题做行业词粗筛，只对命中的抓全文。",
+      "article_url_pattern": "latepost\\.com/news/dj_detail\\?id=\\d+",
+      "jina_article_limit": 6
+    },
+    {
+      "id": "caixin",
+      "name": "财新网",
+      "org": "media_caixin",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 1.0,
+      "channel": "rsshub",
+      "channel_ref": "/caixin/latest",
+      "domains": [
+        "caixin.com"
+      ],
+      "active": true,
+      "partial_content": true,
+      "note": "正文付费墙，只取标题与导语，标记 partial"
+    },
+    {
+      "id": "yicai",
+      "name": "第一财经",
+      "org": "media_yicai",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 0.95,
+      "channel": "rsshub",
+      "channel_ref": "/yicai/brief",
+      "domains": [
+        "yicai.com"
+      ],
+      "active": true,
+      "note": "首页有反爬验证，RSSHub 绕过"
+    },
+    {
+      "id": "36kr",
+      "name": "36氪",
+      "org": "media_36kr",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 0.9,
+      "channel": "rsshub",
+      "channel_ref": "/36kr/newsflashes",
+      "domains": [
+        "36kr.com"
+      ],
+      "active": true,
+      "note": "含智能涌现 AI 垂类"
+    },
+    {
+      "id": "wallstreetcn",
+      "name": "华尔街见闻",
+      "org": "media_wallstreetcn",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 0.9,
+      "channel": "rsshub",
+      "channel_ref": "/wallstreetcn/news/global",
+      "domains": [
+        "wallstreetcn.com"
+      ],
+      "active": true,
+      "note": "财报电话会覆盖好"
+    },
+    {
+      "id": "tmtpost",
+      "name": "钛媒体",
+      "org": "media_tmtpost",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 0.9,
+      "channel": "rss",
+      "channel_ref": "https://www.tmtpost.com/feed",
+      "domains": [
+        "tmtpost.com"
+      ],
+      "active": true
+    },
+    {
+      "id": "guangzi",
+      "name": "光子星球",
+      "org": "media_guangzi",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [],
+      "active": true,
+      "note": "公众号为主，无直采通道"
+    },
+    {
+      "id": "huxiu",
+      "name": "虎嗅",
+      "org": "media_huxiu",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "rsshub",
+      "channel_ref": "/huxiu/article",
+      "domains": [
+        "huxiu.com"
+      ],
+      "active": true
+    },
+    {
+      "id": "pingwest",
+      "name": "品玩",
+      "org": "media_pingwest",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.8,
+      "channel": "rsshub",
+      "channel_ref": "/pingwest/status",
+      "domains": [
+        "pingwest.com"
+      ],
+      "active": true
+    },
+    {
+      "id": "sina_tech",
+      "name": "新浪科技",
+      "org": "media_sina",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.75,
+      "channel": "rsshub",
+      "channel_ref": "/sina/rollnews",
+      "domains": [
+        "sina.com.cn",
+        "sina.cn"
+      ],
+      "active": true,
+      "note": "门户，通稿高发，注意转载识别"
+    },
+    {
+      "id": "qbitai",
+      "name": "量子位",
+      "org": "media_qbitai",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "rss",
+      "channel_ref": "https://www.qbitai.com/feed",
+      "domains": [
+        "qbitai.com"
+      ],
+      "active": true
+    },
+    {
+      "id": "leiphone",
+      "name": "雷峰网",
+      "org": "media_leiphone",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "rss",
+      "channel_ref": "https://www.leiphone.com/feed",
+      "domains": [
+        "leiphone.com"
+      ],
+      "active": true,
+      "note": "含零售数智化垂类"
+    },
+    {
+      "id": "jiqizhixin",
+      "name": "机器之心",
+      "org": "media_jiqizhixin",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "rss",
+      "channel_ref": "https://wechat2rss.xlab.app/feed/51e92aad2728acdd1fda7314be32b16639353001.xml",
+      "domains": [
+        "jiqizhixin.com"
+      ],
+      "active": true,
+      "note": "官网有反爬，经 wechat2rss 公众号镜像挽回"
+    },
+    {
+      "id": "jiemian",
+      "name": "界面新闻",
+      "org": "media_jiemian",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "direct",
+      "channel_ref": "https://www.jiemian.com/lists/68.html",
+      "domains": [
+        "jiemian.com"
+      ],
+      "active": true,
+      "note": "实测 SSR 8409 字",
+      "article_url_pattern": "^/article/\\d+\\.html"
+    },
+    {
+      "id": "aihot",
+      "name": "AIHOT（发现渠道）",
+      "org": "aggregator_aihot",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "aihot",
+      "channel_ref": "https://aihot.virxact.com/api/v1",
+      "domains": [],
+      "active": true,
+      "aihot_queries": [
+        "电商",
+        "淘宝",
+        "抖音",
+        "快手",
+        "小红书",
+        "京东",
+        "微信小店",
+        "购物",
+        "导购",
+        "广告",
+        "视频生成",
+        "图像生成",
+        "数字人",
+        "素材"
+      ],
+      "note": "AI 行业动态聚合与精选站，本项目开工前做过完整拆解。它是发现渠道不是信源——落库用 links.original 指向的原文，信源按原文域名解析，解析不到时采信其 source.name 与一手性判定。使用依据：其公开规则对个人非商业与组织内部使用免费。"
+    },
+    {
+      "id": "cnevpost",
+      "name": "CnEVPost",
+      "org": "media_cnevpost",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "rss",
+      "channel_ref": "https://cnevpost.com/feed/",
+      "domains": [
+        "cnevpost.com"
+      ],
+      "active": true,
+      "note": "实测唯一仍可用的汽车垂类 RSS（50 条/次）"
+    },
+    {
+      "id": "d1ev",
+      "name": "第一电动网",
+      "org": "media_d1ev",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.8,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "d1ev.com"
+      ],
+      "active": true,
+      "note": "RSS 实测 HTTPError，改由 Exa 覆盖"
+    },
+    {
+      "id": "gasgoo",
+      "name": "盖世汽车",
+      "org": "media_gasgoo",
+      "source_class": "C",
+      "affiliated_with": null,
+      "reliability": 0.8,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "gasgoo.com",
+        "auto.gasgoo.com"
+      ],
+      "active": true,
+      "note": "RSS 与 RSSHub 路由均实测失效，改由 Exa 覆盖"
+    },
+    {
+      "id": "chedongxi",
+      "name": "车东西",
+      "org": "media_zhidx",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "zhidx.com"
+      ],
+      "active": true,
+      "note": "智驾垂类原创报道，RSS 失效，Exa 覆盖"
+    },
+    {
+      "id": "42how",
+      "name": "42号车库",
+      "org": "media_42how",
+      "source_class": "B",
+      "affiliated_with": null,
+      "reliability": 0.85,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "42how.com"
+      ],
+      "active": true,
+      "note": "深度原创，RSS 失效，Exa 覆盖"
+    },
+    {
+      "id": "autocarweekly",
+      "name": "autocarweekly",
+      "org": "media_autocarweekly",
+      "source_class": "E",
+      "affiliated_with": null,
+      "reliability": 0.7,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "autocarweekly.com"
+      ],
+      "active": true,
+      "note": "观点评论类，禁止抽取事实"
+    },
+    {
+      "id": "liauto_ir",
+      "name": "理想汽车官方",
+      "org": "liauto_official",
+      "source_class": "A",
+      "affiliated_with": "liauto",
+      "reliability": 1.0,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "lixiang.com"
+      ],
+      "active": true,
+      "note": "官网为 CSR 页面，直抓拿不到正文（实测），由 Exa 定向覆盖"
+    },
+    {
+      "id": "nio_ir",
+      "name": "蔚来官方",
+      "org": "nio_official",
+      "source_class": "A",
+      "affiliated_with": "nio",
+      "reliability": 1.0,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "nio.cn"
+      ],
+      "active": true,
+      "note": "官网为 CSR 页面，直抓拿不到正文（实测），由 Exa 定向覆盖"
+    },
+    {
+      "id": "xpeng_ir",
+      "name": "小鹏汽车官方",
+      "org": "xpeng_official",
+      "source_class": "A",
+      "affiliated_with": "xpeng",
+      "reliability": 1.0,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "xiaopeng.com"
+      ],
+      "active": true,
+      "note": "官网为 CSR 页面，直抓拿不到正文（实测），由 Exa 定向覆盖"
+    },
+    {
+      "id": "byd_ir",
+      "name": "比亚迪官方",
+      "org": "byd_official",
+      "source_class": "A",
+      "affiliated_with": "byd",
+      "reliability": 1.0,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "byd.com"
+      ],
+      "active": true,
+      "note": "官网为 CSR 页面，直抓拿不到正文（实测），由 Exa 定向覆盖"
+    },
+    {
+      "id": "huawei_ir",
+      "name": "华为官方",
+      "org": "huawei_official",
+      "source_class": "A",
+      "affiliated_with": "huawei",
+      "reliability": 1.0,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "huawei.com"
+      ],
+      "active": true,
+      "note": "官网为 CSR 页面，直抓拿不到正文（实测），由 Exa 定向覆盖"
+    },
+    {
+      "id": "xiaomi_ir",
+      "name": "小米汽车官方",
+      "org": "xiaomi_official",
+      "source_class": "A",
+      "affiliated_with": "xiaomi",
+      "reliability": 1.0,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "xiaomi.com"
+      ],
+      "active": true,
+      "note": "官网为 CSR 页面，直抓拿不到正文（实测），由 Exa 定向覆盖"
+    }
+  ],
+  "_original_source_patterns": {
+    "_comment": "原始出处归因（技术方案 §4.0）：从转载正文中识别真实源头，置信度按 effective_class 计算",
+    "latepost": [
+      "晚点LatePost",
+      "晚点 LatePost",
+      "据晚点",
+      "晚点报道"
+    ],
+    "caixin": [
+      "财新记者",
+      "据财新",
+      "财新网报道"
+    ],
+    "36kr": [
+      "36氪获悉",
+      "据36氪",
+      "36氪独家"
+    ],
+    "yicai": [
+      "第一财经记者",
+      "据第一财经"
+    ],
+    "zimubang": [
+      "字母榜",
+      "据字母榜"
+    ],
+    "kazik": [
+      "数字生命卡兹克",
+      "卡兹克"
+    ],
+    "guangzi": [
+      "光子星球",
+      "据光子星球"
+    ],
+    "ebrun": [
+      "亿邦动力",
+      "据亿邦"
+    ]
+  }
+}

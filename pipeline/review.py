@@ -272,7 +272,7 @@ def main() -> int:
     ps.add_argument("--note", default="")
 
     a = ap.parse_args()
-    store = Store()
+    store = Store(dataset=a.dataset)
     try:
         rc = {"queue": cmd_queue, "event": cmd_event, "batch": cmd_batch,
               "merge": cmd_merge, "source": cmd_source}[a.cmd](store, a)

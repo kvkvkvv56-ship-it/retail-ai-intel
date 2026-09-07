@@ -36,6 +36,27 @@ def _company_lines(companies: list[dict]) -> str:
 
 
 # ============================================================ S2 预筛
+def _me(cfg: dict) -> dict:
+    """我方声明。整套提示词里唯一提到「我们是谁」的地方，必须来自 config——
+    早先这里硬编码着「京东零售」，换数据集时提示词照旧只谈京东，
+    「换行业只改配置」就是句空话。这是同一类坑的第二次。"""
+    me = cfg.get("_我方") or {}
+    return {"name": me.get("name") or cfg.get("name") or "本方",
+            "company": me.get("company"),
+            "audiences": me.get("audiences")
+            or ["运营", "商分", "营销", "技术", "供应链"]}
+
+
+def _attribution(cfg: dict) -> str:
+    """company 归属规则。各行业的子品牌/产品归属关系完全不同，
+    只能由 config 给；没给就退化成一句通用说明。"""
+    rules = cfg.get("_归属规则")
+    if rules:
+        return "\n".join(f"- {r}" for r in rules)
+    return ("- 子品牌与产品归到它所属的主体\n"
+            "- 跨主体的监管、国标、行业级动态归到行业类目")
+
+
 def prescreen_sys(cfg: dict) -> str:
     return f"""你是「行业与竞对 AI 洞察情报站」的信息预筛员。
 
@@ -87,10 +108,7 @@ def _common(cfg: dict) -> str:
 - stage: {" / ".join(cfg["stages"])}
 
 company 归属规则：
-- 平台旗下的 AI 产品归到该平台（可灵→kuaishou、豆包与即梦→douyin、
-  通义与千问→taobao、言犀→jd、混元→wechat）
-- 独立模型厂商与工具（OpenAI、Midjourney、Runway、智谱、MiniMax 等）→ ai_vendor
-- 跨平台的监管、国标、行业级动态 → industry
+{_attribution(cfg)}
 
 event_key 规则：同一件事在不同报道中必须得到相同的 event_key。
 用「公司-产品或动作-核心名词」的英文小写连字符形式，例如
@@ -101,15 +119,15 @@ tmall-ai-business-manager、xiaohongshu-search-diandian、kuaishou-semantic-id-s
 无法确认就填 null，**不要猜测或用报道日期顶替**。
 
 ═══ 我方视角 ═══
-本情报站服务于**京东零售**。每个事件都必须给出 implication —— 这条动态
-对京东零售意味着什么。要求：
+本情报站服务于**{_me(cfg)['name']}**。每个事件都必须给出 implication ——
+这条动态对{_me(cfg)['name']}意味着什么。要求：
 
 - 具体到可动作，不要写「值得关注」「有借鉴意义」这类空话
 - 分清三种意义：① 竞对能力构成的压力 ② 可直接借鉴的做法
   ③ 上游能力变化带来的新可能
-- audience 从「运营 / 商分 / 营销 / 技术 / 供应链」中选最贴切的一个
+- audience 从「{" / ".join(_me(cfg)['audiences'])}」中选最贴切的一个
 - needs_internal_data：公开信息无法验证效果的（如「能提升转化率」）一律 true
-- 事件主体本身就是京东时，implication 写它对京东后续动作的含义，
+- 事件主体本身就是{_me(cfg)['name']}时，implication 写它对我方后续动作的含义，
   或该动作暴露的能力缺口
 - 确实推不出有价值含义时，text 写 null —— 不要为了填字段而编
 
@@ -139,7 +157,7 @@ _TAIL_A = """
  "summary": "50字以内客观概述", "stage": "...",
  "facts": ["每条一个可核查的事实，必须来自本文"],
  "inferences": [], "note": "如信息不足以判断可留空",
- "implication": {"text": "对京东零售的启示，或 null", "audience": "运营|商分|营销|技术|供应链",
+ "implication": {"text": f"对{_me(cfg)['name']}的启示，或 null", "audience": "{'|'.join(_me(cfg)['audiences'])}",
                  "needs_internal_data": true/false}}"""
 
 _TAIL_B = """
@@ -161,7 +179,7 @@ _TAIL_B = """
  "event_date": "YYYY-MM-DD 或 null",
  "facts": ["..."],
  "inferences": [{"text": "...", "attributed_to": "媒体名"}],
- "implication": {"text": "对京东零售的启示，或 null", "audience": "运营|商分|营销|技术|供应链",
+ "implication": {"text": f"对{_me(cfg)['name']}的启示，或 null", "audience": "{'|'.join(_me(cfg)['audiences'])}",
                  "needs_internal_data": true/false}}"""
 
 _TAIL_C = """
@@ -182,7 +200,7 @@ _TAIL_C = """
  "event_date": "YYYY-MM-DD 或 null",
  "facts": ["..."], "inferences": [],
  "original_source_hint": "媒体名 或 null", "note": "...",
- "implication": {"text": "对京东零售的启示，或 null", "audience": "运营|商分|营销|技术|供应链",
+ "implication": {"text": f"对{_me(cfg)['name']}的启示，或 null", "audience": "{'|'.join(_me(cfg)['audiences'])}",
                  "needs_internal_data": true/false}}"""
 
 _TAIL_E = """
@@ -201,7 +219,7 @@ _TAIL_E = """
  "event_key": "...", "event_title": "...", "summary": "...",
  "stage": null, "facts": [],
  "inferences": [{"text": "...", "attributed_to": "作者名"}],
- "implication": {"text": "对京东零售的启示，或 null", "audience": "运营|商分|营销|技术|供应链",
+ "implication": {"text": f"对{_me(cfg)['name']}的启示，或 null", "audience": "{'|'.join(_me(cfg)['audiences'])}",
                  "needs_internal_data": true/false}}"""
 
 _CLASS_TAIL = {"A": _TAIL_A, "B": _TAIL_B, "C": _TAIL_C, "E": _TAIL_E}

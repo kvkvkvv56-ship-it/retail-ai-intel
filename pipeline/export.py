@@ -313,8 +313,12 @@ if __name__ == "__main__":
     import sys
     sys.path.insert(0, str(ROOT))
     from pipeline.run import load_config
-    cfg, srccfg = load_config("ecommerce")
-    st = Store()
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dataset", default="ecommerce")
+    a = ap.parse_args()
+    cfg, srccfg = load_config(a.dataset)
+    st = Store(dataset=a.dataset)
     r = export(st, cfg, srccfg)
     st.close()
     print("已导出 API 快照 → web/public/api/v1/")

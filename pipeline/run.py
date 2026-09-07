@@ -346,10 +346,11 @@ def main() -> int:
 
     # CI 是全新 checkout，intel.db 被 gitignore。若不先从 JSONL 重建，
     # known_urls / known_titles 全空，跨期去重会失效并把历史条目重新入库一遍。
-    from pipeline.store import DATA, DB_PATH
-    auto_rebuild = not DB_PATH.exists() and (DATA / "items.jsonl").exists()
+    from pipeline.store import paths_for
+    data_dir, db_path = paths_for(args.dataset)
+    auto_rebuild = not db_path.exists() and (data_dir / "items.jsonl").exists()
 
-    store = Store()
+    store = Store(dataset=args.dataset)
     if auto_rebuild:
         c = store.rebuild()
         print(f"intel.db 不存在，已从 JSONL 重建："

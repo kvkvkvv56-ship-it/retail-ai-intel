@@ -1,0 +1,418 @@
+{
+  "dataset": "auto",
+  "name": "新能源汽车与智能驾驶 AI 洞察",
+  "window_days": 30,
+  "report_window_days": 7,
+  "collect_window_days": 250,
+  "_window_note": "与电商数据集同口径：采集窗口回捞 250 天用于建立历史背景，观察窗口 30 天用于新增/旧闻判定。",
+  "companies": [
+    {
+      "id": "liauto",
+      "name": "理想汽车",
+      "aliases": [
+        "理想",
+        "理想汽车",
+        "Li Auto",
+        "MEGA",
+        "理想同学",
+        "VLA",
+        "Mind GPT"
+      ]
+    },
+    {
+      "id": "nio",
+      "name": "蔚来",
+      "aliases": [
+        "蔚来",
+        "NIO",
+        "NOMI",
+        "乐道",
+        "萤火虫",
+        "蔚来世界模型",
+        "NWM"
+      ]
+    },
+    {
+      "id": "xpeng",
+      "name": "小鹏汽车",
+      "aliases": [
+        "小鹏",
+        "XPeng",
+        "XNGP",
+        "小鹏汽车",
+        "天玑",
+        "图灵芯片",
+        "鲲鹏"
+      ]
+    },
+    {
+      "id": "byd",
+      "name": "比亚迪",
+      "aliases": [
+        "比亚迪",
+        "BYD",
+        "腾势",
+        "仰望",
+        "方程豹",
+        "天神之眼",
+        "璇玑"
+      ]
+    },
+    {
+      "id": "huawei",
+      "name": "华为车BU",
+      "aliases": [
+        "华为",
+        "鸿蒙智行",
+        "问界",
+        "智界",
+        "享界",
+        "尊界",
+        "乾崑",
+        "ADS",
+        "HarmonyOS 座舱"
+      ]
+    },
+    {
+      "id": "xiaomi",
+      "name": "小米汽车",
+      "aliases": [
+        "小米汽车",
+        "小米SU7",
+        "小米YU7",
+        "Xiaomi HAD",
+        "澎湃OS"
+      ]
+    },
+    {
+      "id": "tesla",
+      "name": "特斯拉",
+      "aliases": [
+        "特斯拉",
+        "Tesla",
+        "FSD",
+        "Autopilot",
+        "Optimus",
+        "Dojo"
+      ]
+    },
+    {
+      "id": "ai_vendor",
+      "name": "智驾与芯片供应商",
+      "aliases": [
+        "Momenta",
+        "地平线",
+        "Horizon Robotics",
+        "英伟达",
+        "NVIDIA",
+        "DRIVE",
+        "Mobileye",
+        "四维图新",
+        "轻舟智航",
+        "元戎启行",
+        "黑芝麻",
+        "高通",
+        "8295",
+        "Thor",
+        "禾赛",
+        "速腾聚创"
+      ]
+    },
+    {
+      "id": "industry",
+      "name": "行业与监管",
+      "aliases": [
+        "工信部",
+        "国标",
+        "智能网联",
+        "准入",
+        "召回",
+        "L3",
+        "自动驾驶法规",
+        "中汽协",
+        "强制性国家标准"
+      ]
+    }
+  ],
+  "domains": [
+    {
+      "id": "adas",
+      "name": "智能驾驶",
+      "desc": "城市NOA、高速NOA、端到端大模型、VLA、世界模型、泊车、L3准入"
+    },
+    {
+      "id": "cockpit",
+      "name": "智能座舱",
+      "desc": "车机大模型、语音助手、多模态交互、AI Agent、生态应用"
+    },
+    {
+      "id": "manufacturing",
+      "name": "研发与制造",
+      "desc": "AI用于仿真测试、数据闭环、工厂质检、供应链排产"
+    },
+    {
+      "id": "sales_service",
+      "name": "营销与服务",
+      "desc": "AI销售顾问、智能客服、售后诊断、用户运营"
+    },
+    {
+      "id": "chips_platform",
+      "name": "芯片与算力",
+      "desc": "车载计算平台、自研芯片、训练集群、算力投入"
+    },
+    {
+      "id": "ai_supply",
+      "name": "AI能力供给",
+      "desc": "基础模型、开源方案、供应商能力对整车厂的外溢"
+    }
+  ],
+  "stages": [
+    "概念宣传",
+    "试点探索",
+    "已上线",
+    "规模化应用"
+  ],
+  "statuses": [
+    "新增",
+    "延续",
+    "静默",
+    "旧闻/背景"
+  ],
+  "confidence_levels": [
+    "官方确认·多源印证",
+    "官方一手",
+    "多源已验证",
+    "深度单源",
+    "单源待确认"
+  ],
+  "relevance": {
+    "_comment": "零成本粗筛：AI 词 × 行业词 双命中才进 LLM 预筛。",
+    "ai_terms": [
+      "AI",
+      "人工智能",
+      "大模型",
+      "端到端",
+      "世界模型",
+      "VLA",
+      "神经网络",
+      "算法",
+      "智能体",
+      "Agent",
+      "多模态",
+      "语音助手",
+      "生成式",
+      "强化学习",
+      "自动驾驶",
+      "智驾",
+      "辅助驾驶",
+      "感知",
+      "算力",
+      "芯片"
+    ],
+    "industry_terms": [
+      "汽车",
+      "车企",
+      "整车",
+      "车型",
+      "座舱",
+      "车机",
+      "NOA",
+      "领航",
+      "泊车",
+      "智驾",
+      "新能源",
+      "电动车",
+      "OTA",
+      "量产",
+      "上车",
+      "交付",
+      "主机厂",
+      "供应商",
+      "激光雷达",
+      "线控"
+    ]
+  },
+  "verify": {
+    "min_independent_orgs": 2,
+    "unknown_source_class": "D",
+    "simhash_hamming_threshold": 3,
+    "embedding_topk": 8,
+    "embedding_min_cosine": 0.82
+  },
+  "search": {
+    "engine": "exa",
+    "endpoint": "https://api.exa.ai/search",
+    "category": "news",
+    "num_results": 8,
+    "content_max_chars": 1800,
+    "_comment": "主体 × 领域矩阵，每组一次检索。",
+    "matrix": [
+      {
+        "company": "liauto",
+        "domain": "adas",
+        "q": "理想 智能驾驶 城市NOA 端到端 大模型 推送"
+      },
+      {
+        "company": "liauto",
+        "domain": "cockpit",
+        "q": "理想 智能座舱 车机 大模型 语音助手 AI"
+      },
+      {
+        "company": "nio",
+        "domain": "adas",
+        "q": "蔚来 智能驾驶 城市NOA 端到端 大模型 推送"
+      },
+      {
+        "company": "nio",
+        "domain": "cockpit",
+        "q": "蔚来 智能座舱 车机 大模型 语音助手 AI"
+      },
+      {
+        "company": "xpeng",
+        "domain": "adas",
+        "q": "小鹏 智能驾驶 城市NOA 端到端 大模型 推送"
+      },
+      {
+        "company": "xpeng",
+        "domain": "cockpit",
+        "q": "小鹏 智能座舱 车机 大模型 语音助手 AI"
+      },
+      {
+        "company": "byd",
+        "domain": "adas",
+        "q": "比亚迪 智能驾驶 城市NOA 端到端 大模型 推送"
+      },
+      {
+        "company": "byd",
+        "domain": "cockpit",
+        "q": "比亚迪 智能座舱 车机 大模型 语音助手 AI"
+      },
+      {
+        "company": "huawei",
+        "domain": "adas",
+        "q": "华为 智能驾驶 城市NOA 端到端 大模型 推送"
+      },
+      {
+        "company": "huawei",
+        "domain": "cockpit",
+        "q": "华为 智能座舱 车机 大模型 语音助手 AI"
+      },
+      {
+        "company": "xiaomi",
+        "domain": "adas",
+        "q": "小米汽车 智能驾驶 城市NOA 端到端 大模型 推送"
+      },
+      {
+        "company": "xiaomi",
+        "domain": "cockpit",
+        "q": "小米汽车 智能座舱 车机 大模型 语音助手 AI"
+      },
+      {
+        "company": "tesla",
+        "domain": "adas",
+        "q": "特斯拉 智能驾驶 城市NOA 端到端 大模型 推送"
+      },
+      {
+        "company": "tesla",
+        "domain": "cockpit",
+        "q": "特斯拉 智能座舱 车机 大模型 语音助手 AI"
+      },
+      {
+        "company": "ai_vendor",
+        "domain": "ai_supply",
+        "q": "Momenta 地平线 英伟达 智驾方案 量产 定点"
+      },
+      {
+        "company": "ai_vendor",
+        "domain": "chips_platform",
+        "q": "车载 芯片 算力平台 Thor 征程 量产上车"
+      },
+      {
+        "company": "industry",
+        "domain": "adas",
+        "q": "工信部 智能网联汽车 L3 准入 国标 自动驾驶 法规"
+      },
+      {
+        "company": "industry",
+        "domain": "ai_supply",
+        "q": "智能驾驶 行业标准 安全 监管 召回 OTA 备案"
+      }
+    ],
+    "_site_queries_comment": "针对垂类媒体的站内定向检索。它们的 RSS 实测全部失效，只能靠 Exa 限域检索补。",
+    "site_queries": [
+      {
+        "q": "智能驾驶 大模型 上车 量产",
+        "domains": [
+          "zhidx.com"
+        ]
+      },
+      {
+        "q": "智驾 端到端 世界模型 车企",
+        "domains": [
+          "42how.com"
+        ]
+      },
+      {
+        "q": "新能源汽车 AI 智能化",
+        "domains": [
+          "d1ev.com"
+        ]
+      },
+      {
+        "q": "车企 AI 智驾 座舱 独家",
+        "domains": [
+          "latepost.com"
+        ]
+      }
+    ]
+  },
+  "llm": {
+    "base_url_env": "KB_LLM_BASE_URL",
+    "api_key_env": "KB_LLM_API_KEY",
+    "scout_model_env": "KB_SCOUT_MODEL",
+    "strong_model_env": "KB_STRONG_MODEL"
+  },
+  "_我方": {
+    "company": "liauto",
+    "name": "理想汽车",
+    "audiences": [
+      "智驾研发",
+      "座舱产品",
+      "供应链",
+      "市场",
+      "用户运营"
+    ],
+    "note": "本数据集用于验证「换行业只改配置」。我方设为理想汽车，与电商数据集的京东零售完全独立。"
+  },
+  "_归属规则": [
+    "整车厂旗下的智驾/座舱产品归到该车企（天神之眼→byd、乾崑ADS与问界→huawei、XNGP与天玑→xpeng、Mind GPT与VLA→liauto、NOMI与NWM→nio、澎湃OS与HAD→xiaomi、FSD→tesla）",
+    "独立供应商与芯片厂商（Momenta、地平线、英伟达、Mobileye、禾赛、速腾等）→ ai_vendor",
+    "跨主体的监管、国标、准入、召回等行业级动态 → industry"
+  ],
+  "_别名": {
+    "lixiang": "liauto",
+    "liauto": "liauto",
+    "理想": "liauto",
+    "weilai": "nio",
+    "nio": "nio",
+    "xiaopeng": "xpeng",
+    "xpeng": "xpeng",
+    "byd": "byd",
+    "biyadi": "byd",
+    "tengshi": "byd",
+    "huawei": "huawei",
+    "aito": "huawei",
+    "harmony": "huawei",
+    "hongmeng": "huawei",
+    "xiaomi": "xiaomi",
+    "mi": "xiaomi",
+    "tesla": "tesla",
+    "momenta": "ai_vendor",
+    "horizon": "ai_vendor",
+    "nvidia": "ai_vendor",
+    "mobileye": "ai_vendor",
+    "hesai": "ai_vendor",
+    "robosense": "ai_vendor",
+    "qualcomm": "ai_vendor"
+  }
+}

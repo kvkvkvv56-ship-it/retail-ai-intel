@@ -6,7 +6,9 @@ secrets.env
 
 # ===== 本地缓存与可重建产物 =====
 intel.db
-intel.db-*
+intel-*.db
+intel.db
+intel-*.db-*
 data/cache/
 data/raw/
 
