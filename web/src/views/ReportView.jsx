@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { api, fmtDate } from '../api.js'
 import { Collapse, Empty } from '../components/Bits.jsx'
 
-/** 侧栏最多列这么多期。再多就进「全部周报」页——周报是持续产出物，
- *  期数只会单调增长，列表必须有个不随时间膨胀的上界 */
-const SIDE_MAX = 10
+/** 侧栏默认只列最近这么多期。周报是持续产出物、期数单调增长，
+ *  列表必须有个不随时间膨胀的上界；其余折叠，再全部进「全部周报」页。 */
+const SIDE_MAX = 5
 
 export default function ReportView({ meta, nav, id }) {
+  const [expanded, setExpanded] = useState(false)
   const [list, setList] = useState(null)
   const [rep, setRep] = useState(null)
   const [err, setErr] = useState(null)
@@ -51,7 +52,7 @@ export default function ReportView({ meta, nav, id }) {
       <aside className="rep-side">
         <p className="side-k">往期周报</p>
         <ul className="side-list">
-          {list.results.slice(0, SIDE_MAX).map((r, i) => (
+          {list.results.slice(0, expanded ? SIDE_MAX * 4 : SIDE_MAX).map((r, i) => (
             <li key={r.id}>
               <button className={`side-item ${r.id === rep.id ? 'on' : ''}`}
                       onClick={() => nav(`/report/${r.id}`)}>
@@ -63,9 +64,19 @@ export default function ReportView({ meta, nav, id }) {
             </li>
           ))}
         </ul>
+        {/* 两级：先就地展开到 20 期，仍不够再进存档页。
+            期数会一直涨，侧栏不能无限长 */}
+        {!expanded && list.total > SIDE_MAX && (
+          <button className="side-expand" onClick={() => setExpanded(true)}>
+            展开更早的<span className="side-rest">{list.total - SIDE_MAX} 期</span>
+          </button>
+        )}
+        {expanded && list.total > SIDE_MAX && (
+          <button className="side-expand" onClick={() => setExpanded(false)}>收起</button>
+        )}
         <button className="side-more" onClick={() => nav('/reports')}>
           查看全部周报
-          {list.total > SIDE_MAX && <span className="side-rest">另 {list.total - SIDE_MAX} 期</span>}
+          <span className="side-rest">共 {list.total} 期</span>
         </button>
       </aside>
 

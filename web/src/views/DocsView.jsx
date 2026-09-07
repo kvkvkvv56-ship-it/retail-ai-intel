@@ -106,11 +106,18 @@ export default function DocsView({ id, nav }) {
 
   // 滚动高亮当前小节。
   //
-  // 原先用 IntersectionObserver 取 entries[0]，但 entries 只含**交叉状态发生变化**
-  // 的标题，且顺序不保证是文档序。点目录跳转时页面一次滚过好几屏，中间那些标题
-  // 根本不产生 entry，高亮就卡在第一节不动。
-  // 改成直接按位置算：当前小节 = 最后一个顶边越过阈值线的标题。确定性，
-  // 与滚动方式无关。
+  // 设计原则：**触发与判定分开**。
+  //
+  // 判定永远是同一套确定性规则——当前小节 = 最后一个顶边越过阈值线的标题，
+  // 一个都没越过就取第一个。没有任何分支能强制选中末条：
+  // 之前加过一个「滚到底就高亮最后一节」的分支，两次都变成了故障源
+  // （高亮被永久钉在末条），它带来的那点观感收益不值这个代价，已删除。
+  //
+  // 触发用两条并联：window 的 scroll 事件，以及挂在各标题上的
+  // IntersectionObserver。前者在文档本身滚动时有效；后者在页面由某个
+  // 嵌套容器滚动、window 收不到事件时兜底。IO 在这里只当触发器，
+  // 不参与判定——它的 entries 只含状态变化的元素且顺序不保证，
+  // 拿它直接选节点正是最初那版的错误。
   useEffect(() => {
     if (!html || !bodyRef.current) return
     const hs = [...bodyRef.current.querySelectorAll('h2[id], h3[id]')]
@@ -120,20 +127,6 @@ export default function DocsView({ id, nav }) {
     let raf = 0
     const compute = () => {
       raf = 0
-      // 滚到底时高亮最后一节：末节太短时永远越不过阈值线。
-      // 但必须先确认页面真的能滚——文档短于一屏时 innerHeight 就已经
-      // 等于 scrollHeight，这个分支会无条件命中，把最后一节永久点亮
-      // 滚到底才让最后一节接管，且要求它确实已经进入视口——
-      // 少了后一个条件，任何把页面推到底部的意外都会把高亮永久钉在末条
-      const last = hs[hs.length - 1]
-      const scrollable =
-        document.documentElement.scrollHeight - window.innerHeight > 40
-      if (scrollable
-          && window.innerHeight + window.scrollY
-             >= document.documentElement.scrollHeight - 4
-          && last.getBoundingClientRect().top < window.innerHeight) {
-        return setActive(last.id)
-      }
       let cur = hs[0].id
       for (const h of hs) {
         if (h.getBoundingClientRect().top <= LINE) cur = h.id
@@ -141,25 +134,27 @@ export default function DocsView({ id, nav }) {
       }
       setActive(cur)
     }
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(compute) }
+    const kick = () => { if (!raf) raf = requestAnimationFrame(compute) }
 
     compute()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll)
+    // capture 阶段挂在 document 上：嵌套滚动容器的 scroll 不冒泡到 window
+    document.addEventListener('scroll', kick, { capture: true, passive: true })
+    window.addEventListener('resize', kick)
+    const io = new IntersectionObserver(kick, { threshold: [0, 1] })
+    hs.forEach((h) => io.observe(h))
     return () => {
       if (raf) cancelAnimationFrame(raf)
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onScroll)
+      document.removeEventListener('scroll', kick, { capture: true })
+      window.removeEventListener('resize', kick)
+      io.disconnect()
     }
   }, [html])
 
   // 长文档的目录自身会滚动，高亮项要保证可见。
   //
-  // **不能用 scrollIntoView**：它会滚动所有可滚动祖先，包括文档本身。
-  // 那会形成正反馈——推动页面 → 触发滚动监听 → 重算 active → 再次推动，
-  // 一路滚到底，然后 atEnd 分支把最后一条永久点亮。
-  // 表现正是「点击能跳转，但目录一直高亮最后一条」。
-  // 这里只改目录容器自己的 scrollTop，物理上不可能影响窗口。
+  // **不能用 scrollIntoView**：它会滚动所有可滚动祖先，包括文档本身，
+  // 那会形成「推动页面 → 触发重算 → 再推动」的正反馈。
+  // 这里只写目录容器自己的 scrollTop，物理上不可能影响窗口。
   useEffect(() => {
     if (!active) return
     const box = document.querySelector('.docs-toc')
