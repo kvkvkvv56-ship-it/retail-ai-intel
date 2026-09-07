@@ -10,6 +10,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 
+from pipeline import embed as EMB
 from pipeline import prompts as P
 from pipeline.llm import LLMError
 
@@ -290,46 +291,119 @@ def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
     return stats
 
 
+# 向量召回阈值。事件两两余弦的中位数是 0.560、p99 是 0.807；取 0.80 时
+# 候选对占全部的 1.1%，而相似度最高的若干对经人工核对全部是真重复
+# （其中一对只差引号：「"AI万相"」与「“AI万相”」）。
+# 这是召回阈值不是判定阈值——判定由 LLM 做，所以宁可宽一点。
+XMERGE_FLOOR = 0.80
+XMERGE_BATCH = 10
+
+
+def _event_vec_text(store, e) -> str:
+    facts = store.q("""SELECT text FROM claims WHERE event_id=? AND kind='fact'
+                       LIMIT 2""", (e["id"],))
+    return (f'{e["title"]}。{(e["summary"] or "")[:200]}'
+            + "".join(f' {f["text"][:80]}' for f in facts))
+
+
+def _xmerge_pairs(store, evs: list) -> list[tuple[int, int, float]] | None:
+    """向量召回：返回值得送去裁决的事件对。无 embedding 能力时返回 None。"""
+    if not EMB.available():
+        return None
+    vecs = EMB.embed([_event_vec_text(store, e) for e in evs])
+    if sum(1 for v in vecs if v) < 2:
+        return None
+    out = []
+    for a in range(len(evs)):
+        if not vecs[a]:
+            continue
+        for b in range(a + 1, len(evs)):
+            if not vecs[b]:
+                continue
+            c = EMB.cosine(vecs[a], vecs[b])
+            if c >= XMERGE_FLOOR:
+                out.append((a, b, c))
+    out.sort(key=lambda x: -x[2])
+    return out
+
+
 def stage_merge_cross(store, llm, run_id: str) -> dict:
-    """S4b 跨公司归并复核。
+    """S4b 跨公司归并复核：**向量召回 + LLM 裁决**。
 
     S4 按公司分组归并有一个结构性盲区：同一事件若被抽取成不同 company，
     两者永远不会被放在一起比较。首轮实跑就命中了——「千问AI Arena」被判为
     taobao、「阿里云通义AI竞技场」被判为 industry，实为同一件事。
     （讽刺的是，这个漏归并是周报的 method_notes 自己发现并报告的。）
 
-    本阶段对全部事件做一次整体扫描，事件量级为百级，一次调用即可。
+    原实现把**全部事件**塞进一次调用整体扫描。两个问题：
+      1. 不可扩展 —— 百级事件的提示词已经很长，五百级就塞不下
+      2. 实测漏判严重 —— 事件涨到 133 个之后，余弦最高的 8 对全是真重复，
+         而整表通读一对都没抓到，其中还有一对标题只差一个引号
+
+    改为：向量召回出高相似度的事件对（占全部两两组合约 1%），分批送模型
+    逐对裁决。这正是技术方案原本写的「embedding + LLM 裁决」。
+    向量不可用时退回整表通读，行为与改动前一致。
     """
     evs = store.q("SELECT id, company, event_key, title, summary FROM events")
-    stats = {"scanned": len(evs), "cross_merged": 0, "suspects": 0, "error": 0}
+    stats = {"scanned": len(evs), "cross_merged": 0, "suspects": 0, "error": 0,
+             "recall_pairs": 0, "recall": "full_scan"}
     if len(evs) < 2:
         return stats
 
-    # 只给标题不够：实测「千问AI Arena」与「阿里云通义AI竞技场」标题词重合度
-    # 仅 0.088，产品名完全不同（千问/通义、Arena/竞技场），必须给摘要与事实
-    # 才能判断是同一件事。周报的 method_notes 能发现这个漏归并，正是因为它
-    # 拿到了事实要点。
-    lines = []
-    for i, e in enumerate(evs):
+    def block(i: int) -> str:
+        e = evs[i]
         facts = store.q("""SELECT text FROM claims WHERE event_id=?
                            AND kind='fact' LIMIT 2""", (e["id"],))
-        lines.append(
-            f'[{i}] {e["company"]} | {e["event_key"]}\n'
-            f'    标题：{e["title"]}\n'
-            f'    概述：{(e["summary"] or "")[:100]}\n'
-            + "".join(f'    · {f["text"][:90]}\n' for f in facts))
-    try:
-        res = llm.chat_json([
-            {"role": "system", "content": P.MERGE_CROSS_SYS},
-            {"role": "user", "content": "全部事件：\n\n" + "\n\n".join(lines)},
-        ], strong=True, max_tokens=1500)
-    except Exception:                                         # noqa: BLE001
-        stats["error"] = 1
-        return stats
+        return (f'[{i}] {e["company"]} | {e["event_key"]}\n'
+                f'    标题：{e["title"]}\n'
+                f'    概述：{(e["summary"] or "")[:100]}\n'
+                + "".join(f'    · {f["text"][:90]}\n' for f in facts))
 
+    pairs = _xmerge_pairs(store, evs)
+    res = {"duplicates": [], "suspects": []}
+
+    if pairs is None:
+        # 退化路径：整表通读（旧行为）
+        try:
+            res = llm.chat_json([
+                {"role": "system", "content": P.MERGE_CROSS_SYS},
+                {"role": "user", "content": "全部事件：\n\n"
+                    + "\n\n".join(block(i) for i in range(len(evs)))},
+            ], strong=True, max_tokens=1500)
+        except Exception:                                     # noqa: BLE001
+            stats["error"] = 1
+            return stats
+    else:
+        stats["recall"] = "vector"
+        stats["recall_pairs"] = len(pairs)
+        if not pairs:
+            return stats
+        for s0 in range(0, len(pairs), XMERGE_BATCH):
+            chunk = pairs[s0:s0 + XMERGE_BATCH]
+            idx = sorted({i for a, b, _ in chunk for i in (a, b)})
+            listing = "\n\n".join(block(i) for i in idx)
+            asks = "\n".join(f"- [{a}] 与 [{b}]（向量相似度 {c:.2f}）"
+                              for a, b, c in chunk)
+            try:
+                r = llm.chat_json([
+                    {"role": "system", "content": P.MERGE_CROSS_SYS},
+                    {"role": "user", "content":
+                        f"以下是向量召回出的疑似重复事件对，请逐对裁决：\n{asks}"
+                        f"\n\n涉及事件的详情：\n\n{listing}"},
+                ], strong=True, max_tokens=1200)
+            except Exception:                                 # noqa: BLE001
+                stats["error"] += 1
+                continue
+            res["duplicates"].extend(r.get("duplicates") or [])
+            res["suspects"].extend(r.get("suspects") or [])
+
+    # 分批裁决后，前一批可能已经把某个事件合掉了。后一批若还引用它，
+    # 会把条目挂到一个已删除的事件上——必须跳过已消失的成员。
+    gone: set[str] = set()
     for g in res.get("duplicates") or []:
         idx = [i for i in g.get("members", [])
-               if isinstance(i, int) and 0 <= i < len(evs)]
+               if isinstance(i, int) and 0 <= i < len(evs)
+               and evs[i]["id"] not in gone]
         if len(idx) < 2:
             continue
         members = [evs[i] for i in idx]
@@ -348,6 +422,7 @@ def stage_merge_cross(store, llm, run_id: str) -> dict:
             store.db.execute("DELETE FROM edges WHERE from_event=? OR to_event=?",
                              (m["id"], m["id"]))
             store.db.execute("DELETE FROM events WHERE id=?", (m["id"],))
+            gone.add(m["id"])
             store.insert("rejects", {
                 "run_id": run_id, "item_id": None, "url": None,
                 "title": m["title"], "source_name": "—",
@@ -359,7 +434,8 @@ def stage_merge_cross(store, llm, run_id: str) -> dict:
     # 模型表达的不确定性 → 人工复核队列（不自动合并）
     for g in res.get("suspects") or []:
         idx = [i for i in g.get("members", [])
-               if isinstance(i, int) and 0 <= i < len(evs)]
+               if isinstance(i, int) and 0 <= i < len(evs)
+               and evs[i]["id"] not in gone]
         if len(idx) < 2:
             continue
         ms = [evs[i] for i in idx]

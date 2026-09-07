@@ -276,6 +276,24 @@ def export(store: Store, cfg: dict, srccfg: dict) -> dict:
     (fb / "fallback.json").write_text(txt, encoding="utf-8")
     stats["fallback_kb"] = round(len(txt) / 1024)
 
+    # ---------------------------------------------- 事件向量（线上语义检索）
+    # 事件向量在这里算好进快照，线上只对用户 query 调一次 embedding 接口，
+    # 余弦在 Worker 里算——这样线上不必挂向量库，也不必为检索多存一份数据。
+    from pipeline import embed as EMB
+    if EMB.available():
+        texts, ids = [], []
+        for e in ev_rows:
+            facts = store.q("""SELECT text FROM claims WHERE event_id=?
+                               AND kind='fact' LIMIT 2""", (e["id"],))
+            texts.append(f'{e["title"]}。{(e["summary"] or "")[:200]}'
+                         + "".join(f' {f["text"][:80]}' for f in facts))
+            ids.append(e["id"])
+        vecs = EMB.embed(texts)
+        vmap = {i: EMB.pack(v) for i, v in zip(ids, vecs) if v}
+        total += _w("vectors.json", {"model": EMB.MODEL, "task": EMB.TASK,
+                                     "dim": EMB.DIM, "vectors": vmap})
+        stats["vectors"] = len(vmap)
+
     # 文档站快照与数据走同一条链路，跑批时一起刷新
     from pipeline.docs_export import export_docs
     d = export_docs()

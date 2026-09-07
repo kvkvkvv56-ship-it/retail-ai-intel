@@ -12,6 +12,7 @@
 
 interface Env {
   ASSETS: Fetcher
+  JINA_API_KEY?: string       // 语义检索：只对用户 query 调用，事件向量在快照里
   DATA_REPO?: string          // owner/repo，指向流水线提交数据的仓库
   DATA_REF?: string           // 分支，默认 main
   KB_LLM_API_KEY?: string
@@ -90,6 +91,57 @@ async function snapshot(env: Env, path: string): Promise<any | null> {
   return fresh !== null ? fresh : await fromAssets(env, path)
 }
 
+// ==================================================================== 向量检索
+//
+// 事件向量在导出时算好写进 vectors.json（int8 量化后 base64，114 条约 156KB）。
+// 线上只对用户的 query 调一次 embedding 接口，余弦在这里算——不必挂向量库，
+// 也不必为检索多存一份数据。没有 JINA_API_KEY 时全部退回词面匹配。
+
+const EMBED_API = 'https://api.jina.ai/v1/embeddings'
+
+function unpack(b64: string): Int8Array {
+  const bin = atob(b64)
+  const v = new Int8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) v[i] = bin.charCodeAt(i) - 128
+  return v
+}
+
+function cosine(a: Int8Array | number[], b: Int8Array | number[]): number {
+  let dot = 0, na = 0, nb = 0
+  for (let i = 0; i < a.length; i++) { dot += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i] }
+  return dot / (Math.sqrt(na) * Math.sqrt(nb) || 1)
+}
+
+async function embedQuery(env: Env, text: string): Promise<number[] | null> {
+  if (!env.JINA_API_KEY || !text.trim()) return null
+  try {
+    const r = await fetch(EMBED_API, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json',
+                 authorization: `Bearer ${env.JINA_API_KEY}` },
+      body: JSON.stringify({ model: 'jina-embeddings-v3', task: 'text-matching',
+                             input: [text.slice(0, 1600)] }),
+      signal: AbortSignal.timeout(8000),
+    })
+    if (!r.ok) return null
+    const j: any = await r.json()
+    return j?.data?.[0]?.embedding ?? null
+  } catch { return null }
+}
+
+/** 事件 id → 语义相似度。取不到向量或接口失败时返回空 Map，调用方退回词面。 */
+async function semanticScores(env: Env, query: string): Promise<Map<string, number>> {
+  const out = new Map<string, number>()
+  const qv = await embedQuery(env, query)
+  if (!qv) return out
+  const pack = await snapshot(env, 'vectors')
+  if (!pack?.vectors) return out
+  for (const [id, b64] of Object.entries(pack.vectors as Record<string, string>)) {
+    out.set(id, cosine(qv, unpack(b64)))
+  }
+  return out
+}
+
 function ok(data: unknown): Response {
   return new Response(JSON.stringify(data), { headers: JSON_HEADERS })
 }
@@ -166,10 +218,26 @@ export default {
       const idx = (await snapshot(env, 'search-index')) as any[] | null
       if (!idx) return problem(503, 'snapshot_missing', '检索索引尚未生成')
       const lower = q.toLowerCase()
-      const hits = idx.filter(
-        (e) => e.t.toLowerCase().includes(lower) || (e.s || '').toLowerCase().includes(lower),
-      )
-      return ok({ query: q, total: hits.length, results: hits.slice(0, 50) })
+      const lex = (e: any) =>
+        e.t.toLowerCase().includes(lower) || (e.s || '').toLowerCase().includes(lower)
+
+      // 词面命中优先（用户搜确切词就是想要它），其余按语义相似度补齐。
+      // 语义不可用时行为与改动前完全一致。
+      const sem = await semanticScores(env, q)
+      const SEM_FLOOR = 0.62
+      const scored = idx
+        .map((e: any) => ({ e, lex: lex(e) ? 1 : 0, sem: sem.get(e.id) ?? 0 }))
+        .filter((x) => x.lex || x.sem >= SEM_FLOOR)
+        .sort((a, b) => (b.lex - a.lex) || (b.sem - a.sem))
+      return ok({
+        query: q,
+        mode: sem.size ? 'lexical+semantic' : 'lexical',
+        total: scored.length,
+        results: scored.slice(0, 50).map((x) => ({
+          ...x.e, matched: x.lex ? 'lexical' : 'semantic',
+          similarity: x.sem ? Math.round(x.sem * 1000) / 1000 : undefined,
+        })),
+      })
     }
 
     if (route === 'briefs/generate') {
@@ -331,6 +399,7 @@ async function generateBrief(request: Request, env: Env): Promise<Response> {
 
       // ---------------- ① 意图分析 ----------------
       let intent: any = null
+      let retrievalMode = '词面'
       if (prompt) {
         await send('thinking', { step: 'analyze', text: '解析检索意图' })
         try {
@@ -360,16 +429,23 @@ async function generateBrief(request: Request, env: Env): Promise<Response> {
       const terms = prompt
         ? grams([prompt, ...(intent?.keywords || [])].join(' '))
         : new Set<string>()
+      // 语义相似度与词面命中相加：词面抓确切主体名（「快手」），
+      // 语义抓概念性提法（「导购闭环」「素材生成」）——两者互补，
+      // 只用其一都会漏。语义权重 6 相当于「命中 6 个共现二元组」。
+      const sem = prompt ? await semanticScores(env, `${prompt} ${(intent?.keywords || []).join(' ')}`)
+                         : new Map<string, number>()
       const score = (e: any) => {
         let n = 0
         if (terms.size) {
           const eg = grams(`${e.title} ${e.summary || ''}`)
           for (const g of terms) if (eg.has(g)) n++
         }
-        return n + (e.status === '新增' ? 2 : e.status === '延续' ? 1 : 0)
+        const sv = sem.get(e.id) ?? 0
+        return n + sv * 6 + (e.status === '新增' ? 2 : e.status === '延续' ? 1 : 0)
       }
       evs = evs.map((e) => ({ e, s: score(e) })).sort((a, b) => b.s - a.s)
         .slice(0, 15).map((x) => x.e)
+      retrievalMode = sem.size ? '词面 + 语义' : '词面'
 
       const scopeText = [
         comps.size ? '公司：' + [...comps].map((id) =>
@@ -381,9 +457,9 @@ async function generateBrief(request: Request, env: Env): Promise<Response> {
       await send('thinking', {
         step: 'retrieve',
         text: scopeText
-          ? `知识库检索「${scopeText}」· 命中 ${evs.length} 条`
-          : `知识库检索 · 取${prompt ? '相关性' : '最新'}前 ${evs.length} 条`,
-        meta: { hits: evs.length, scope: scopeText },
+          ? `知识库检索「${scopeText}」· ${retrievalMode} · 命中 ${evs.length} 条`
+          : `知识库检索 · 取${prompt ? `相关性（${retrievalMode}）` : '最新'}前 ${evs.length} 条`,
+        meta: { hits: evs.length, scope: scopeText, retrieval: retrievalMode },
       })
       if (!evs.length) {
         await send('error', { message: '所选范围内没有事件，请放宽条件' })
