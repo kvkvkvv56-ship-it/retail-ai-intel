@@ -755,9 +755,36 @@ a { color: inherit; text-decoration: none; }
   .docs-toc { display: none; }
 }
 @media (max-width: 780px) {
-  .docs-layout { grid-template-columns: 1fr; gap: 24px; }
-  .docs-nav { position: static; max-height: none; }
+  /* 1fr 会被宽内容（长代码行、宽表格）撑破，必须 minmax(0,1fr) 才允许收缩 */
+  .docs-layout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  /* 竖排目录在手机上会占满整个首屏，读者要滑过六条链接才看到正文。
+     改成横向条：一眼看全，不吃垂直空间 */
+  .docs-nav {
+    position: static; max-height: none;
+    display: flex; gap: 20px; overflow-x: auto;
+    padding-bottom: 10px; border-bottom: 1px solid var(--line);
+    scrollbar-width: none;
+  }
+  .docs-nav::-webkit-scrollbar { display: none; }
+  .dn-group { margin-bottom: 0; flex: none; }
+  .dn-group ul { display: flex; gap: 4px; }
+  .dn-item {
+    width: auto; white-space: nowrap; padding: 6px 12px;
+    border-left: 0; border-radius: var(--radius-pill);
+    border: 1px solid var(--line);
+  }
+  .dn-item.on { border-left: 0; border-color: var(--text); }
   .dn-d { display: none; }
   .md { max-width: 100%; }
   .md .anchor { display: none; }
+  .docs-pager { flex-direction: column; }
+  .docs-pager button { max-width: 100%; }
+  .docs-pager button.nx { align-items: flex-start; text-align: left; margin-left: 0; }
 }
+
+.foot-link {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font-family: var(--sans); font-size: inherit; color: var(--muted);
+  transition: var(--t-color);
+}
+.foot-link:hover { color: var(--text); }

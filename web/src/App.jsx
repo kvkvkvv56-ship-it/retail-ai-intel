@@ -98,6 +98,7 @@ export default function App() {
         <span>只采集公开可访问信息，遵守 robots.txt</span>
         <span>正文仅保留截断摘录与原文链接</span>
         <span>输出供内部研究参考，不构成投资建议</span>
+        <button className="foot-link" onClick={() => nav('/docs')}>方法与运行说明 →</button>
         {meta && <span>快照 {meta.generated_at?.slice(0, 16).replace('T', ' ')} UTC</span>}
       </footer>
     </div>
