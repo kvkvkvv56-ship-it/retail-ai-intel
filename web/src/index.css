@@ -643,9 +643,11 @@ a { color: inherit; text-decoration: none; }
    三栏：文档目录 / 正文 / 本页目录。正文限宽 72ch —— 长行会显著拖慢阅读，
    开发者文档尤其，因为读者要在代码块与散文之间反复跳。 */
 /* 挣脱 .wrap 的 960px：正文保持与顶栏同宽（912px）居中，
-   章节栏与目录栏用掉两侧的剩余空间，一直铺到屏幕边缘 */
+   章节栏与目录栏用掉两侧的剩余空间，一直铺到屏幕边缘。
+   用负外边距而不是 width: 100vw —— 100vw 含滚动条宽度，
+   页面一旦出现纵向滚动条就会横向溢出，多出一条横向滚动条。 */
 .docs-layout {
-  width: 100vw; margin-left: calc(50% - 50vw);
+  margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
   padding-left: 28px; padding-right: 28px;
   display: grid;
   grid-template-columns: minmax(196px, 1fr) minmax(0, 912px) minmax(176px, 1fr);
@@ -892,5 +894,5 @@ a { color: inherit; text-decoration: none; }
   .rep-side, .docs-nav, .docs-toc { display: none; }
   .rep-collapse, .docs-collapse { margin-bottom: 14px; }
   .rep-layout, .docs-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .docs-layout { width: auto; margin-left: 0; padding-left: 0; padding-right: 0; }
+  .docs-layout { margin-left: 0; margin-right: 0; padding-left: 0; padding-right: 0; }
 }

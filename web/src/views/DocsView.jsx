@@ -123,12 +123,16 @@ export default function DocsView({ id, nav }) {
       // 滚到底时高亮最后一节：末节太短时永远越不过阈值线。
       // 但必须先确认页面真的能滚——文档短于一屏时 innerHeight 就已经
       // 等于 scrollHeight，这个分支会无条件命中，把最后一节永久点亮
+      // 滚到底才让最后一节接管，且要求它确实已经进入视口——
+      // 少了后一个条件，任何把页面推到底部的意外都会把高亮永久钉在末条
+      const last = hs[hs.length - 1]
       const scrollable =
         document.documentElement.scrollHeight - window.innerHeight > 40
       if (scrollable
           && window.innerHeight + window.scrollY
-             >= document.documentElement.scrollHeight - 4) {
-        return setActive(hs[hs.length - 1].id)
+             >= document.documentElement.scrollHeight - 4
+          && last.getBoundingClientRect().top < window.innerHeight) {
+        return setActive(last.id)
       }
       let cur = hs[0].id
       for (const h of hs) {
@@ -149,11 +153,24 @@ export default function DocsView({ id, nav }) {
     }
   }, [html])
 
-  // 长文档的目录自身会滚动，高亮项要保证可见
+  // 长文档的目录自身会滚动，高亮项要保证可见。
+  //
+  // **不能用 scrollIntoView**：它会滚动所有可滚动祖先，包括文档本身。
+  // 那会形成正反馈——推动页面 → 触发滚动监听 → 重算 active → 再次推动，
+  // 一路滚到底，然后 atEnd 分支把最后一条永久点亮。
+  // 表现正是「点击能跳转，但目录一直高亮最后一条」。
+  // 这里只改目录容器自己的 scrollTop，物理上不可能影响窗口。
   useEffect(() => {
     if (!active) return
-    document.querySelector(`.docs-toc a[data-h="${CSS.escape(active)}"]`)
-      ?.scrollIntoView({ block: 'nearest' })
+    const box = document.querySelector('.docs-toc')
+    const el = box?.querySelector(`a[data-h="${CSS.escape(active)}"]`)
+    if (!box || !el || box.scrollHeight <= box.clientHeight) return
+    const top = el.offsetTop - box.offsetTop
+    const bottom = top + el.offsetHeight
+    if (top < box.scrollTop) box.scrollTop = top
+    else if (bottom > box.scrollTop + box.clientHeight) {
+      box.scrollTop = bottom - box.clientHeight
+    }
   }, [active])
 
   // 文档内互链走前端路由，不整页跳转
