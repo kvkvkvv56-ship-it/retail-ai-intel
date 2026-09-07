@@ -119,10 +119,16 @@ export default function DocsView({ id, nav }) {
     let raf = 0
     const compute = () => {
       raf = 0
-      // 滚到底时高亮最后一节：末节太短时永远越不过阈值线
-      const atEnd = window.innerHeight + window.scrollY
-        >= document.documentElement.scrollHeight - 4
-      if (atEnd) return setActive(hs[hs.length - 1].id)
+      // 滚到底时高亮最后一节：末节太短时永远越不过阈值线。
+      // 但必须先确认页面真的能滚——文档短于一屏时 innerHeight 就已经
+      // 等于 scrollHeight，这个分支会无条件命中，把最后一节永久点亮
+      const scrollable =
+        document.documentElement.scrollHeight - window.innerHeight > 40
+      if (scrollable
+          && window.innerHeight + window.scrollY
+             >= document.documentElement.scrollHeight - 4) {
+        return setActive(hs[hs.length - 1].id)
+      }
       let cur = hs[0].id
       for (const h of hs) {
         if (h.getBoundingClientRect().top <= LINE) cur = h.id
