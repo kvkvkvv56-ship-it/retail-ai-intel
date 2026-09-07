@@ -10,8 +10,16 @@ name: 情报流水线
 # 前端构建与部署已从关键路径上摘除，改为手动或独立 workflow。
 on:
   schedule:
+    # 前两条是正式档；后四条是补位——GitHub 的 schedule 是尽力而为，会延迟
+    # 甚至整条丢弃（实测 12:30 那轮被推迟到 15:36，另有一轮根本没触发）。
+    # 补位轮由下面的 gate 步骤判定：距上次运行不足 6 小时直接跳过，
+    # 代价是十几秒 Actions 时间，换来「某一轮被丢弃时当天仍会跑到」。
     - cron: '30 0 * * *'
+    - cron: '30 1 * * *'
+    - cron: '30 2 * * *'
     - cron: '30 12 * * *'
+    - cron: '30 13 * * *'
+    - cron: '30 14 * * *'
   workflow_dispatch:
     inputs:
       no_exa:
@@ -39,7 +47,49 @@ jobs:
 
       # 流水线零第三方依赖（仅标准库），无需 pip install
 
+      - name: 判断本轮是否补位（距上次运行不足 6 小时则跳过）
+        id: gate
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os, pathlib
+          from datetime import datetime, timezone
+
+          MIN_GAP_H = 6            # 两个正式档相隔 12 小时，补位档相隔 1 小时
+          ev = os.environ.get("EVENT", "")
+          run = "true"
+          why = ""
+          if ev == "schedule":
+              p = pathlib.Path("data/runs.jsonl")
+              lines = [l for l in p.read_text(encoding="utf-8").splitlines()
+                       if l.strip()] if p.exists() else []
+              if lines:
+                  r = json.loads(lines[-1])
+                  ts = r.get("finished_at") or r.get("started_at")
+                  try:
+                      d = datetime.fromisoformat(ts)
+                      if d.tzinfo is None:
+                          d = d.replace(tzinfo=timezone.utc)
+                      age = (datetime.now(timezone.utc) - d).total_seconds() / 3600
+                      if age < MIN_GAP_H:
+                          run, why = "false", f"距上次运行 {age:.1f} 小时，补位轮跳过"
+                      else:
+                          why = f"距上次运行 {age:.1f} 小时，正常跑"
+                  except ValueError:
+                      why = "上次运行时间无法解析，保守起见照跑"
+          else:
+              why = "手动触发，不受补位判定约束"
+          print(f"run={run}")
+          print(f"why={why}")
+          PY
+        env:
+          EVENT: ${{ github.event_name }}
+
+      - name: 补位轮跳过说明
+        if: steps.gate.outputs.run != 'true'
+        run: echo "::notice::${{ steps.gate.outputs.why }}"
+
       - name: 跑流水线
+        if: steps.gate.outputs.run == 'true'
         env:
           EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
           KB_LLM_API_KEY: ${{ secrets.KB_LLM_API_KEY }}
@@ -48,8 +98,11 @@ jobs:
           KB_SCOUT_MODEL: deepseek-chat
           KB_STRONG_MODEL: deepseek-chat
         run: |
-          # 20:30 那轮（UTC 12:30）只跑免费通道；手动触发可用 no_exa 覆盖
-          if [ "${{ github.event.schedule }}" = "30 12 * * *" ] || [ "${{ inputs.no_exa }}" = "true" ]; then
+          # 晚场（UTC 12–14 时段，北京 20:30 前后）只跑免费通道，控 Exa 额度。
+          # 按小时判断而不是匹配单条 cron —— 补位轮的 cron 表达式不同，
+          # 硬编码会让补位的晚场误跑 Exa
+          HOUR=$(echo "${{ github.event.schedule }}" | awk '{print $2}')
+          if [ "$HOUR" -ge 12 ] 2>/dev/null || [ "${{ inputs.no_exa }}" = "true" ]; then
             echo "本轮跳过 Exa（免费通道轮）"
             python pipeline/run.py --no-exa
           else
@@ -59,9 +112,11 @@ jobs:
       # 缺了这步的话，data/ 天天在更新而线上站点永远停在上次部署——
       # Worker 读的是 web/public/api/ 里的快照，不是 JSONL
       - name: 生成前端 API 快照
+        if: steps.gate.outputs.run == 'true'
         run: python -m pipeline.export
 
       - name: 提交数据变更
+        if: steps.gate.outputs.run == 'true'
         run: |
           git config user.name  "intel-pipeline[bot]"
           git config user.email "intel-pipeline@users.noreply.github.com"
@@ -83,7 +138,7 @@ jobs:
           git push
 
       - name: 运行摘要
-        if: always()
+        if: always() && steps.gate.outputs.run == 'true'
         run: |
           {
             echo "## 本轮运行"
