@@ -8,6 +8,7 @@ import SourcesView from './views/SourcesView.jsx'
 import ReportView from './views/ReportView.jsx'
 import ReportsIndex from './views/ReportsIndex.jsx'
 import BriefView from './views/BriefView.jsx'
+import DocsView from './views/DocsView.jsx'
 
 const Tab = ({ on, go, n, children }) => (
   <button className={`tab ${on ? 'on' : ''}`} onClick={go}>
@@ -50,6 +51,7 @@ export default function App() {
     const ev = path.match(/^\/events\/([A-Za-z0-9\-]+)$/)
     const rj = path.match(/^\/runs\/([A-Za-z0-9\-]+)\/rejects$/)
     const rp = path.match(/^\/report\/([A-Za-z0-9\-]+)$/)
+    const dc = path.match(/^\/docs\/([a-z0-9\-]+)$/)
     if (ev) body = <EventDetail id={ev[1]} meta={meta} nav={nav} />
     else if (rj) body = <RejectsView runId={rj[1]} nav={nav} />
     else if (path.startsWith('/events')) body = <EventsView meta={meta} nav={nav} />
@@ -57,6 +59,8 @@ export default function App() {
     else if (path.startsWith('/reports')) body = <ReportsIndex nav={nav} />
     else if (rp) body = <ReportView meta={meta} nav={nav} id={rp[1]} />
     else if (path.startsWith('/report')) body = <ReportView meta={meta} nav={nav} />
+    else if (dc) body = <DocsView id={dc[1]} nav={nav} />
+    else if (path.startsWith('/docs')) body = <DocsView nav={nav} />
     else if (path.startsWith('/brief')) body = <BriefView meta={meta} nav={nav} />
     else body = <RunView meta={meta} run={run} nav={nav} />
   }
@@ -64,7 +68,8 @@ export default function App() {
   const tab = path.startsWith('/events') ? 'events'
     : path.startsWith('/sources') ? 'sources'
     : path.startsWith('/report') ? 'report'
-    : path.startsWith('/brief') ? 'brief' : 'run'
+    : path.startsWith('/brief') ? 'brief'
+    : path.startsWith('/docs') ? 'docs' : 'run'
 
   return (
     <div className="wrap">
@@ -79,6 +84,7 @@ export default function App() {
             <Tab on={tab === 'report'} go={() => nav('/report')}>周报</Tab>
             <Tab on={tab === 'brief'} go={() => nav('/brief')}>定制简报</Tab>
             <Tab on={tab === 'sources'} go={() => nav('/sources')} n={meta?.counts.sources}>信源</Tab>
+            <Tab on={tab === 'docs'} go={() => nav('/docs')}>文档</Tab>
           </nav>
         </div>
       </header>

@@ -1,0 +1,206 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { marked } from 'marked'
+import { api } from '../api.js'
+import { Empty } from '../components/Bits.jsx'
+
+/**
+ * 站内文档站。
+ *
+ * 文档源是 docs/*.md，由 pipeline/docs_export.py 落进 API 快照，
+ * 和数据走同一条更新链路——文档不必另开一套发布流程。
+ *
+ * 渲染放在前端而不是 Python：两侧各写一套 Markdown 规则，迟早会漂移。
+ */
+
+/** 标题 → 锚点。中文直接保留，URL fragment 支持。 */
+function slug(text, seen) {
+  const base = String(text)
+    .trim()
+    .replace(/[`*_~]/g, '')
+    .replace(/[^\w一-鿿]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase() || 'h'
+  const n = (seen[base] = (seen[base] || 0) + 1)
+  return n === 1 ? base : `${base}-${n}`
+}
+
+function render(md) {
+  const seen = {}
+  const renderer = new marked.Renderer()
+  const base = renderer.heading.bind(renderer)
+  renderer.heading = function (token) {
+    const html = base(token)
+    const id = slug(token.text, seen)
+    // 标题挂锚点 + 一个 # 链接，长文档要能把某一节直接发给别人
+    return html.replace(
+      /^<(h[1-6])>/,
+      `<$1 id="${id}"><a class="anchor" href="#${id}" aria-label="链接到本节">#</a>`,
+    )
+  }
+  const link = renderer.link.bind(renderer)
+  renderer.link = function (token) {
+    const html = link(token)
+    // 站内文档互链（形如 方法论.md）改写成前端路由，其余外链新窗口打开
+    if (/^https?:/.test(token.href)) {
+      return html.replace('<a ', '<a target="_blank" rel="noopener noreferrer" ')
+    }
+    return html
+  }
+  return marked.parse(md, { renderer, breaks: false, gfm: true })
+}
+
+/** 文档内互链 docs/xxx.md 或 xxx.md → 站内路由 */
+const FILE_TO_ID = {
+  '作品文档.md': 'overview', '方法论.md': 'methodology', '运行说明.md': 'operations',
+  '技术方案.md': 'architecture', '信源实测报告.md': 'sources-field-test',
+  '参考-AIHOT产品拆解.md': 'appendix-aihot',
+}
+
+export default function DocsView({ id, nav }) {
+  const [index, setIndex] = useState(null)
+  const [doc, setDoc] = useState(null)
+  const [err, setErr] = useState(null)
+  const [active, setActive] = useState('')
+  const bodyRef = useRef(null)
+
+  useEffect(() => {
+    api('docs').then(setIndex).catch((e) => setErr(String(e)))
+  }, [])
+
+  const docId = id || index?.results?.[0]?.id
+
+  useEffect(() => {
+    if (!docId) return
+    setDoc(null)
+    api(`docs/${docId}`).then(setDoc).catch((e) => setErr(String(e)))
+  }, [docId])
+
+  const html = useMemo(() => (doc ? render(doc.markdown) : ''), [doc])
+
+  // 目录锚点必须和渲染用同一套 slug 规则，所以在这里重算一遍而不是用后端 outline
+  const toc = useMemo(() => {
+    if (!doc) return []
+    const seen = {}
+    return doc.outline
+      .map((h) => ({ ...h, id: slug(h.text, seen) }))
+      .filter((h) => h.level >= 2)
+  }, [doc])
+
+  // 滚动高亮当前小节
+  useEffect(() => {
+    if (!html || !bodyRef.current) return
+    const hs = bodyRef.current.querySelectorAll('h2[id], h3[id]')
+    if (!hs.length) return
+    const ob = new IntersectionObserver(
+      (entries) => {
+        const vis = entries.filter((e) => e.isIntersecting)
+        if (vis.length) setActive(vis[0].target.id)
+      },
+      { rootMargin: '-110px 0px -70% 0px', threshold: 0 },
+    )
+    hs.forEach((h) => ob.observe(h))
+    return () => ob.disconnect()
+  }, [html])
+
+  // 文档内互链走前端路由，不整页跳转
+  const onBodyClick = (e) => {
+    const a = e.target.closest('a')
+    if (!a) return
+    const href = a.getAttribute('href') || ''
+    if (href.startsWith('#')) {
+      e.preventDefault()
+      const el = bodyRef.current?.querySelector(`[id="${CSS.escape(href.slice(1))}"]`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
+    const file = decodeURIComponent(href.split('/').pop() || '')
+    if (FILE_TO_ID[file]) {
+      e.preventDefault()
+      nav(`/docs/${FILE_TO_ID[file]}`)
+    }
+  }
+
+  if (err) return <div className="error">加载失败：{err}</div>
+  if (!index) return <div className="loading">载入中…</div>
+  if (!index.results.length) return <Empty>尚无文档</Empty>
+
+  const pos = index.results.findIndex((d) => d.id === docId)
+  const prev = pos > 0 ? index.results[pos - 1] : null
+  const next = pos >= 0 && pos < index.results.length - 1 ? index.results[pos + 1] : null
+
+  return (
+    <div className="view docs-layout">
+      {/* ------------------------------- 左：文档目录 */}
+      <aside className="docs-nav">
+        {index.groups.map((g) => (
+          <div className="dn-group" key={g}>
+            <p className="dn-k">{g}</p>
+            <ul>
+              {index.results.filter((d) => d.group === g).map((d) => (
+                <li key={d.id}>
+                  <button className={`dn-item ${d.id === docId ? 'on' : ''}`}
+                          onClick={() => nav(`/docs/${d.id}`)}>
+                    <span className="dn-t">{d.title.split('·').pop().trim()}</span>
+                    <span className="dn-d">{d.description}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </aside>
+
+      {/* ------------------------------- 中：正文 */}
+      <article className="docs-main">
+        {!doc ? <div className="loading">载入中…</div> : (
+          <>
+            <div className="docs-crumb">
+              <span>{doc.group}</span>
+              <span className="sep">/</span>
+              <code>{doc.source}</code>
+            </div>
+            <div className="md" ref={bodyRef} onClick={onBodyClick}
+                 dangerouslySetInnerHTML={{ __html: html }} />
+            <nav className="docs-pager">
+              {prev ? (
+                <button onClick={() => nav(`/docs/${prev.id}`)}>
+                  <span className="pg-k">← 上一篇</span>
+                  <span className="pg-t">{prev.title.split('·').pop().trim()}</span>
+                </button>
+              ) : <span />}
+              {next && (
+                <button className="nx" onClick={() => nav(`/docs/${next.id}`)}>
+                  <span className="pg-k">下一篇 →</span>
+                  <span className="pg-t">{next.title.split('·').pop().trim()}</span>
+                </button>
+              )}
+            </nav>
+          </>
+        )}
+      </article>
+
+      {/* ------------------------------- 右：本页目录 */}
+      <aside className="docs-toc">
+        {toc.length > 0 && (
+          <>
+            <p className="dn-k">本页目录</p>
+            <ul>
+              {toc.map((h) => (
+                <li key={h.id} className={`lv${h.level}`}>
+                  <a href={`#${h.id}`} className={active === h.id ? 'on' : ''}
+                     onClick={(e) => {
+                       e.preventDefault()
+                       bodyRef.current?.querySelector(`[id="${CSS.escape(h.id)}"]`)
+                         ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                     }}>
+                    {h.text}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </aside>
+    </div>
+  )
+}

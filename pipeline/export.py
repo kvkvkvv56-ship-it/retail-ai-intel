@@ -276,6 +276,12 @@ def export(store: Store, cfg: dict, srccfg: dict) -> dict:
     (fb / "fallback.json").write_text(txt, encoding="utf-8")
     stats["fallback_kb"] = round(len(txt) / 1024)
 
+    # 文档站快照与数据走同一条链路，跑批时一起刷新
+    from pipeline.docs_export import export_docs
+    d = export_docs()
+    stats["docs"] = d["docs"]
+    total += d["kb"] * 1024
+
     stats["bytes"] = total
     return stats
 

@@ -109,7 +109,7 @@ export default {
 
     // ---------------- 元信息 ----------------
     if (route === 'meta' || route === 'sources' || route === 'reviews'
-        || route === 'runs' || route === 'reports') {
+        || route === 'runs' || route === 'reports' || route === 'docs') {
       const d = await snapshot(env, route)
       return d ? ok(d) : problem(503, 'snapshot_missing', `快照 ${route} 尚未生成`)
     }
@@ -139,7 +139,7 @@ export default {
     }
 
     // ---------------- 详情类 ----------------
-    const detail = route.match(/^(events|runs|reports)\/([A-Za-z0-9\-]+)$/)
+    const detail = route.match(/^(events|runs|reports|docs)\/([A-Za-z0-9\-]+)$/)
     if (detail) {
       const d = await snapshot(env, `${detail[1]}/${detail[2]}`)
       return d ? ok(d) : problem(404, 'not_found', `${detail[1]} ${detail[2]} 不存在`)
