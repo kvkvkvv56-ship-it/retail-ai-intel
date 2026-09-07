@@ -1,9 +1,46 @@
 import React, { useRef, useState } from 'react'
 import { ThinkingOrb } from 'thinking-orbs'
 import { BorderBeam } from 'border-beam'
+import { MetalFx } from 'metal-fx'
 
 // 步骤 → orb 动画状态。让动画语义对应真实阶段，而不是当装饰用：
 // searching 是扫描地球仪、connecting 是连线成星座、composing 是起伏的绸带。
+/**
+ * 输入框的三种状态各用一种边框，让「现在在干什么」不必读文字就能看出来：
+ *   idle     液态金属环 —— 静止时唯一的视觉焦点，暗示这里可以输入
+ *   running  border beam —— 只在生成过程中跑，光带即进度
+ *   done/err 普通线条框 —— 结果已出，边框退回背景，注意力交给正文
+ */
+function PromptFrame({ state, children }) {
+  if (state === 'running') {
+    return (
+      <div className="beam-wrap">
+        <BorderBeam size="md" colorVariant="colorful" theme="light"
+                    borderRadius={12} active>
+          <div className="prompt-wrap bare">{children}</div>
+        </BorderBeam>
+      </div>
+    )
+  }
+  if (state === 'idle') {
+    return (
+      <div className="metal-wrap">
+        {/* button 变体的环默认只有 1px，在这么宽的输入框上几乎看不见，
+            加到 2px 才有金属边的观感 */}
+        <MetalFx variant="button" preset="chromatic" theme="light"
+                 strength={0.9} ringCssPx={2} borderRadius={12}
+                 normalizeHostStyles={false}>
+          <div className="prompt-wrap bare">{children}</div>
+        </MetalFx>
+      </div>
+    )
+  }
+  return <div className="prompt-wrap plain">{children}</div>
+}
+
+const SUPPORTS_FIELD_SIZING =
+  typeof CSS !== 'undefined' && CSS.supports?.('field-sizing', 'content')
+
 const STEPS = [
   { k: 'analyze',  t: '解析意图',   orb: 'solving' },
   { k: 'retrieve', t: '知识库检索', orb: 'searching' },
@@ -77,11 +114,20 @@ export default function BriefView({ meta, nav }) {
 
   const curStep = steps.length ? steps[steps.length - 1] : null
 
-  /** field-sizing 仅新版 Chrome 支持，这里做兜底：单行起步，随内容自增到上限 */
+  /** field-sizing 的 JS 兜底：单行起步，随内容自增到上限。
+   *
+   *  两个坑：
+   *  ① 原生支持时必须完全让位。CSS 已经把高度算对了，再写内联 height 只会
+   *     和它打架——被 MetalFx 的 flex 容器包起来后，挂载那一刻布局还没稳定，
+   *     scrollHeight 读回 300（正好是 max-height），于是把 300px 写死，
+   *     空输入框直接变成一个巨大的方块。
+   *  ② 不支持时也要等布局稳定再量，否则同样会量到脏值。 */
   const autoGrow = (el) => {
-    if (!el) return
-    el.style.height = 'auto'
-    el.style.height = Math.min(el.scrollHeight, 300) + 'px'
+    if (!el || SUPPORTS_FIELD_SIZING) return
+    requestAnimationFrame(() => {
+      el.style.height = 'auto'
+      el.style.height = Math.min(el.scrollHeight, 300) + 'px'
+    })
   }
 
   return (
@@ -97,20 +143,15 @@ export default function BriefView({ meta, nav }) {
         </div>
       </div>
 
-      <div className="beam-wrap">
-        <BorderBeam size="md" colorVariant="colorful" theme="light"
-                    borderRadius={12} active={state === 'running'}>
-          <div className="prompt-wrap">
-            <textarea
-              rows={1}
-              ref={autoGrow}
-              placeholder="例：对比各平台 AI 导购的落地阶段差异，哪些做法对我方商家工具有借鉴价值？"
-              value={prompt}
-              onChange={(e) => { setPrompt(e.target.value); autoGrow(e.target) }}
-              onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) run() }} />
-          </div>
-        </BorderBeam>
-      </div>
+      <PromptFrame state={state}>
+        <textarea
+          rows={1}
+          ref={autoGrow}
+          placeholder="例：对比各平台 AI 导购的落地阶段差异，哪些做法对我方商家工具有借鉴价值？"
+          value={prompt}
+          onChange={(e) => { setPrompt(e.target.value); autoGrow(e.target) }}
+          onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) run() }} />
+      </PromptFrame>
 
       <div className="brief-bar">
         <button className="btn" onClick={run}

@@ -5,7 +5,7 @@
   direct  服务端渲染页面直抓
   exa     Exa 搜索广度召回
 
-设计见 docs/技术方案.md §4，通道分配依据 docs/信源实测报告.md。
+设计见 docs/技术方案.md §4。通道归属是逐个实测出来的，不是按信源类型分配的。
 
 三条硬规则：
   1. 正文只保留截断摘录（content_max_chars），不存全文（版权，见 README 边界声明）
@@ -483,7 +483,7 @@ def collect_aihot(src: dict, cfg: dict) -> tuple[list[dict], str | None]:
     """经 AIHOT 发现条目（技术方案 §4.1 补充通道）。
 
     AIHOT 是 AI 行业动态的聚合与精选站（本项目开工前做过完整拆解，
-    见 docs/参考-AIHOT产品拆解.md）。它的 API 匿名只读、无需 key。
+    卡兹克的 AI 日报聚合）。它的 API 匿名只读、无需 key。
 
     **它是发现渠道，不是信源**：真正的信源是 links.original 指向的原文
     发布方，AIHOT 只是告诉我们这条存在。故：

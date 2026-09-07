@@ -58,8 +58,7 @@ function render(md) {
 /** 文档内互链 docs/xxx.md 或 xxx.md → 站内路由 */
 const FILE_TO_ID = {
   '作品文档.md': 'overview', '方法论.md': 'methodology', '运行说明.md': 'operations',
-  '技术方案.md': 'architecture', '信源实测报告.md': 'sources-field-test',
-  '参考-AIHOT产品拆解.md': 'appendix-aihot',
+  '技术方案.md': 'architecture',
 }
 
 export default function DocsView({ id, nav }) {
@@ -104,21 +103,51 @@ export default function DocsView({ id, nav }) {
     })
   }, [html])
 
-  // 滚动高亮当前小节
+  // 滚动高亮当前小节。
+  //
+  // 原先用 IntersectionObserver 取 entries[0]，但 entries 只含**交叉状态发生变化**
+  // 的标题，且顺序不保证是文档序。点目录跳转时页面一次滚过好几屏，中间那些标题
+  // 根本不产生 entry，高亮就卡在第一节不动。
+  // 改成直接按位置算：当前小节 = 最后一个顶边越过阈值线的标题。确定性，
+  // 与滚动方式无关。
   useEffect(() => {
     if (!html || !bodyRef.current) return
-    const hs = bodyRef.current.querySelectorAll('h2[id], h3[id]')
+    const hs = [...bodyRef.current.querySelectorAll('h2[id], h3[id]')]
     if (!hs.length) return
-    const ob = new IntersectionObserver(
-      (entries) => {
-        const vis = entries.filter((e) => e.isIntersecting)
-        if (vis.length) setActive(vis[0].target.id)
-      },
-      { rootMargin: '-110px 0px -70% 0px', threshold: 0 },
-    )
-    hs.forEach((h) => ob.observe(h))
-    return () => ob.disconnect()
+
+    const LINE = 120                       // 略低于吸顶头部
+    let raf = 0
+    const compute = () => {
+      raf = 0
+      // 滚到底时高亮最后一节：末节太短时永远越不过阈值线
+      const atEnd = window.innerHeight + window.scrollY
+        >= document.documentElement.scrollHeight - 4
+      if (atEnd) return setActive(hs[hs.length - 1].id)
+      let cur = hs[0].id
+      for (const h of hs) {
+        if (h.getBoundingClientRect().top <= LINE) cur = h.id
+        else break
+      }
+      setActive(cur)
+    }
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(compute) }
+
+    compute()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      if (raf) cancelAnimationFrame(raf)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [html])
+
+  // 长文档的目录自身会滚动，高亮项要保证可见
+  useEffect(() => {
+    if (!active) return
+    document.querySelector(`.docs-toc a[data-h="${CSS.escape(active)}"]`)
+      ?.scrollIntoView({ block: 'nearest' })
+  }, [active])
 
   // 文档内互链走前端路由，不整页跳转
   const onBodyClick = (e) => {
@@ -206,7 +235,7 @@ export default function DocsView({ id, nav }) {
             <ul>
               {toc.map((h) => (
                 <li key={h.id} className={`lv${h.level}`}>
-                  <a href={`#${h.id}`} className={active === h.id ? 'on' : ''}
+                  <a href={`#${h.id}`} data-h={h.id} className={active === h.id ? 'on' : ''}
                      onClick={(e) => {
                        e.preventDefault()
                        bodyRef.current?.querySelector(`[id="${CSS.escape(h.id)}"]`)

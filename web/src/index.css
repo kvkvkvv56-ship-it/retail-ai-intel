@@ -322,8 +322,22 @@ a { color: inherit; text-decoration: none; }
   background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-md);
   padding: 16px 18px; transition: var(--t-surface);
 }
-.prompt-wrap:focus-within { border-color: var(--muted); box-shadow: var(--shadow-elevated); }
-.beam-wrap { width: 100%; }
+/* 被 beam 包着时不要自己的边框——光带就是边，两层会显得脏 */
+.prompt-wrap.bare { border-color: transparent; }
+.prompt-wrap.bare:focus-within { box-shadow: none; }
+/* metal 例外：金属环是**游走的高光**，任一瞬间只点亮一段周长，
+   底下没有稳定边框的话，输入框看上去就是个断掉的方框。
+   保留一条常规细线，金属光晕叠在它外面 */
+.metal-wrap .prompt-wrap.bare { border-color: var(--line); }
+/* 生成结束：退回普通黑色线条框，注意力交给正文 */
+.prompt-wrap.plain { border-color: var(--text); }
+.prompt-wrap:focus-within { box-shadow: var(--shadow-elevated); }
+.beam-wrap, .metal-wrap { width: 100%; }
+/* MetalFx 套的是 root > content > 宿主 三层，且 root 是 inline-flex，
+   逐层撑满才不会把输入框压成半宽 */
+.metal-wrap .metal-fx-root,
+.metal-wrap .metal-fx-content,
+.metal-wrap .prompt-wrap { width: 100%; }
 .prompt-wrap textarea {
   display: block; width: 100%; border: 0; outline: none; background: transparent;
   font-family: var(--sans); font-size: 14px; line-height: 1.7; color: var(--text);
