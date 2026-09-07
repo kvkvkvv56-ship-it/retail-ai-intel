@@ -57,6 +57,7 @@ function render(md) {
 
 /** 文档内互链 docs/xxx.md 或 xxx.md → 站内路由 */
 const FILE_TO_ID = {
+  '使用说明.md': 'guide',
   '作品文档.md': 'overview', '方法论.md': 'methodology', '运行说明.md': 'operations',
   '技术方案.md': 'architecture',
 }
