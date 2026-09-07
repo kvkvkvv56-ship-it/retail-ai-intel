@@ -12,6 +12,8 @@
 
 interface Env {
   ASSETS: Fetcher
+  DATA_REPO?: string          // owner/repo，指向流水线提交数据的仓库
+  DATA_REF?: string           // 分支，默认 main
   KB_LLM_API_KEY?: string
   KB_LLM_BASE_URL?: string
   KB_BRIEF_MODEL?: string
@@ -37,7 +39,37 @@ function problem(status: number, title: string, detail?: string): Response {
   )
 }
 
-async function snapshot(env: Env, path: string): Promise<any | null> {
+/** 仓库快照的边缘缓存时长（秒）。流水线每天两轮，10 分钟足够新。 */
+const SNAP_TTL = 600
+
+/**
+ * 从仓库读最新快照。
+ *
+ * 流水线每天两轮把 web/public/api/ 提交回仓库，但 ASSETS 里的资产是
+ * **部署那一刻**打包进去的。只读 ASSETS 的话，数据天天在更新而站点永远停在
+ * 上次手动部署——「每日自动更新」就是假的。
+ *
+ * 走 raw 而不是在 CI 里加一步 wrangler deploy，是为了不引入 Cloudflare
+ * API token：数据更新与代码发布本来就该解耦，代码不变时没有重新部署的理由。
+ */
+async function fromRepo(env: Env, path: string): Promise<any | null> {
+  if (!env.DATA_REPO) return null
+  const url = `https://raw.githubusercontent.com/${env.DATA_REPO}/`
+    + `${env.DATA_REF || 'main'}/web/public/api/v1/${path}.json`
+  try {
+    const r = await fetch(url, {
+      // 超时兜底：raw 慢的时候不能把整个接口拖住，退回 ASSETS 就好
+      signal: AbortSignal.timeout(3000),
+      cf: { cacheTtl: SNAP_TTL, cacheEverything: true },
+    })
+    if (!r.ok) return null
+    return await r.json()
+  } catch {
+    return null
+  }
+}
+
+async function fromAssets(env: Env, path: string): Promise<any | null> {
   const r = await env.ASSETS.fetch(new Request(`https://assets.local/api/v1/${path}.json`))
   // 注意：assets 配了 not_found_handling: "single-page-application"，
   // 资产不存在时会返回 index.html 且状态 200 —— 只判 r.ok 会把 HTML 喂给
@@ -50,6 +82,12 @@ async function snapshot(env: Env, path: string): Promise<any | null> {
   } catch {
     return null
   }
+}
+
+/** 仓库最新优先，读不到退回部署时打包的版本（永远可用）。 */
+async function snapshot(env: Env, path: string): Promise<any | null> {
+  const fresh = await fromRepo(env, path)
+  return fresh !== null ? fresh : await fromAssets(env, path)
 }
 
 function ok(data: unknown): Response {

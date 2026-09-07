@@ -12,6 +12,10 @@
     { "pattern": "ai.kvkvkvv.site", "custom_domain": true }
   ],
   "vars": {
+    // 读接口优先取仓库里的最新快照，ASSETS 作兜底 —— 这样每日跑批的数据
+    // 不必重新部署就能上线，见 worker/index.ts 的 fromRepo()
+    "DATA_REPO": "kvkvkvv56-ship-it/retail-ai-intel",
+    "DATA_REF": "main",
     "KB_LLM_BASE_URL": "https://api.deepseek.com",
     "KB_BRIEF_MODEL": "deepseek-chat"
   },

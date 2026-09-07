@@ -26,4 +26,5 @@ __pycache__/
 web/dist/
 web/node_modules/
 # 导出的 API 快照由 pipeline/export.py 生成，不入库
-web/public/api/
+# web/public/api/ 必须提交：Worker 从仓库 raw 读它作为最新快照，
+# 不提交的话每日跑批的数据到不了线上（见 worker/index.ts 的 fromRepo）
