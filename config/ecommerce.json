@@ -74,6 +74,29 @@
       ]
     },
     {
+      "id": "meituan",
+      "name": "美团",
+      "aliases": [
+        "美团",
+        "Meituan",
+        "美团外卖",
+        "美团闪购",
+        "美团优选",
+        "小象超市",
+        "美团买菜",
+        "大众点评",
+        "美团配送",
+        "LongCat",
+        "龙猫",
+        "袋鼠参谋",
+        "美团无人机",
+        "美团骑行",
+        "美团医药",
+        "快驴",
+        "美团酒旅"
+      ]
+    },
+    {
       "id": "wechat",
       "name": "微信小店",
       "aliases": [
@@ -279,7 +302,15 @@
       "短视频带货",
       "内容电商",
       "货架电商",
-      "即时零售"
+      "即时零售",
+      "外卖",
+      "本地生活",
+      "配送",
+      "骑手",
+      "到家",
+      "闪购",
+      "门店",
+      "前置仓"
     ]
   },
   "verify": {
@@ -423,6 +454,26 @@
         "q": "2026 京东 AI 战略 大模型 落地"
       },
       {
+        "company": "meituan",
+        "domain": "retail_ops",
+        "q": "美团 闪购 即时零售 AI 搜索 推荐 上线"
+      },
+      {
+        "company": "meituan",
+        "domain": "merchant_tools",
+        "q": "美团 商家 AI 工具 袋鼠参谋 经营 助手"
+      },
+      {
+        "company": "meituan",
+        "domain": "service_fulfillment",
+        "q": "美团 AI 客服 智能调度 无人配送 履约"
+      },
+      {
+        "company": "meituan",
+        "domain": "ai_supply",
+        "q": "美团 LongCat 大模型 开源 自研 AI 能力"
+      },
+      {
         "company": "wechat",
         "domain": "retail_ops",
         "q": "2026 微信小店 视频号 电商 AI"
@@ -488,6 +539,13 @@
           "qbitai.com",
           "jiqizhixin.com"
         ]
+      },
+      {
+        "q": "美团 AI 即时零售 商家",
+        "domains": [
+          "tech.meituan.com",
+          "about.meituan.com"
+        ]
       }
     ]
   },
@@ -529,10 +587,16 @@
     "rednote": "xiaohongshu",
     "jingdong": "jd",
     "wechat_shop": "wechat",
-    "tencent": "wechat"
+    "tencent": "wechat",
+    "meituan": "meituan",
+    "dianping": "meituan",
+    "美团": "meituan",
+    "longcat": "meituan",
+    "xiaoxiang": "meituan",
+    "meituan_waimai": "meituan"
   },
   "_归属规则": [
-    "平台旗下的 AI 产品归到该平台（可灵→kuaishou、豆包与即梦→douyin、通义与千问→alibaba、言犀→jd、混元→wechat）",
+    "平台旗下的 AI 产品归到该平台（可灵→kuaishou、豆包与即梦→douyin、通义与千问→alibaba、言犀→jd、混元→wechat、LongCat与袋鼠参谋→meituan）",
     "独立模型厂商与工具（OpenAI、Midjourney、Runway、智谱、MiniMax 等）→ ai_vendor",
     "跨平台的监管、国标、行业级动态 → industry"
   ]

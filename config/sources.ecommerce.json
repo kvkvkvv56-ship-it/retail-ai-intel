@@ -533,6 +533,37 @@
         "素材"
       ],
       "note": "AI 行业动态聚合与精选站，本项目开工前做过完整拆解。它是发现渠道不是信源——落库用 links.original 指向的原文，信源按原文域名解析，解析不到时采信其 source.name 与一手性判定。使用依据：其公开规则对个人非商业与组织内部使用免费。"
+    },
+    {
+      "id": "meituan_tech",
+      "name": "美团技术团队",
+      "org": "meituan_official",
+      "source_class": "A",
+      "affiliated_with": "meituan",
+      "reliability": 1.0,
+      "channel": "rss",
+      "channel_ref": "https://tech.meituan.com/feed/",
+      "domains": [
+        "tech.meituan.com"
+      ],
+      "active": true,
+      "note": "实测可用（10 条/次）。当事方直述的工程实践，是本站最稀缺的 A 类信源"
+    },
+    {
+      "id": "meituan_news",
+      "name": "美团官方newsroom",
+      "org": "meituan_official",
+      "source_class": "A",
+      "affiliated_with": "meituan",
+      "reliability": 1.0,
+      "channel": "exa",
+      "channel_ref": null,
+      "domains": [
+        "about.meituan.com",
+        "meituan.com"
+      ],
+      "active": true,
+      "note": "官网为 CSR 页面，直抓拿不到正文（实测），由 Exa 定向覆盖"
     }
   ],
   "_original_source_patterns": {

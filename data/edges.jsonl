@@ -150,3 +150,41 @@
 {"from_event": "EV-80973f54", "to_event": "EV-9509703a", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-02 → 2026-09-03）", "created_by": "rule"}
 {"from_event": "EV-9509703a", "to_event": "EV-bb9e4563", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-03 → 2026-09-06）", "created_by": "rule"}
 {"from_event": "EV-c80e9ecb", "to_event": "EV-b9207350", "relation": "same_actor_track", "basis": "同为 xiaohongshu 的动作，时间相邻（2026-02-11 → 2026-04-30）", "created_by": "rule"}
+{"from_event": "EV-ce74c67a", "to_event": "EV-ed8d6a4e", "relation": "follows", "basis": "CatPaw平台搭载开源LongCat 2.0，说明平台发布在LongCat 2.0开源之后。", "created_by": "llm"}
+{"from_event": "EV-57eeb181", "to_event": "EV-d40512f1", "relation": "follows", "basis": "OpenClaw效率评测基于LongCat-Flash-Thinking-2601模型，评测在模型发布之后进行。", "created_by": "llm"}
+{"from_event": "EV-62976e07", "to_event": "EV-84002102", "relation": "follows", "basis": "AI小管家、袋鼠参谋等工具在2025年10月发布，后续披露服务超180万商家的进展数据，属于同一产品线的后续进展。", "created_by": "llm"}
+{"from_event": "EV-dd55ef15", "to_event": "EV-da2f0aa7", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-04-01 → 2026-04-30）", "created_by": "rule"}
+{"from_event": "EV-da2f0aa7", "to_event": "EV-5b5f3e9b", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-04-30 → 2026-06-12）", "created_by": "rule"}
+{"from_event": "EV-7d9b7ce7", "to_event": "EV-4d7c3e91", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-03-09 → 2026-03-24）", "created_by": "rule"}
+{"from_event": "EV-4d7c3e91", "to_event": "EV-72ae499f", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-03-24 → 2026-04-01）", "created_by": "rule"}
+{"from_event": "EV-a215fa2f", "to_event": "EV-ad2ad23b", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-08-13 → 2026-09-07）", "created_by": "rule"}
+{"from_event": "EV-12fc279d", "to_event": "EV-6bbbc36e", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-09-04 → 2026-09-07）", "created_by": "rule"}
+{"from_event": "EV-1d72a752", "to_event": "EV-3f26c5ce", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-02-11 → 2026-02-12）", "created_by": "rule"}
+{"from_event": "EV-3f26c5ce", "to_event": "EV-249b9993", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-02-12 → 2026-03-12）", "created_by": "rule"}
+{"from_event": "EV-ea0d0385", "to_event": "EV-e44c0cb4", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-08-16 → 2026-08-27）", "created_by": "rule"}
+{"from_event": "EV-e44c0cb4", "to_event": "EV-3d6bcde4", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-08-27 → 2026-08-31）", "created_by": "rule"}
+{"from_event": "EV-94c34a45", "to_event": "EV-9ede7c2b", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-07 → 2026-09-07）", "created_by": "rule"}
+{"from_event": "EV-875b9fbe", "to_event": "EV-a9ae845b", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-03-25 → 2026-04-03）", "created_by": "rule"}
+{"from_event": "EV-a9ae845b", "to_event": "EV-a0515eb2", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-04-03 → 2026-04-22）", "created_by": "rule"}
+{"from_event": "EV-ba718369", "to_event": "EV-b5016f0f", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2025-11-16 → 2026-01-14）", "created_by": "rule"}
+{"from_event": "EV-b5016f0f", "to_event": "EV-6ac990c0", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-01-14 → 2026-03-07）", "created_by": "rule"}
+{"from_event": "EV-6ac990c0", "to_event": "EV-3a28d465", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-03-07 → 2026-04-07）", "created_by": "rule"}
+{"from_event": "EV-3a28d465", "to_event": "EV-916cecd6", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-04-07 → 2026-05-27）", "created_by": "rule"}
+{"from_event": "EV-6b169c74", "to_event": "EV-ad6a6322", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-08-08 → 2026-08-31）", "created_by": "rule"}
+{"from_event": "EV-ad6a6322", "to_event": "EV-5d759c6f", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-08-31 → 2026-09-01）", "created_by": "rule"}
+{"from_event": "EV-5d759c6f", "to_event": "EV-bffa57f2", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-01 → 2026-09-01）", "created_by": "rule"}
+{"from_event": "EV-62976e07", "to_event": "EV-99a689d8", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2025-10-16 → 2026-01-13）", "created_by": "rule"}
+{"from_event": "EV-99a689d8", "to_event": "EV-57eeb181", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-01-13 → 2026-01-20）", "created_by": "rule"}
+{"from_event": "EV-57eeb181", "to_event": "EV-3bb14a38", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-01-20 → 2026-01-23）", "created_by": "rule"}
+{"from_event": "EV-3bb14a38", "to_event": "EV-27c823da", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-01-23 → 2026-01-26）", "created_by": "rule"}
+{"from_event": "EV-27c823da", "to_event": "EV-d40512f1", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-01-26 → 2026-03-09）", "created_by": "rule"}
+{"from_event": "EV-d40512f1", "to_event": "EV-487a4e66", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-03-09 → 2026-03-30）", "created_by": "rule"}
+{"from_event": "EV-487a4e66", "to_event": "EV-44171866", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-03-30 → 2026-04-02）", "created_by": "rule"}
+{"from_event": "EV-44171866", "to_event": "EV-84002102", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-04-02 → 2026-04-29）", "created_by": "rule"}
+{"from_event": "EV-84002102", "to_event": "EV-8d9cd745", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-04-29 → 2026-05-21）", "created_by": "rule"}
+{"from_event": "EV-8d9cd745", "to_event": "EV-7a30a325", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-05-21 → 2026-05-26）", "created_by": "rule"}
+{"from_event": "EV-7a30a325", "to_event": "EV-fc53a8c4", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-05-26 → 2026-05-27）", "created_by": "rule"}
+{"from_event": "EV-fc53a8c4", "to_event": "EV-948794bb", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-05-27 → 2026-06-11）", "created_by": "rule"}
+{"from_event": "EV-948794bb", "to_event": "EV-6c318d06", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-06-11 → 2026-06-29）", "created_by": "rule"}
+{"from_event": "EV-6c318d06", "to_event": "EV-ce74c67a", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-06-29 → 2026-06-30）", "created_by": "rule"}
+{"from_event": "EV-ce74c67a", "to_event": "EV-78e11336", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-06-30 → 2026-07-27）", "created_by": "rule"}

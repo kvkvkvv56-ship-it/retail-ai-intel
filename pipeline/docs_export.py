@@ -111,6 +111,14 @@ def live_blocks(store, cfg: dict | None = None) -> dict[str, str]:
             f"{r[0]} {r[1]}" for r in store.db.execute(
                 "SELECT channel, COUNT(*) FROM items GROUP BY 1 ORDER BY 2 DESC")),
 
+        # 观察范围也走活区块：加一个主体就要改四份文档，手工同步必漏
+        # （实测漏过：README 没加、运行说明计数还写着 8、交付说明写重了两遍）
+        "scope": (
+            "**观察主体（" + str(len((cfg or {}).get("companies", []))) + "）**："
+            + " · ".join(c["name"] for c in (cfg or {}).get("companies", []))
+            + "\n\n**观察领域（" + str(len((cfg or {}).get("domains", []))) + "）**："
+            + " · ".join(d["name"] for d in (cfg or {}).get("domains", []))),
+
         "classes": "**原始条目一手性分布**：" + " · ".join(
             f"{r[0]} {r[1]}" for r in store.db.execute(
                 "SELECT effective_class, COUNT(*) FROM items GROUP BY 1 ORDER BY 1")),
@@ -121,7 +129,9 @@ def refresh_live(store, cfg=None) -> int:
     """把 live 区块按当前库重写回 .md 文件。返回改动的区块数。"""
     blocks = live_blocks(store, cfg)
     changed = 0
-    for f in list(DOCS.glob("*.md")) + [ROOT / "README.md"]:
+    # 交付说明在仓库根目录、不进文档站，但同样含活区块，必须一起刷
+    targets = list(DOCS.glob("*.md")) + [ROOT / "README.md", ROOT / "交付说明.md"]
+    for f in targets:
         if not f.exists():
             continue
         src = f.read_text(encoding="utf-8")
@@ -224,7 +234,12 @@ def export_docs(store=None, cfg=None) -> dict:
 
 
 if __name__ == "__main__":
-    r = export_docs()
+    # 单独跑时也要带上 config，否则 scope 这类依赖配置的活区块会被刷成空
+    import sys
+    sys.path.insert(0, str(ROOT))
+    from pipeline.run import load_config
+    _cfg, _ = load_config("ecommerce")
+    r = export_docs(Store(), _cfg)
     print(f"已导出文档快照 {r['docs']} 份 → web/public/api/v1/docs/  ({r['kb']} KB)")
     if r["live"]:
         print(f"  活数字区块已刷新 {r['live']} 处")
