@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { marked } from 'marked'
 import { api } from '../api.js'
 import { Collapse, Empty } from '../components/Bits.jsx'
@@ -67,7 +67,14 @@ export default function DocsView({ id, nav }) {
   const [doc, setDoc] = useState(null)
   const [err, setErr] = useState(null)
   const [active, setActive] = useState('')
-  const bodyRef = useRef(null)
+  // 用**回调 ref 存进 state**，而不是 useRef。
+  //
+  // index（文档列表）与 doc（单篇内容）是两个独立请求。doc 先到、index 未到时，
+  // 组件走 `if (!index) return <loading>` 早退，.md 压根不在树里，ref 是 null；
+  // 而这时 html 已经算好，依赖 [html] 的效应跑一次就永久放弃——之后 html
+  // 不再变化，效应再也不会重跑。表现就是目录高亮从头到尾一动不动。
+  // 存进 state 后，节点挂载这件事本身触发重渲染，效应必然在节点就绪后执行。
+  const [bodyEl, setBodyEl] = useState(null)
 
   useEffect(() => {
     api('docs').then(setIndex).catch((e) => setErr(String(e)))
@@ -95,14 +102,14 @@ export default function DocsView({ id, nav }) {
   // Markdown 里常用「| | |」写无表头的键值表，渲染出来是一行空 th
   // 加一条分隔线，视觉上像多了个空行
   useEffect(() => {
-    if (!html || !bodyRef.current) return
-    bodyRef.current.querySelectorAll('table').forEach((t) => {
+    if (!html || !bodyEl) return
+    bodyEl.querySelectorAll('table').forEach((t) => {
       const th = [...t.querySelectorAll('thead th')]
       if (th.length && th.every((x) => !x.textContent.trim())) {
         t.classList.add('no-head')
       }
     })
-  }, [html])
+  }, [html, bodyEl])
 
   // 滚动高亮当前小节。
   //
@@ -119,14 +126,24 @@ export default function DocsView({ id, nav }) {
   // 不参与判定——它的 entries 只含状态变化的元素且顺序不保证，
   // 拿它直接选节点正是最初那版的错误。
   useEffect(() => {
-    if (!html || !bodyRef.current) return
-    const hs = [...bodyRef.current.querySelectorAll('h2[id], h3[id]')]
-    if (!hs.length) return
+    if (!html || !bodyEl) return
+
+    // **每次都从 bodyEl 现查标题，绝不缓存这个数组。**
+    //
+    // 实测踩过：把 querySelectorAll 的结果缓存进闭包，之后 React 重设了
+    // dangerouslySetInnerHTML，.md 这个 div 本身没变（isSameNode 为 true、
+    // isConnected 为 true），但它的子节点被整体换掉了——缓存下来的那批标题
+    // isConnected 变成 false。对脱离文档的节点 getBoundingClientRect()
+    // 恒返回 0，`0 <= 120` 于是永远成立，循环每次都走到末尾，
+    // 高亮被永久钉在最后一条。现查十几个节点的代价远小于这个风险。
+    const heads = () => [...bodyEl.querySelectorAll('h2[id], h3[id]')]
 
     const LINE = 120                       // 略低于吸顶头部
     let raf = 0
     const compute = () => {
       raf = 0
+      const hs = heads()
+      if (!hs.length) return
       let cur = hs[0].id
       for (const h of hs) {
         if (h.getBoundingClientRect().top <= LINE) cur = h.id
@@ -140,15 +157,16 @@ export default function DocsView({ id, nav }) {
     // capture 阶段挂在 document 上：嵌套滚动容器的 scroll 不冒泡到 window
     document.addEventListener('scroll', kick, { capture: true, passive: true })
     window.addEventListener('resize', kick)
-    const io = new IntersectionObserver(kick, { threshold: [0, 1] })
-    hs.forEach((h) => io.observe(h))
+    // 内容被换掉时重算一次——IO/scroll 都可能错过这个时机
+    const mo = new MutationObserver(kick)
+    mo.observe(bodyEl, { childList: true, subtree: false })
     return () => {
       if (raf) cancelAnimationFrame(raf)
       document.removeEventListener('scroll', kick, { capture: true })
       window.removeEventListener('resize', kick)
-      io.disconnect()
+      mo.disconnect()
     }
-  }, [html])
+  }, [html, bodyEl])
 
   // 长文档的目录自身会滚动，高亮项要保证可见。
   //
@@ -175,7 +193,7 @@ export default function DocsView({ id, nav }) {
     const href = a.getAttribute('href') || ''
     if (href.startsWith('#')) {
       e.preventDefault()
-      const el = bodyRef.current?.querySelector(`[id="${CSS.escape(href.slice(1))}"]`)
+      const el = bodyEl?.querySelector(`[id="${CSS.escape(href.slice(1))}"]`)
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
       return
     }
@@ -212,7 +230,7 @@ export default function DocsView({ id, nav }) {
                   current={toc.find((h) => h.id === active)?.text || toc[0].text}>
           {toc.map((h) => (
             <button key={h.id} className={`cb-item lv${h.level} ${active === h.id ? 'on' : ''}`}
-                    onClick={() => bodyRef.current
+                    onClick={() => bodyEl
                       ?.querySelector(`[id="${CSS.escape(h.id)}"]`)
                       ?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
               <span className="cb-t">{h.text}</span>
@@ -251,7 +269,7 @@ export default function DocsView({ id, nav }) {
               <code>{doc.source}</code>
               {doc.updated && <><span className="sep">/</span><span className="tnum">{doc.updated}</span></>}
             </div>
-            <div className="md" ref={bodyRef} onClick={onBodyClick}
+            <div className="md" ref={setBodyEl} onClick={onBodyClick}
                  dangerouslySetInnerHTML={{ __html: html }} />
             <nav className="docs-pager">
               {prev ? (
@@ -282,7 +300,7 @@ export default function DocsView({ id, nav }) {
                   <a href={`#${h.id}`} data-h={h.id} className={active === h.id ? 'on' : ''}
                      onClick={(e) => {
                        e.preventDefault()
-                       bodyRef.current?.querySelector(`[id="${CSS.escape(h.id)}"]`)
+                       bodyEl?.querySelector(`[id="${CSS.escape(h.id)}"]`)
                          ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                      }}>
                     {h.text}
