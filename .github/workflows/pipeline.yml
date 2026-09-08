@@ -4,22 +4,24 @@ name: 情报流水线
 #
 # 成本设计：Exa 每轮固定 $0.133（20 组查询，与返回量无关），RSS/RSSHub/直抓
 # 三条通道零成本。实测增量轮只新增 ~10 条，两轮都跑 Exa 是浪费。
-# 故：早轮跑全通道，晚轮只跑免费通道。Exa 月成本从 ~$8 降到 ~$4。
+# 故：早场跑全通道，晚场只跑免费通道。Exa 月成本从 ~$8 降到 ~$4。
 #
 # 刻意只跑 Python：v1 的 CI 是被 `npm ci` 挂死 44 分钟烧满作业超时拖垮的，
 # 前端构建与部署已从关键路径上摘除，改为手动或独立 workflow。
 on:
   schedule:
-    # 前两条是正式档；后四条是补位——GitHub 的 schedule 是尽力而为，会延迟
-    # 甚至整条丢弃（实测 12:30 那轮被推迟到 15:36，另有一轮根本没触发）。
-    # 补位轮由下面的 gate 步骤判定：距上次运行不足 6 小时直接跳过，
-    # 代价是十几秒 Actions 时间，换来「某一轮被丢弃时当天仍会跑到」。
-    - cron: '30 0 * * *'
-    - cron: '30 1 * * *'
-    - cron: '30 2 * * *'
-    - cron: '30 12 * * *'
-    - cron: '30 13 * * *'
-    - cron: '30 14 * * *'
+    # 正式档是 00:30 / 12:30 UTC，其余小时全是补位。
+    #
+    # GitHub 的 schedule 是尽力而为。本仓库实测延迟不是偶发而是常态：
+    # 2026-09-07 六条 cron 无一准点，00:30 那条 05:02 才跑（迟 4h32m），
+    # 12:30 那条 17:49 才跑（迟 5h19m）；更早还观察到整条根本没触发。
+    # 原来的补位窗口只有 +2h，覆盖不住实测延迟——补位轮和正式档被一起
+    # 平移了同样多，等于没补。窗口按实测放到 7 小时。
+    #
+    # 多出来的轮次不花钱：gate 判定本档今天已经跑过就直接跳过，一次十几秒。
+    # 写成范围而不是逐条列出，是因为 gate 只需要小时字段的首值判档位。
+    - cron: '30 0-7 * * *'
+    - cron: '30 12-18 * * *'
   workflow_dispatch:
     inputs:
       no_exa:
@@ -40,6 +42,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # 取分支当前 tip，而不是触发时的 SHA。补位轮可能排在正式轮后面执行
+          # （concurrency 串行化），用触发时的 SHA 会读到旧的 runs.jsonl，
+          # 把刚跑完的档判成还没跑过，两轮重复采集
+          ref: ${{ github.ref_name }}
 
       - uses: actions/setup-python@v5
         with:
@@ -47,46 +54,124 @@ jobs:
 
       # 流水线零第三方依赖（仅标准库），无需 pip install
 
-      - name: 判断本轮是否补位（距上次运行不足 6 小时则跳过）
+      - name: 判断本档今天是否已经跑过
         id: gate
+        env:
+          EVENT: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
         run: |
           python - <<'PY' >> "$GITHUB_OUTPUT"
           import json, os, pathlib
           from datetime import datetime, timezone
 
-          MIN_GAP_H = 6            # 两个正式档相隔 12 小时，补位档相隔 1 小时
-          ev = os.environ.get("EVENT", "")
-          run = "true"
-          why = ""
-          if ev == "schedule":
-              p = pathlib.Path("data/runs.jsonl")
-              lines = [l for l in p.read_text(encoding="utf-8").splitlines()
-                       if l.strip()] if p.exists() else []
-              if lines:
-                  r = json.loads(lines[-1])
-                  ts = r.get("finished_at") or r.get("started_at")
-                  try:
-                      d = datetime.fromisoformat(ts)
-                      if d.tzinfo is None:
-                          d = d.replace(tzinfo=timezone.utc)
-                      age = (datetime.now(timezone.utc) - d).total_seconds() / 3600
-                      if age < MIN_GAP_H:
-                          run, why = "false", f"距上次运行 {age:.1f} 小时，补位轮跳过"
-                      else:
-                          why = f"距上次运行 {age:.1f} 小时，正常跑"
-                  except ValueError:
-                      why = "上次运行时间无法解析，保守起见照跑"
-          else:
-              why = "手动触发，不受补位判定约束"
-          print(f"run={run}")
-          print(f"why={why}")
-          PY
-        env:
-          EVENT: ${{ github.event_name }}
+          # 判据是「本档今天服务过没有」，绝对量，不是「距上次运行几小时」。
+          #
+          # 相对判据在延迟面前会自我抵消：schedule 迟到越多，补位轮离上一轮
+          # 越近，越容易被自己的 6 小时闸门拦掉。2026-09-07 早场就差 28 分钟
+          # 全军覆没——07:29 那轮距上次 6.47 小时，只比闸门多 0.47，上一轮
+          # 但凡晚结束半小时，当天 CI 一轮都不会跑，而且不会有任何告警。
+          # 绝对判据与延迟解耦：本档今天没服务过就照跑，服务过就跳，迟到多久
+          # 都不影响判断。这和 S7 周报「该周是否已有周报」是同一个自愈思路。
+          #
+          # 本地手动跑的轮次同样计入——它一样刷新了数据。「每天两轮」说的是
+          # 数据被刷新两次，不是 CI 被触发两次。2026-09-07 晚场就是你本地
+          # 20:27 跑掉的，CI 那三条补位跳过是对的。
+          FORMAL = {"am": 0, "pm": 12}   # 正式档的 UTC 小时，用来算迟了多久
 
+          now = datetime.now(timezone.utc)
+          event = os.environ.get("EVENT", "")
+
+          def cron_hour(expr):
+              """cron 小时字段可能是范围（0-7）或列表（0,2），取首值代表本档意图。
+              按当前时刻判档位是错的——迟到 5 小时的早场会被当成晚场。"""
+              field = (expr.split() + ["", ""])[1]
+              try:
+                  return int(field.split("-")[0].split(",")[0].split("/")[0])
+              except ValueError:
+                  return None
+
+          h = cron_hour(os.environ.get("SCHEDULE", ""))
+          slot = "am" if (h if h is not None else now.hour) < 12 else "pm"
+
+          served, todays = {}, []
+          p = pathlib.Path("data/runs.jsonl")
+          if p.exists():
+              for line in p.read_text(encoding="utf-8").splitlines():
+                  if not line.strip():
+                      continue
+                  try:
+                      r = json.loads(line)
+                      d = datetime.fromisoformat(r["started_at"] or r["finished_at"])
+                  except (ValueError, TypeError, KeyError):
+                      continue      # 记录损坏时不计数：宁可多跑一轮，不可漏一轮
+                  if d.tzinfo is None:
+                      d = d.replace(tzinfo=timezone.utc)
+                  d = d.astimezone(timezone.utc)
+                  if d.date() != now.date():
+                      continue
+                  st = r.get("stats") or {}
+                  # raw=0 说明六条通道一条都没采到（全网失败），这种轮次不该占掉
+                  # 本档名额——否则一次网络抖动就让当天彻底没有数据，而补位轮
+                  # 明明还有机会。有采到东西才算「本档已服务」
+                  if not st.get("raw", 0):
+                      continue
+                  rid = r.get("id", "?")
+                  todays.append(rid)
+                  # CI 轮次自报档位（见 run.py 的 KB_RUN_SLOT）。本地轮没有这个
+                  # 标记，按时刻归档——人在 20:27 手动跑的确实就是晚场。
+                  # 不能对 CI 轮也按时刻归档：迟到 5 小时的早场会落到 12:00 之后，
+                  # 被当成晚场，把真正的晚场一起判掉，当天就只剩一轮
+                  served.setdefault(st.get("ci_slot") or ("am" if d.hour < 12 else "pm"), rid)
+
+          if event != "schedule":
+              run = "true"
+              why = f"手动触发，不受档位判定约束（今天已服务 {sorted(served) or '无'}）"
+          elif slot in served:
+              run = "false"
+              why = f"{slot} 档今天已由 {served[slot]} 服务过，本轮跳过"
+          else:
+              run = "true"
+              why = f"{slot} 档今天还没服务过（今天已跑 {len(todays)} 轮），开跑"
+
+          # 晚场只跑免费通道，把每天一轮的 Exa 额度留给早场。
+          # 但若今天一轮都没跑过（早场整条被丢弃），晚场就得把全通道补上——
+          # 否则「schedule 丢一条」的代价从「晚几小时」变成「当天没有检索」。
+          # 一旦跑过一轮，后面的 pm 补位轮回到免费通道，Exa 每天仍最多一轮。
+          # 手动触发一律走全通道，由 inputs.no_exa 决定
+          no_exa = "true" if (event == "schedule" and slot == "pm" and todays) else "false"
+
+          # 迟到多久按本档正式档算，而不是按触发它的那条补位 cron 算——
+          # 使用者关心的是「数据比计划晚了多久」，不是「哪条 cron 发晚了」
+          lag = ""
+          if event == "schedule":
+              plan = now.replace(hour=FORMAL[slot], minute=30, second=0, microsecond=0)
+              mins = int((now - plan).total_seconds() // 60)
+              if mins >= 60:
+                  lag = (f"本档正式档 {FORMAL[slot]:02d}:30 UTC，现在 {now:%H:%M} UTC，"
+                         f"迟 {mins // 60} 小时 {mins % 60} 分")
+
+          print(f"run={run}")
+          print(f"slot={slot}")
+          print(f"no_exa={no_exa}")
+          print(f"why={why}")
+          print(f"lag={lag}")
+          PY
+
+      # gate 的输出里带 runs.jsonl 的 run id。表达式是在 shell 解析之前展开的，
+      # 直接拼进命令行等于把数据文件的内容当命令执行，一律走 env
       - name: 补位轮跳过说明
         if: steps.gate.outputs.run != 'true'
-        run: echo "::notice::${{ steps.gate.outputs.why }}"
+        env:
+          WHY: ${{ steps.gate.outputs.why }}
+        run: echo "::notice::$WHY"
+
+      # 迟到是 GitHub 侧的问题，流水线自身无解，但必须露出来——
+      # 否则「作业全绿」会让人以为数据是按点更新的
+      - name: 本轮迟到提示
+        if: steps.gate.outputs.run == 'true' && steps.gate.outputs.lag != ''
+        env:
+          LAG: ${{ steps.gate.outputs.lag }}
+        run: echo "::warning::$LAG（GitHub schedule 延迟，非流水线故障）"
 
       - name: 跑流水线
         if: steps.gate.outputs.run == 'true'
@@ -97,12 +182,15 @@ jobs:
           KB_LLM_BASE_URL: https://api.deepseek.com
           KB_SCOUT_MODEL: deepseek-chat
           KB_STRONG_MODEL: deepseek-chat
+          # 让本轮把自己服务的档位写进 runs.jsonl，供下一条补位 cron 判定。
+          # 不写的话只能按时刻倒推，迟到的早场会被误判成晚场
+          KB_RUN_SLOT: ${{ steps.gate.outputs.slot }}
+          NO_EXA: ${{ steps.gate.outputs.no_exa }}
+          NO_EXA_INPUT: ${{ inputs.no_exa }}
         run: |
-          # 晚场（UTC 12–14 时段，北京 20:30 前后）只跑免费通道，控 Exa 额度。
-          # 按小时判断而不是匹配单条 cron —— 补位轮的 cron 表达式不同，
-          # 硬编码会让补位的晚场误跑 Exa
-          HOUR=$(echo "${{ github.event.schedule }}" | awk '{print $2}')
-          if [ "$HOUR" -ge 12 ] 2>/dev/null || [ "${{ inputs.no_exa }}" = "true" ]; then
+          # 档位与 Exa 开关都由 gate 统一判定，这里不再解析 cron——
+          # 两处各自解析一次，改了一处忘了另一处就是省额度的设计反过来花钱
+          if [ "$NO_EXA" = "true" ] || [ "$NO_EXA_INPUT" = "true" ]; then
             echo "本轮跳过 Exa（免费通道轮）"
             python pipeline/run.py --no-exa
           else
@@ -144,10 +232,16 @@ jobs:
 
       - name: 运行摘要
         if: always() && steps.gate.outputs.run == 'true'
+        env:
+          SLOT: ${{ steps.gate.outputs.slot }}
+          WHY: ${{ steps.gate.outputs.why }}
+          LAG: ${{ steps.gate.outputs.lag }}
         run: |
           {
             echo "## 本轮运行"
             echo '```'
+            echo "档位 $SLOT　$WHY"
+            [ -n "$LAG" ] && echo "$LAG"
             python - <<'PY'
           import json, pathlib
           p = pathlib.Path("data/runs.jsonl")
