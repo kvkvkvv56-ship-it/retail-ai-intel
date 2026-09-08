@@ -325,12 +325,20 @@ def _xmerge_pairs(store, evs: list) -> list[tuple[int, int, float]] | None:
 
 
 def stage_merge_cross(store, llm, run_id: str) -> dict:
-    """S4b 跨公司归并复核：**向量召回 + LLM 裁决**。
+    """S4b 全库归并复核：**向量召回 + LLM 裁决**。
 
-    S4 按公司分组归并有一个结构性盲区：同一事件若被抽取成不同 company，
-    两者永远不会被放在一起比较。首轮实跑就命中了——「千问AI Arena」被判为
-    taobao、「阿里云通义AI竞技场」被判为 industry，实为同一件事。
-    （讽刺的是，这个漏归并是周报的 method_notes 自己发现并报告的。）
+    补的是 S4 的两个结构性盲区。S4 只读本轮 status='extracted' 的候选、
+    并且按 company 分组，于是：
+
+    1. **跨轮次看不见。** 事件的跨轮同一性完全靠 LLM 每次生成一模一样的
+       event_key 字符串（eid = sha1(company:key)）。同一条新闻隔天再被报道，
+       模型给出 `wechat-ai-agent-weilm` 和 `wechat-xiaowei-ai-social`，
+       差一个词就是两个事件。实测 09-07 与 09-08 的「微信小微」即此情形，
+       两者余弦 0.869，远在召回阈值之上。这是本阶段最主要的价值——
+       让库里同一件事**只保留第一次出现的那条**，后续报道并入它作为佐证。
+    2. **跨公司看不见。** 同一事件被抽成不同 company 时永不相遇。首轮实跑
+       即命中：「千问AI Arena」判为 taobao、「阿里云通义AI竞技场」判为
+       industry，实为同一件事。（这个漏归并是周报的 method_notes 自己报的。）
 
     原实现把**全部事件**塞进一次调用整体扫描。两个问题：
       1. 不可扩展 —— 百级事件的提示词已经很长，五百级就塞不下
@@ -340,8 +348,14 @@ def stage_merge_cross(store, llm, run_id: str) -> dict:
     改为：向量召回出高相似度的事件对（占全部两两组合约 1%），分批送模型
     逐对裁决。这正是技术方案原本写的「embedding + LLM 裁决」。
     向量不可用时退回整表通读，行为与改动前一致。
+
+    规模上限：两两余弦是纯 Python 的 O(n²)，实测 178 事件 15753 对耗时
+    1.5s（93 µs/对）。外推 1000 事件约 47s、2000 约 3 分钟、5000 约 19 分钟——
+    作业超时是 25 分钟，所以天花板在 4000-5000 事件。到那时需要换成
+    分块比对或近似最近邻，不能再全量两两算。
     """
-    evs = store.q("SELECT id, company, event_key, title, summary FROM events")
+    evs = store.q("SELECT id, company, event_key, title, summary, "
+                  "first_seen_at, event_date FROM events")
     stats = {"scanned": len(evs), "cross_merged": 0, "suspects": 0, "error": 0,
              "recall_pairs": 0, "recall": "full_scan"}
     if len(evs) < 2:
@@ -404,11 +418,20 @@ def stage_merge_cross(store, llm, run_id: str) -> dict:
         if len(idx) < 2:
             continue
         members = [evs[i] for i in idx]
-        # 保留信源最多的那个作为主事件
+        # 保留**最早进库**的那条作为主事件。
+        #
+        # 原规则是「留信源最多的那条」，方向错了：同一条新闻第二天被另一家
+        # 转述、抽成新事件时，新的那条往往当轮信源更多，于是把最早那条删掉，
+        # 事件的 first_seen_at 和 event_date 一起被推后——库里就再也看不出
+        # 这件事是什么时候第一次出现的，而这恰恰是情报库的核心价值。
+        # 信源不会因此丢失：下面把被合并方的 items/claims 全部改挂到 keep 上，
+        # S5 会按合并后的 items 重算独立信源数，置信度该升还是会升。
         counts = {m["id"]: store.one(
             "SELECT COUNT(*) FROM items WHERE event_id=?", (m["id"],)) or 0
             for m in members}
-        keep = max(members, key=lambda m: counts[m["id"]])
+        # 同一时刻进库时（同一轮抽出的两条）再看信源数，多的那条更完整
+        keep = min(members, key=lambda m: (m["first_seen_at"] or "9999",
+                                           -counts[m["id"]]))
         for m in members:
             if m["id"] == keep["id"]:
                 continue
@@ -420,14 +443,33 @@ def stage_merge_cross(store, llm, run_id: str) -> dict:
                              (m["id"], m["id"]))
             store.db.execute("DELETE FROM events WHERE id=?", (m["id"],))
             gone.add(m["id"])
+            # 链式合并会把审计链切断：前一批把 X 合进 m，这一批又把 m 合进 keep，
+            # 于是「X 去哪了」的台账行指向一个已被删除的事件。实测本轮 24 次
+            # 合并里出现 1 次，历史数据里也有 3 条这样的断链。改指到新的幸存者——
+            # 条目和 claim 本来就是链式迁移的，台账不该比它们少一环
+            store.db.execute("UPDATE rejects SET merged_into=? "
+                             "WHERE stage='merge_cross' AND merged_into=?",
+                             (keep["id"], m["id"]))
             store.insert("rejects", {
                 "run_id": run_id, "item_id": None, "url": None,
                 "title": m["title"], "source_name": "—",
                 "stage": "merge_cross", "reason_code": "merged",
-                "reason_detail": f"跨公司复核：与 {keep['id']} 为同一事件。"
-                                 f"{g.get('reason', '')}",
+                "reason_detail": f"全库复核：与更早入库的 {keep['id']} 为同一事件，"
+                                 f"证据已并入。{g.get('reason', '')}",
                 "merged_into": keep["id"], "created_at": _now()})
             stats["cross_merged"] += 1
+
+        # 同一件事被抽成两条时，event_date 也可能不同（实测：微信小微那条
+        # 09-07 抽成 09-07、09-08 又抽成 09-08）。合并后归到最早的那个，
+        # 否则事件会显示成比它实际发生时间更晚。first_seen_at 不用动——
+        # keep 选的就是最早进库的那条。last_update_at 刷新，因为确实有新证据进来
+        dates = sorted(d for d in (m["event_date"] for m in members) if d)
+        if dates and dates[0] != keep["event_date"]:
+            store.db.execute("UPDATE events SET event_date=? WHERE id=?",
+                             (dates[0], keep["id"]))
+        store.db.execute("UPDATE events SET last_update_at=? WHERE id=?",
+                         (_now(), keep["id"]))
+
     # 模型表达的不确定性 → 人工复核队列（不自动合并）
     for g in res.get("suspects") or []:
         idx = [i for i in g.get("members", [])
