@@ -1,4 +1,5 @@
 import React from 'react'
+import { stagger } from '../components/Bits.jsx'
 
 export default function RunView({ meta, run, nav }) {
   const s = run?.stats || {}
@@ -33,8 +34,8 @@ export default function RunView({ meta, run, nav }) {
       </p>
 
       <div className="funnel">
-        {stages.map((st) => (
-          <button key={st.label} className="stage-card"
+        {stages.map((st, i) => (
+          <button key={st.label} className="stage-card stagger" style={stagger(i)}
                   disabled={!st.to || !rid}
                   onClick={() => nav(`/runs/${rid}/rejects`)}>
             <span className="k">{st.label}</span>

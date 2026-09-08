@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { api } from '../api.js'
-import { Empty } from '../components/Bits.jsx'
+import { Empty, Loading, stagger } from '../components/Bits.jsx'
 
 /**
  * 全部周报存档。侧栏只留最近 5 期，其余从这里进。
@@ -17,7 +17,7 @@ export default function ReportsIndex({ nav }) {
   }, [])
 
   if (err) return <div className="error">加载失败：{err}</div>
-  if (!list) return <div className="loading">载入中…</div>
+  if (!list) return <Loading />
   if (!list.results.length) return <Empty>尚无周报</Empty>
 
   return (
@@ -29,7 +29,7 @@ export default function ReportsIndex({ nav }) {
 
       <ul className="rep-index">
         {list.results.map((r, i) => (
-          <li key={r.id}>
+          <li key={r.id} className="stagger" style={stagger(i)}>
             <button className="rep-row" onClick={() => nav(`/report/${r.id}`)}>
               <span className="rep-no tnum">第 {list.total - i} 期</span>
               <span className="rep-win tnum d">{r.period_start} ~ {r.period_end}</span>

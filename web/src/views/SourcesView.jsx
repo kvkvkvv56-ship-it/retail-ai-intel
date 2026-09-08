@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { api, CLASS_LABEL, CLASS_SHORT, fmtDate } from '../api.js'
+import { Loading } from '../components/Bits.jsx'
 
 /**
  * 信源健康度（技术方案 §3.4）
@@ -20,7 +21,7 @@ export default function SourcesView() {
     api('reviews').then(setRev).catch(() => {})
   }, [])
   if (err) return <div className="error">加载失败：{err}</div>
-  if (!d) return <div className="loading">载入中…</div>
+  if (!d) return <Loading />
 
   return (
     <div className="view">
