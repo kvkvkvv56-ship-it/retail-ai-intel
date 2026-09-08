@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
@@ -459,10 +460,17 @@ def main() -> int:
         if stage_errors:
             llm_stats["stage_errors"] = stage_errors
 
+    # CI 传进来的档位（am/pm）跟着轮次一起落账。workflow 的补位判定要靠它
+    # 区分「这轮服务的是哪个档」——只按时刻倒推的话，迟到 5 小时的早场会
+    # 落进晚场的时段，把真正的晚场一起判成已完成
+    run_stats = {**stats, **llm_stats, "collect_errors": errors}
+    if os.environ.get("KB_RUN_SLOT"):
+        run_stats["ci_slot"] = os.environ["KB_RUN_SLOT"]
+
     store.upsert("runs", {
         "id": run_id, "started_at": started, "finished_at": now_iso(),
         "mode": "live", "dataset": args.dataset,
-        "stats": {**stats, **llm_stats, "collect_errors": errors},
+        "stats": run_stats,
         "cost": cost, "config_hash": config_hash(cfg, srccfg),
     })
     store.commit()
