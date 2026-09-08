@@ -118,7 +118,9 @@ def stage_dedup(store: Store, raw: list[dict], cfg: dict, srccfg: dict,
 
     L1 URL 精确  → duplicate_url
     L2 SimHash   → syndication（转载）
-    L3 语义归并  → D5 实现（需 embedding + LLM 裁决）
+    L3 语义近重复 → **条目层仍未实现**。改写过的转载这里拦不住，
+                   会走到 S3 抽取、再由 S4b 在事件层用向量召回 + LLM 裁决合掉。
+                   代价是多花一次抽取的钱，换来的是判断有正文依据、且可审计。
     另有时间窗口与信源类别过滤。
     """
     domain_idx = C.build_domain_index(srccfg["sources"])
