@@ -402,8 +402,17 @@ def stage_merge_cross(store, llm, run_id: str) -> dict:
                         f"以下是向量召回出的疑似重复事件对，请逐对裁决：\n{asks}"
                         f"\n\n涉及事件的详情：\n\n{listing}"},
                 ], strong=True, max_tokens=1200)
-            except Exception:                                 # noqa: BLE001
+            except Exception as e:                            # noqa: BLE001
+                # 批次失败必须留下原因。这一层原来只 +1 计数，连异常类型都不记——
+                # 接上 S4b 的首轮（2026-09-08 17:19）就失败 2 批、约 20 对疑似重复
+                # 没被裁决，而日志里查不出任何线索。记法对齐 run.py 的 stage()。
+                # 不中断：这些候选对下一轮仍会被向量召回，是自愈的
+                nth = s0 // XMERGE_BATCH + 1
                 stats["error"] += 1
+                stats.setdefault("error_detail", []).append(
+                    f"批次 {nth}（{len(chunk)} 对）：{type(e).__name__}: {str(e)[:120]}")
+                print(f"  ✗ 批次 {nth} 裁决失败，{len(chunk)} 对未判定（下轮重试）："
+                      f"{type(e).__name__}: {str(e)[:120]}")
                 continue
             res["duplicates"].extend(r.get("duplicates") or [])
             res["suspects"].extend(r.get("suspects") or [])

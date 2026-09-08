@@ -441,6 +441,10 @@ def main() -> int:
             if xm.get("recall") == "vector":
                 print(f"  → 扫描 {xm['scanned']} 事件，向量召回 {xm['recall_pairs']} 对疑似"
                       f"，合并 {xm['cross_merged']} 个，存疑待人工 {xm['suspects']}")
+                # 阶段整体成功不代表每批都成功——失败的批次里那些疑似重复这轮
+                # 没被裁决，不说出来就等于「事件数没降」找不到原因
+                if xm.get("error"):
+                    print(f"     ✗ {xm['error']} 批裁决失败，这些疑似对本轮未判定，下轮重试")
             else:
                 # 缺 JINA_API_KEY 时退回整表通读，实测漏判严重，必须说出来
                 print(f"  → 向量不可用，退回整表通读（漏判率高）：扫描 {xm['scanned']} 事件"
