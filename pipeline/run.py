@@ -7,7 +7,7 @@
     python3 pipeline/run.py --no-exa         # 跳过 Exa（零成本，只跑免费通道）
 
 阶段（docs/技术方案.md §2.1）：
-    S0 采集 → S1 去重 → S2 预筛 → S3 抽取 → S4 归并 → S5 核验 → [S6 洞察]
+    S0 采集 → S1 去重 → S2 预筛 → S3 抽取 → S4 归并 → S4b 全库复核 → S5 核验 → [S6 洞察]
     方括号内为 D7 待实现
 """
 from __future__ import annotations
@@ -431,6 +431,19 @@ def main() -> int:
             print(f"  → {mg['candidates']} 条候选归并为 {mg['events']} 个事件"
                   f"（合并掉 {mg['merged_away']} 条重复报道），关系边 {mg['relations']}")
 
+        # 必须排在 S5 之前：S5 按 items 重算独立信源数，合并要先做完，
+        # 否则同一件事的信源被拆在两个事件上，两边的置信度都被低估
+        print("\n[S4b] 全库归并复核（向量召回 + LLM 逐对裁决）")
+        xm = stage("S4b", PR.stage_merge_cross, store, llm, run_id)
+        if xm:
+            if xm.get("recall") == "vector":
+                print(f"  → 扫描 {xm['scanned']} 事件，向量召回 {xm['recall_pairs']} 对疑似"
+                      f"，合并 {xm['cross_merged']} 个，存疑待人工 {xm['suspects']}")
+            else:
+                # 缺 JINA_API_KEY 时退回整表通读，实测漏判严重，必须说出来
+                print(f"  → 向量不可用，退回整表通读（漏判率高）：扫描 {xm['scanned']} 事件"
+                      f"，合并 {xm['cross_merged']} 个，存疑 {xm['suspects']}")
+
         print("\n[S5] 核验（纯规则）")
         vf = stage("S5", PR.stage_verify, store, cfg, srccfg)
         if vf:
@@ -454,7 +467,8 @@ def main() -> int:
                   f" · 观察清单 {ins['watchlist']} · 延续性检查 {ins.get('continuity', 0)}")
             print(f"     主线：{ins.get('headline', '')}")
 
-        llm_stats = {"prescreen": ps, "extract": ex, "merge": mg, "verify": vf,
+        llm_stats = {"prescreen": ps, "extract": ex, "merge": mg,
+                     "merge_cross": xm, "verify": vf,
                      "edges": eg, "insight": ins,
                      "llm_usage": llm.usage, "llm_cost_cny": llm.cost_estimate()}
         if stage_errors:
