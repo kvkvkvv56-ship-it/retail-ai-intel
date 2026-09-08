@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { api, CONFIDENCE_ORDER } from '../api.js'
-import { Confidence, Status, StageScale, Empty } from '../components/Bits.jsx'
+import { Confidence, Status, StageScale, Empty, Loading, stagger } from '../components/Bits.jsx'
 
 export default function EventsView({ meta, nav }) {
   const [data, setData] = useState(null)
@@ -22,7 +22,7 @@ export default function EventsView({ meta, nav }) {
   }, [data, f, q])
 
   if (err) return <div className="error">加载失败：{err}</div>
-  if (!data) return <div className="loading">载入中…</div>
+  if (!data) return <Loading />
 
   const compName = Object.fromEntries(meta.companies.map((c) => [c.id, c.name]))
   const domName = Object.fromEntries(meta.domains.map((d) => [d.id, d.name]))
@@ -56,8 +56,9 @@ export default function EventsView({ meta, nav }) {
         )}
       </div>
 
-      {rows.length === 0 ? <Empty>没有符合条件的事件</Empty> : rows.map((r) => (
-        <article key={r.id} className="ev-card" onClick={() => nav(`/events/${r.id}`)}>
+      {rows.length === 0 ? <Empty>没有符合条件的事件</Empty> : rows.map((r, i) => (
+        <article key={r.id} className="ev-card stagger" style={stagger(i)}
+                 onClick={() => nav(`/events/${r.id}`)}>
           <div className="ev-rail">
             <span className="d1">{(r.event_date || '').slice(5) || '—'}</span>
             <span className="d2">{(r.event_date || '').slice(0, 4)}</span>

@@ -49,6 +49,23 @@ export function TimeMark({ at, source }) {
 export const Empty = ({ children }) => <p className="empty">{children}</p>
 
 /**
+ * 加载态。
+ *
+ * 样式上延后 300ms 才淡入（见 index.css 的 .loading）——接口大多在 100ms
+ * 内返回，原来每切一次视图都要闪一下「载入中…」，比不显示更吵。
+ */
+export const Loading = () => <div className="loading">载入中…</div>
+
+/**
+ * 列表入场错峰的序号上限。
+ *
+ * 封顶而不是直接用索引：不封的话第 100 行要干等 2.4 秒才出现，
+ * 用户会以为没加载完。封在 8，最长等待固定 192ms。
+ */
+export const STAGGER_CAP = 8
+export const stagger = (i) => ({ '--i': Math.min(i, STAGGER_CAP) })
+
+/**
  * 窄屏折叠菜单。
  *
  * 顶部导航、周报往期、文档章节在手机上原本都是横向滚动条——横滚看不全，
@@ -81,11 +98,12 @@ export function Collapse({ label, current, children, className = '' }) {
         <span className="ch-cur">{current}</span>
         <span className="ch-arrow" aria-hidden>▾</span>
       </button>
-      {open && (
-        <div className="collapse-body" onClick={() => setOpen(false)}>
-          {children}
-        </div>
-      )}
+      {/* 常驻 DOM 而不是 open && …：卸载掉就没有收起动画可言。
+          收起时的 visibility:hidden 会把内部按钮移出 tab 序列，
+          所以不需要额外的 inert，键盘用户也不会 tab 进一个看不见的菜单 */}
+      <div className="collapse-body" onClick={() => setOpen(false)}>
+        {children}
+      </div>
     </div>
   )
 }

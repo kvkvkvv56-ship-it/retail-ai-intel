@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { api, fmtDate } from '../api.js'
-import { Collapse, Empty } from '../components/Bits.jsx'
+import { Collapse, Empty, Loading, stagger } from '../components/Bits.jsx'
 
 /** 侧栏只列最近这么多期。周报是持续产出物、期数单调增长，
  *  列表必须有个不随时间膨胀的上界；其余全部进「查看全部周报」页。 */
@@ -24,7 +24,7 @@ export default function ReportView({ meta, nav, id }) {
   }, [id])
 
   if (err) return <div className="error">加载失败：{err}</div>
-  if (!list) return <div className="loading">载入中…</div>
+  if (!list) return <Loading />
   if (!rep) return <Empty>尚无周报</Empty>
 
   const b = rep.body || {}
@@ -85,7 +85,7 @@ export default function ReportView({ meta, nav, id }) {
         关键发现 <span className="n">{(b.key_findings || []).length}</span>
       </h3>
       {(b.key_findings || []).map((f, i) => (
-        <article className="finding" key={i}>
+        <article className="finding stagger" style={stagger(i)} key={i}>
           <span className="no">{String(i + 1).padStart(2, '0')}</span>
           <h4>{f.title}</h4>
           <p>{f.detail}</p>

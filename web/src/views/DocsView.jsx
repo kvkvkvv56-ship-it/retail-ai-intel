@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { marked } from 'marked'
 import { api } from '../api.js'
-import { Collapse, Empty } from '../components/Bits.jsx'
+import { Collapse, Empty, Loading } from '../components/Bits.jsx'
 
 /**
  * 站内文档站。
@@ -205,7 +205,7 @@ export default function DocsView({ id, nav }) {
   }
 
   if (err) return <div className="error">加载失败：{err}</div>
-  if (!index) return <div className="loading">载入中…</div>
+  if (!index) return <Loading />
   if (!index.results.length) return <Empty>尚无文档</Empty>
 
   const pos = index.results.findIndex((d) => d.id === docId)
@@ -261,7 +261,7 @@ export default function DocsView({ id, nav }) {
 
       {/* ------------------------------- 中：正文 */}
       <article className="docs-main">
-        {!doc ? <div className="loading">载入中…</div> : (
+        {!doc ? <Loading /> : (
           <>
             <div className="docs-crumb">
               <span>{doc.group}</span>

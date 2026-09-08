@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { api, offline, onOffline } from './api.js'
-import { Collapse } from './components/Bits.jsx'
+import { Collapse, Loading } from './components/Bits.jsx'
 import RunView from './views/RunView.jsx'
 import EventsView from './views/EventsView.jsx'
 import EventDetail from './views/EventDetail.jsx'
@@ -20,11 +20,52 @@ const VIEWS = [
   { k: 'docs', to: '/docs', label: '文档' },
 ]
 
-const Tab = ({ on, go, n, children }) => (
-  <button className={`tab ${on ? 'on' : ''}`} onClick={go}>
+const Tab = ({ on, go, n, innerRef, children }) => (
+  <button ref={innerRef} className={`tab ${on ? 'on' : ''}`} onClick={go}>
     {children}{n != null && <span className="n">{n}</span>}
   </button>
 )
+
+/**
+ * 顶部导航的滑动下划线。
+ *
+ * 量出当前标签的位置写进 CSS 变量，让一条共用的墨条滑过去，而不是让每个
+ * 标签各自开关自己的 border——后者切换时是硬跳，看不出「从哪来到哪去」。
+ *
+ * 三个必须重量的时机：
+ *   1. 选中项变了
+ *   2. 字体加载完 —— 标题字是 woff2 子集，落地前后标签宽度不一样，
+ *      只在 mount 时量会让墨条停在错位置
+ *   3. 容器尺寸变化 —— 窄屏下 .tabs 会横向滚动，宽度变了位置也就变了
+ *
+ * 量到了才给容器加 .inked（由它把静态 border 隐掉）。JS 没跑或量失败时
+ * 保留原来的 border，不会出现哪个标签都没有下划线的情况。
+ */
+function useTabInk(active) {
+  const box = useRef(null)
+  const tabs = useRef({})
+  const [inked, setInked] = useState(false)
+
+  const measure = useCallback(() => {
+    const el = tabs.current[active]
+    const wrap = box.current
+    if (!el || !wrap || !el.offsetWidth) return
+    wrap.style.setProperty('--ink-x', `${el.offsetLeft}px`)
+    wrap.style.setProperty('--ink-w', `${el.offsetWidth}px`)
+    setInked(true)
+  }, [active])
+
+  useLayoutEffect(() => {
+    measure()
+    // 字体是 font-display: swap，落地时机不确定，ready 之后再量一次
+    document.fonts?.ready.then(measure).catch(() => {})
+    const ro = new ResizeObserver(measure)
+    if (box.current) ro.observe(box.current)
+    return () => ro.disconnect()
+  }, [measure])
+
+  return { box, tabs, inked }
+}
 
 export default function App() {
   const [meta, setMeta] = useState(null)
@@ -56,7 +97,7 @@ export default function App() {
 
   let body
   if (err) body = <div className="error">加载失败：{err}</div>
-  else if (!meta) body = <div className="loading">载入中…</div>
+  else if (!meta) body = <Loading />
   else {
     const ev = path.match(/^\/events\/([A-Za-z0-9\-]+)$/)
     const rj = path.match(/^\/runs\/([A-Za-z0-9\-]+)\/rejects$/)
@@ -75,11 +116,12 @@ export default function App() {
     else body = <RunView meta={meta} run={run} nav={nav} />
   }
 
-  const tab = path.startsWith('/events') ? 'events'
+  const tabKey = path.startsWith('/events') ? 'events'
     : path.startsWith('/sources') ? 'sources'
     : path.startsWith('/report') ? 'report'
     : path.startsWith('/brief') ? 'brief'
     : path.startsWith('/docs') ? 'docs' : 'run'
+  const ink = useTabInk(tabKey)
 
   return (
     <div className="wrap">
@@ -89,16 +131,18 @@ export default function App() {
             <h1 onClick={() => nav('/')}>行业与竞对 AI 洞察情报站</h1>
           </div>
           {/* 桌面常驻横排；窄屏由 CSS 换成下面的折叠菜单 */}
-          <nav className="tabs">
+          <nav className={`tabs ${ink.inked ? 'inked' : ''}`} ref={ink.box}>
             {VIEWS.map((v) => (
-              <Tab key={v.k} on={tab === v.k} go={() => nav(v.to)}
+              <Tab key={v.k} on={tabKey === v.k} go={() => nav(v.to)}
+                   innerRef={(el) => { ink.tabs.current[v.k] = el }}
                    n={v.n ? meta?.counts[v.n] : undefined}>{v.label}</Tab>
             ))}
+            <span className="tab-ink" aria-hidden />
           </nav>
           <Collapse className="nav-collapse" label="视图"
-                    current={VIEWS.find((v) => v.k === tab)?.label || '运行回放'}>
+                    current={VIEWS.find((v) => v.k === tabKey)?.label || '运行回放'}>
             {VIEWS.map((v) => (
-              <button key={v.k} className={`cb-item ${tab === v.k ? 'on' : ''}`}
+              <button key={v.k} className={`cb-item ${tabKey === v.k ? 'on' : ''}`}
                       onClick={() => nav(v.to)}>
                 {v.label}
                 {v.n && <span className="n">{meta?.counts[v.n]}</span>}

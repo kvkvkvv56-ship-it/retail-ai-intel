@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { api, CLASS_LABEL, CLASS_SHORT, fmtDate } from '../api.js'
-import { Confidence, Status, TimeMark, Empty } from '../components/Bits.jsx'
+import { Confidence, Status, TimeMark, Empty, Loading } from '../components/Bits.jsx'
 
 const REL_LABEL = {
   follows: '后续进展', same_actor_track: '同主体动作',
@@ -16,7 +16,7 @@ export default function EventDetail({ id, meta, nav }) {
   }, [id])
 
   if (err) return <div className="error">加载失败：{err}</div>
-  if (!e) return <div className="loading">载入中…</div>
+  if (!e) return <Loading />
 
   const domName = Object.fromEntries(meta.domains.map((d) => [d.id, d.name]))
   const compName = Object.fromEntries(meta.companies.map((c) => [c.id, c.name]))

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { api, REASON_LABEL } from '../api.js'
-import { Empty } from '../components/Bits.jsx'
+import { Empty, Loading } from '../components/Bits.jsx'
 
 /**
  * 拒绝台账（技术方案 §5.2）
@@ -23,7 +23,7 @@ export default function RejectsView({ runId, nav }) {
     [d, reason])
 
   if (err) return <div className="error">加载失败：{err}</div>
-  if (!d) return <div className="loading">载入中…</div>
+  if (!d) return <Loading />
 
   return (
     <div className="view">

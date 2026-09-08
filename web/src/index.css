@@ -902,3 +902,93 @@ a { color: inherit; text-decoration: none; }
   .rep-layout, .docs-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .docs-layout { margin-left: 0; margin-right: 0; padding-left: 0; padding-right: 0; }
 }
+
+/* ===================== 动效补充 =====================
+ *
+ * 原则与既有视觉系统一致：只在「切换」和「出现」两个时刻做交代，
+ * 幅度小于 8px、时长不超过 250ms，一律走已有的 motion token。
+ * 不碰定制简报的 MetalFx 金属环与 BorderBeam 光带——那两个是
+ * 生成状态的语义表达，不是装饰。
+ *
+ * 每一条都在文件末尾的 prefers-reduced-motion 块里有对应的关闭项。
+ */
+
+/* ---------- 导航下划线滑动 ----------
+ * 原来是 .tab.on 的 border-bottom 硬切换。改成一条共用的墨条在标签间滑动，
+ * 位置由 App.jsx 测量后写进 --ink-x / --ink-w。
+ * 只有测到了才给 .tabs 加 .inked——测量失败（JS 未执行、字体未就绪）时
+ * 保留原来的静态边框，不会出现「哪个标签都没有下划线」。 */
+.tabs { position: relative; }
+.tab-ink {
+  position: absolute; bottom: 0; left: 0; height: 2px; background: var(--text);
+  width: var(--ink-w, 0); transform: translateX(var(--ink-x, 0));
+  opacity: 0; pointer-events: none;
+}
+.tabs.inked .tab-ink {
+  opacity: 1;
+  transition: transform var(--duration-fast) var(--ease-smooth-out),
+              width var(--duration-fast) var(--ease-smooth-out),
+              opacity var(--duration-quick) var(--ease-smooth-out);
+}
+.tabs.inked .tab.on { border-bottom-color: transparent; }
+
+/* ---------- 折叠菜单展开 / 收起 ----------
+ * 原来是 open && <div>，进出都没有交代，在手机上像闪一下。
+ * 改成常驻 DOM + visibility 切换：收起时 visibility:hidden 会把内部按钮
+ * 移出 tab 序列，不需要额外的 inert。 */
+.collapse-body {
+  transform-origin: top center;
+  opacity: 0; visibility: hidden; transform: translateY(-4px) scale(0.985);
+  transition: opacity var(--duration-quick) var(--ease-smooth-out),
+              transform var(--duration-quick) var(--ease-smooth-out),
+              visibility 0s linear var(--duration-quick);
+}
+.collapse.open .collapse-body {
+  opacity: 1; visibility: visible; transform: none;
+  transition: opacity var(--duration-quick) var(--ease-smooth-out),
+              transform var(--duration-fast) var(--ease-smooth-out),
+              visibility 0s;
+}
+
+/* ---------- 列表入场微错峰 ----------
+ * --i 由各视图按索引写入并封顶（见 STAGGER_CAP），所以最长等待固定在
+ * 8 × 24ms = 192ms，不会因为列表长就让末尾干等。
+ * key 用的是业务 id：筛选后仍在结果里的行不会重新挂载，也就不会重播动画,
+ * 只有真正新出现的行才有入场——这正是想要的。 */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+.stagger {
+  animation: riseIn var(--duration-fast) var(--ease-smooth-out)
+             calc(var(--i, 0) * 24ms) both;
+}
+
+/* ---------- 「载入中…」延迟出现 ----------
+ * 接口大多在 100ms 内返回，原来每次切换视图都会闪一下「载入中…」。
+ * 延后 300ms 再淡入：快的时候根本看不见，慢的时候照常有反馈。
+ *
+ * 用独立的 fadeOnly 而不是复用 .view 的 fadeIn——后者带 4px 位移，
+ * 而「延迟出现」是时序安排不是动效，减少动态偏好下也该保留，
+ * 复用就会把位移一起带进 reduced-motion。 */
+@keyframes fadeOnly { from { opacity: 0; } to { opacity: 1; } }
+.loading {
+  animation: fadeOnly var(--duration-fast) var(--ease-smooth-out) 300ms both;
+}
+
+/* ---------- 返回按钮 ----------
+ * 悬停时往箭头方向让一点，把「往回走」这件事说出来。 */
+.back { transition: var(--t-color), transform var(--duration-micro) var(--ease-smooth-out); }
+.back:hover { transform: translateX(-2px); }
+
+/* ---------- 减少动态偏好 ----------
+ * 逐条关掉上面的位移与错峰。注意不是 animation: none 一刀切——
+ * 元素靠 both 填充模式取终态，直接砍掉动画会让它停在 opacity:0 上。 */
+@media (prefers-reduced-motion: reduce) {
+  .tabs.inked .tab-ink { transition: opacity var(--duration-quick) linear; }
+  .collapse-body,
+  .collapse.open .collapse-body { transform: none; transition: visibility 0s; }
+  .stagger { animation: none; }
+  .loading { animation: fadeOnly var(--duration-quick) linear 300ms both; }
+  .back:hover { transform: none; }
+}
