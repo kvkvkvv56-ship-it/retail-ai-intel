@@ -266,6 +266,14 @@ jobs:
                       print(f"周报 {ins.get('period','')}：{ins['skipped']}")
                   elif ins.get("headline"):
                       print(f"周报 {ins.get('period','')} 已生成：{ins['headline']}")
+                  # S4b 的批次失败不是阶段失败（阶段整体是成功的），走不到
+                  # stage_errors，必须单独露出来——否则绿灯照样掩盖掉
+                  # 「一批疑似重复没被裁决」
+                  mc = s.get("merge_cross") or {}
+                  if mc.get("error"):
+                      print(f"!! S4b {mc['error']} 批裁决失败（下轮重试）")
+                      for d in mc.get("error_detail") or []:
+                          print(f"   {d}")
                   for e in s.get("stage_errors") or []:
                       print(f"!! 阶段失败 {e}")
                   for e in s.get("collect_errors") or []:
