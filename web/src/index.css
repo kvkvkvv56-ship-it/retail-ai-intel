@@ -290,7 +290,9 @@ a { color: inherit; text-decoration: none; }
 /* ===================== 周报 ===================== */
 .headline-banner { padding: 8px 0 28px; }
 .headline-banner .k { font-size: 10px; color: var(--faint); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
-.headline-banner h3 { font-size: 22px; font-weight: 600; line-height: 1.45; letter-spacing: -.02em; max-width: 26ch; }
+/* 主线标题占满内容列。不要用 ch 限宽：ch 是「0」的宽度，中文一个字约 2ch，
+   26ch 只解析成 355px（比正文的 68ch=509px 还窄），会把 22 字的标题压成两行。 */
+.headline-banner h3 { font-size: 22px; font-weight: 600; line-height: 1.45; letter-spacing: -.02em; text-wrap: balance; }
 .hist { margin-left: 12px; font-family: var(--sans); font-size: 11px; color: var(--text); background: none; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; }
 
 .finding { padding: 20px 0; border-bottom: 1px solid var(--line-subtle); }
@@ -438,7 +440,7 @@ a { color: inherit; text-decoration: none; }
   .ev-rail { width: 40px; }
   .ev-rail .d2, .stage i:not(.cur) { display: none; }
   .detail-title { font-size: 19px; }
-  .headline-banner h3 { font-size: 19px; max-width: none; }
+  .headline-banner h3 { font-size: 19px; }
   .stage-card .v { font-size: 24px; }
   .tbl th:nth-child(n+4), .tbl td:nth-child(n+4) { display: none; }
 }
