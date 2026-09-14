@@ -120,11 +120,16 @@ def weeks_with_events(store, min_events: int = 3) -> list[str]:
 
     只有 1-2 个事件的周不出周报——周报的价值在跨事件看格局，
     单事件复述没有意义（周报 prompt 里也写了这条）。
+
+    还没过完的当周一律不算：窗口没走完就出，拿到的是半周事实，结论会被
+    后面几天的事件推翻。2026-09-07 的全量回填就是因为这里没拦住，给当时
+    还剩六天的本周出了一份只有 5 条事件的周报。
     """
+    this_week = week_of(datetime.now(timezone.utc).date().isoformat())
     counts: dict[str, int] = {}
     for r in store.q("SELECT event_date FROM events WHERE event_date IS NOT NULL"):
         counts[week_of(r["event_date"])] = counts.get(week_of(r["event_date"]), 0) + 1
-    return sorted(w for w, n in counts.items() if n >= min_events)
+    return sorted(w for w, n in counts.items() if n >= min_events and w < this_week)
 
 
 def _prev_watchlist(store, before: str | None = None) -> list[str]:
@@ -179,10 +184,23 @@ def stage_insight(store, llm, cfg: dict, run_id: str,
     # 效果同样是周一第一轮出上周报告，但多了自愈——某轮被 GitHub 的
     # schedule 丢掉、或那天模型调用失败，下一轮会自动补上，
     # 而按星期判断的话就永久错过了。
-    if not force and store.one("SELECT COUNT(*) FROM reports WHERE id=?",
-                               ("W-" + p_start,)):
-        stats["skipped"] = "本周周报已生成，跳过（--force-weekly 可重出）"
+    #
+    # 但「存在」本身不够，还要求这份是在窗口结束之后出的。2026-09-07 的全量
+    # 回填把当时才过了半天的本周（09-07~09-13）也出了一份，输入只有周一上午
+    # 的 5 条事件。一周之后的 09-14 周一，窗口第一次轮到这一周（实到 78 条
+    # 事件），闸门看见记录存在就跳过了——那份 5 条事件的快照会就此成为终稿，
+    # 本周后续 13 轮的判断完全相同，且日志只写「已生成」，看不出异常。
+    # 加上生成时间判据后，窗口没结束就出的那份只当草稿，下一轮照常重出，
+    # 仍然是自愈，不需要人工干预。
+    rid = "W-" + p_start
+    prev_gen = store.one("SELECT generated_at FROM reports WHERE id=?", (rid,))
+    if not force and prev_gen and prev_gen[:10] > p_end:
+        stats["skipped"] = (f"本周周报已生成（{prev_gen[:10]} 出），"
+                            "跳过（--force-weekly 可重出）")
         return stats
+    if prev_gen and prev_gen[:10] <= p_end:
+        # 覆盖的是残周快照。日志里必须点名，否则和常规重出分不开
+        stats["replaced"] = prev_gen[:10]
 
     if not evs:
         stats["error"] = f"{p_start}~{p_end} 无事件，跳过"
@@ -219,7 +237,6 @@ def stage_insight(store, llm, cfg: dict, run_id: str,
     valid_ids = {e["id"] for e in evs}
     res = _sanitize(res, valid_ids)
 
-    rid = "W-" + p_start
     # 重出本期时先清掉上一版的建议——它们已不在任何一期周报里，
     # 留着只会让事件详情堆积无出处的建议
     store.db.execute("DELETE FROM claims WHERE kind='recommendation' AND attributed_to=?",
