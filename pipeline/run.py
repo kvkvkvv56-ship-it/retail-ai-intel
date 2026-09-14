@@ -465,6 +465,9 @@ def main() -> int:
             print(f"  → {ins['error']}")
         elif ins:
             print(f"  → 窗口 {ins['period']}，输入 {ins['events_in']} 事件")
+            if ins.get("replaced"):
+                print(f"     覆盖 {ins['replaced']} 出的那份残周快照"
+                      "（出稿时该周还没过完）")
             print(f"     关键发现 {ins['key_findings']} · 借鉴建议 {ins['implications']}"
                   f" · 观察清单 {ins['watchlist']} · 延续性检查 {ins.get('continuity', 0)}")
             print(f"     主线：{ins.get('headline', '')}")

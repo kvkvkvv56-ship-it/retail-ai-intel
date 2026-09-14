@@ -266,6 +266,8 @@ jobs:
                       print(f"周报 {ins.get('period','')}：{ins['skipped']}")
                   elif ins.get("headline"):
                       print(f"周报 {ins.get('period','')} 已生成：{ins['headline']}")
+                      if ins.get("replaced"):
+                          print(f"周报覆盖了 {ins['replaced']} 出的残周快照")
                   for e in s.get("stage_errors") or []:
                       print(f"!! 阶段失败 {e}")
                   for e in s.get("collect_errors") or []:
