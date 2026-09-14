@@ -303,6 +303,9 @@ def export(store: Store, cfg: dict, srccfg: dict) -> dict:
     from pipeline.docs_export import export_docs
     d = export_docs(store, cfg)
     stats["docs"] = d["docs"]
+    if d["bad_tables"]:
+        stats["_warn_docs"] = ("文档表格断裂，渲染出来是一段竖线裸奔的正文："
+                               + "、".join(d["bad_tables"]))
     total += d["kb"] * 1024
 
     stats["bytes"] = total

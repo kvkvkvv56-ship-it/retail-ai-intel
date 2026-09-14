@@ -125,13 +125,20 @@ def live_blocks(store, cfg: dict | None = None) -> dict[str, str]:
     }
 
 
+def md_targets() -> list[Path]:
+    """活区块刷新与表格自检的共同作用域。
+
+    README 与交付说明在仓库根目录、不进文档站，但同样含活区块、同样要在
+    GitHub 上渲染，两件事都得带上它们。
+    """
+    return sorted(DOCS.glob("*.md")) + [ROOT / "README.md", ROOT / "交付说明.md"]
+
+
 def refresh_live(store, cfg=None) -> int:
     """把 live 区块按当前库重写回 .md 文件。返回改动的区块数。"""
     blocks = live_blocks(store, cfg)
     changed = 0
-    # 交付说明在仓库根目录、不进文档站，但同样含活区块，必须一起刷
-    targets = list(DOCS.glob("*.md")) + [ROOT / "README.md", ROOT / "交付说明.md"]
-    for f in targets:
+    for f in md_targets():
         if not f.exists():
             continue
         src = f.read_text(encoding="utf-8")
@@ -192,6 +199,35 @@ def outline(md: str) -> list[dict]:
     return items
 
 
+_DELIM = re.compile(r"^\|[\s:|-]*-[\s:|-]*\|?\s*$")
+
+
+def broken_tables(md: str) -> list[int]:
+    """找出以 `|` 开头却不构成合法表格的行块，返回各块起始行号。
+
+    活区块的内容是段落形状（**加粗** + 空行），一旦被塞进表格中间，那个
+    空行就把表格截断了：后面的 `|` 行失去表头，被渲染成一段竖线裸奔的正文。
+    运行说明 §2 观察范围就是这么坏的，线上肉眼可见，而 .md 源文件里四行
+    整整齐齐，看不出任何异常——只能在导出时机器检。
+
+    判据：连续的 `|` 行块，第二行必须是表头分隔行（`|---|`）。
+    """
+    bad, run, start, fence = [], [], 0, False
+    for i, line in enumerate(md.splitlines() + [""], 1):
+        if _FENCE.match(line):          # 代码块里的 | 是内容，不是表格
+            fence = not fence
+            line = ""
+        if not fence and line.startswith("|"):
+            if not run:
+                start = i
+            run.append(line)
+            continue
+        if run and not (len(run) >= 2 and _DELIM.match(run[1])):
+            bad.append(start)
+        run = []
+    return bad
+
+
 def export_docs(store=None, cfg=None) -> dict:
     # 先把文档里的活数字按当前库刷一遍，再导出
     live = refresh_live(store or Store(), cfg)
@@ -200,6 +236,15 @@ def export_docs(store=None, cfg=None) -> dict:
         for f in OUT.glob("*.json"):
             f.unlink()
     OUT.mkdir(parents=True, exist_ok=True)
+
+    # 表格断裂在源文件里看不出来，每轮导出顺手检一遍，检出即报
+    bad_tables = []
+    for f in md_targets():
+        if not f.exists():
+            continue
+        body, _ = strip_frontmatter(f.read_text(encoding="utf-8"))
+        for ln in broken_tables(body):
+            bad_tables.append(f"{f.relative_to(ROOT)}:{ln}")
 
     index, total, missing = [], 0, []
     for fname, did, group, desc in REGISTRY:
@@ -230,7 +275,7 @@ def export_docs(store=None, cfg=None) -> dict:
     txt = json.dumps(idx, ensure_ascii=False, separators=(",", ":"))
     (OUT.parent / "docs.json").write_text(txt, encoding="utf-8")
     return {"docs": len(index), "missing": missing, "live": live,
-            "kb": round((total + len(txt)) / 1024)}
+            "bad_tables": bad_tables, "kb": round((total + len(txt)) / 1024)}
 
 
 if __name__ == "__main__":
@@ -245,3 +290,5 @@ if __name__ == "__main__":
         print(f"  活数字区块已刷新 {r['live']} 处")
     if r["missing"]:
         print(f"  ⚠️ 缺失：{'、'.join(r['missing'])}")
+    if r["bad_tables"]:
+        print(f"  ⚠️ 表格断裂（| 开头但缺表头分隔行）：{'、'.join(r['bad_tables'])}")
