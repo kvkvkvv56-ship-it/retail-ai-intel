@@ -470,7 +470,9 @@ def stage_merge_cross(store, llm, run_id: str) -> dict:
         store.db.execute("UPDATE events SET last_update_at=? WHERE id=?",
                          (_now(), keep["id"]))
 
-    # 模型表达的不确定性 → 人工复核队列（不自动合并）
+    # 模型表达的不确定性 → 人工复核队列（不自动合并）。
+    # 两条标记路径共用一个 seen，彼此之间也不会把同一组记两遍
+    seen = _flagged_pairs(store)
     for g in res.get("suspects") or []:
         idx = [i for i in g.get("members", [])
                if isinstance(i, int) and 0 <= i < len(evs)
@@ -482,21 +484,75 @@ def stage_merge_cross(store, llm, run_id: str) -> dict:
             store.db.execute(
                 "UPDATE events SET review_state='suspect_duplicate' "
                 "WHERE id=? AND review_state IN ('none','')", (m["id"],))
-        store.insert("reviews", {
-            "target_type": "merge", "target_id": "|".join(m["id"] for m in ms),
-            "action": "flag",
-            "note": "模型标记疑似重复，证据不足未自动合并：" + g.get("reason", "")
-                    + "｜涉及：" + " / ".join(f'{m["title"][:26]}({m["company"]})'
-                                              for m in ms),
-            "reviewer": "system", "created_at": _now()})
-        stats["suspects"] += 1
+        stats["suspects"] += _flag_once(
+            store, seen, [m["id"] for m in ms],
+            "模型标记疑似重复，证据不足未自动合并：" + g.get("reason", "")
+            + "｜涉及：" + " / ".join(f'{m["title"][:26]}({m["company"]})'
+                                      for m in ms))
 
-    stats["suspects"] += _flag_suspect_duplicates(store)
+    stats["suspects"] += _flag_suspect_duplicates(store, seen=seen)
+    # 本轮归并可能吃掉了某个标记组的另一方，顺手把幸存一方放出队列
+    stats["stale_suspects"] = _clear_stale_suspects(store)
     store.commit()
     return stats
 
 
-def _flag_suspect_duplicates(store, jaccard: float = 0.34) -> int:
+def _clear_stale_suspects(store) -> int:
+    """标记组里的另一方被后续自动归并吃掉后，撤掉幸存一方的 suspect_duplicate。
+
+    重复问题此时已经不存在了——那一方已经并进别的事件——但状态没人撤，
+    事件就永远卡在复核队列的「疑似重复」里，而队列里又找不到可比对的对象
+    （实测卡住 4 个，其中最早的从 2025 年就挂着）。stage_verify 把
+    suspect_duplicate 列为粘性状态不动它，于是谁也不会把它放出来。
+
+    系统设的状态由系统撤，人裁过的（watching/confirmed/rejected）不在此列，
+    粘性规则不变。撤回 none 之后，下一轮 verify 会按置信度重新判它该不该
+    进单源队列——该进的照样进，不该进的就此出队。
+    """
+    alive = {r["id"] for r in store.q("SELECT id FROM events")}
+    live_flagged = set()
+    for f in store.q("SELECT target_id FROM reviews WHERE action='flag'"):
+        ids = f["target_id"].split("|")
+        if all(i in alive for i in ids):
+            live_flagged.update(ids)
+    stale = [r["id"] for r in
+             store.q("SELECT id FROM events WHERE review_state='suspect_duplicate'")
+             if r["id"] not in live_flagged]
+    for i in stale:
+        store.db.execute("UPDATE events SET review_state='none' WHERE id=?", (i,))
+    return len(stale)
+
+
+def _flagged_pairs(store) -> set[frozenset]:
+    """账本里已经标记过的疑似重复组。成员顺序不同视为同一组。"""
+    return {frozenset(r["target_id"].split("|"))
+            for r in store.q("SELECT target_id FROM reviews WHERE action='flag'")}
+
+
+def _flag_once(store, seen: set, ids: list[str], note: str) -> int:
+    """同一组疑似重复只记一次账。
+
+    两处 flag 原本每轮无条件 insert，同一组被反复记录：实测 390 条 flag 只
+    对应 131 组不同的对，最多的一组记了 13 次。代价不止账本变胖——复核队列
+    里同一组要翻十几遍（显示 176 组待裁决，去重后其实只有 32 组），
+    「复核记录」的计数也被灌水（408 条里 390 条是系统自己重复写的，而这个
+    数字会展示在线上信源页）。
+
+    标记表达的是「这组待人裁决」这个**状态**，不是流水，记一次就够；
+    真正的流水是人的裁决（split / same），那个本来就每次都记。
+    """
+    key = frozenset(ids)
+    if key in seen:
+        return 0
+    seen.add(key)
+    store.insert("reviews", {
+        "target_type": "merge", "target_id": "|".join(ids), "action": "flag",
+        "note": note, "reviewer": "system", "created_at": _now()})
+    return 1
+
+
+def _flag_suspect_duplicates(store, jaccard: float = 0.34,
+                             seen: set | None = None) -> int:
     """标记疑似重复事件，进人工复核队列。
 
     S4b 的提示词要求「宁可漏掉也不要误合并」——误合并会不可逆地毁掉信息，
@@ -506,6 +562,8 @@ def _flag_suspect_duplicates(store, jaccard: float = 0.34) -> int:
     这是 HITL「归并纠错」节点（技术方案 §12）的输入来源。
     """
     import re
+    if seen is None:                      # 单独调用时自己取一次
+        seen = _flagged_pairs(store)
     evs = store.q("SELECT id, title, company FROM events")
 
     def toks(t: str) -> set[str]:
@@ -529,14 +587,11 @@ def _flag_suspect_duplicates(store, jaccard: float = 0.34) -> int:
                     store.db.execute(
                         "UPDATE events SET review_state='suspect_duplicate' "
                         "WHERE id=? AND review_state IN ('none','')", (e["id"],))
-                store.insert("reviews", {
-                    "target_type": "merge", "target_id": f"{a['id']}|{b['id']}",
-                    "action": "flag",
-                    "note": f"疑似重复待人工判定：「{a['title'][:30]}」({a['company']}) "
-                            f"与「{b['title'][:30]}」({b['company']}) 标题词高度重合，"
-                            f"自动归并未合并（保守策略）",
-                    "reviewer": "system", "created_at": _now()})
-                n += 1
+                n += _flag_once(
+                    store, seen, [a["id"], b["id"]],
+                    f"疑似重复待人工判定：「{a['title'][:30]}」({a['company']}) "
+                    f"与「{b['title'][:30]}」({b['company']}) 标题词高度重合，"
+                    f"自动归并未合并（保守策略）")
     return n
 
 

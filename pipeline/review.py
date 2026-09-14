@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -28,7 +29,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from pipeline.store import ROOT, Store                        # noqa: E402
 
-REVIEWER = "operator"
+# 复核记录会展示在线上（导出时只滤掉 reviewer=system 的系统标记）。
+# 默认仍是 operator；由别人代跑时用 KB_REVIEWER 标上，事后才分得清
+# 哪些判断是谁下的——混在一起的账本等于没有追溯。
+REVIEWER = os.environ.get("KB_REVIEWER", "operator")
 
 
 def _now() -> str:

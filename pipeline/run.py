@@ -440,11 +440,11 @@ def main() -> int:
         if xm:
             if xm.get("recall") == "vector":
                 print(f"  → 扫描 {xm['scanned']} 事件，向量召回 {xm['recall_pairs']} 对疑似"
-                      f"，合并 {xm['cross_merged']} 个，存疑待人工 {xm['suspects']}")
+                      f"，合并 {xm['cross_merged']} 个，新增存疑待人工 {xm['suspects']}")
             else:
                 # 缺 JINA_API_KEY 时退回整表通读，实测漏判严重，必须说出来
                 print(f"  → 向量不可用，退回整表通读（漏判率高）：扫描 {xm['scanned']} 事件"
-                      f"，合并 {xm['cross_merged']} 个，存疑 {xm['suspects']}")
+                      f"，合并 {xm['cross_merged']} 个，新增存疑 {xm['suspects']}")
 
         print("\n[S5] 核验（纯规则）")
         vf = stage("S5", PR.stage_verify, store, cfg, srccfg)
