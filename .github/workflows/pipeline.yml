@@ -268,6 +268,9 @@ jobs:
                       print(f"周报 {ins.get('period','')} 已生成：{ins['headline']}")
                       if ins.get("replaced"):
                           print(f"周报覆盖了 {ins['replaced']} 出的残周快照")
+                  xm = s.get("merge_cross") or {}
+                  if xm.get("split_blocked"):
+                      print(f"归并拦截 {xm['split_blocked']} 组：模型想合，人已判为不同事件")
                   for e in s.get("stage_errors") or []:
                       print(f"!! 阶段失败 {e}")
                   for e in s.get("collect_errors") or []:

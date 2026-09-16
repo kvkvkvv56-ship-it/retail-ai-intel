@@ -445,6 +445,11 @@ def main() -> int:
                 # 缺 JINA_API_KEY 时退回整表通读，实测漏判严重，必须说出来
                 print(f"  → 向量不可用，退回整表通读（漏判率高）：扫描 {xm['scanned']} 事件"
                       f"，合并 {xm['cross_merged']} 个，新增存疑 {xm['suspects']}")
+            # 拦下来的必须报出来：静默拦截和当初静默推翻人工裁决一样，
+            # 都是让人看不见系统在替自己做决定
+            if xm.get("split_blocked"):
+                print(f"     拦下 {xm['split_blocked']} 组模型想合、但人已判为不同事件的："
+                      + "、".join(xm.get("split_blocked_pairs") or []))
 
         print("\n[S5] 核验（纯规则）")
         vf = stage("S5", PR.stage_verify, store, cfg, srccfg)
