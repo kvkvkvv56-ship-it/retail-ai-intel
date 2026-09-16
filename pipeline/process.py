@@ -357,7 +357,7 @@ def stage_merge_cross(store, llm, run_id: str) -> dict:
     evs = store.q("SELECT id, company, event_key, title, summary, "
                   "first_seen_at, event_date FROM events")
     stats = {"scanned": len(evs), "cross_merged": 0, "suspects": 0, "error": 0,
-             "recall_pairs": 0, "recall": "full_scan"}
+             "recall_pairs": 0, "recall": "full_scan", "split_blocked": 0}
     if len(evs) < 2:
         return stats
 
@@ -408,6 +408,20 @@ def stage_merge_cross(store, llm, run_id: str) -> dict:
             res["duplicates"].extend(r.get("duplicates") or [])
             res["suspects"].extend(r.get("suspects") or [])
 
+    # 人裁定为「不同事件」的组，模型不得再合。
+    #
+    # split 写的是 review_state='confirmed'，而 confirmed 不在归并的排除条件里，
+    # 于是人的判断会在下一轮被无声推翻——实测 36 组 split 裁决里有 12 组的成员
+    # 已被后续归并吃掉，其中 4 组是直接合成了当初判开的那个对家，最快的一组
+    # 间隔 28 分钟；「快手可灵」那条产品线更是被一路归并成单个事件，而 2024 年
+    # 的模型发布与 2026 年的营收数据本来就是人明确判过「不同阶段不该合」的。
+    #
+    # 文档里说的「复核状态具备粘性」此前只覆盖 stage_verify 不把裁决冲回
+    # pending，归并这条路径是漏的，而它推翻的恰恰是裁决本身。HITL 的意义在于
+    # 人的判断能压过模型，压不住就不成其为 HITL。
+    split_pairs = {frozenset(r["target_id"].split("|")) for r in
+                   store.q("SELECT target_id FROM reviews WHERE action='split'")}
+
     # 分批裁决后，前一批可能已经把某个事件合掉了。后一批若还引用它，
     # 会把条目挂到一个已删除的事件上——必须跳过已消失的成员。
     gone: set[str] = set()
@@ -418,6 +432,17 @@ def stage_merge_cross(store, llm, run_id: str) -> dict:
         if len(idx) < 2:
             continue
         members = [evs[i] for i in idx]
+
+        # 组里只要有两个成员被人判过「不是一回事」，整组都不合——
+        # 模型是把这些当成同一个事件提出来的，其中一对既然被否掉，
+        # 这个分组本身就不可信。放回队列比合错强，合错不可逆。
+        mids = {m["id"] for m in members}
+        blocked = next((p for p in split_pairs if len(p & mids) >= 2), None)
+        if blocked:
+            stats["split_blocked"] += 1
+            stats.setdefault("split_blocked_pairs", []).append("|".join(sorted(blocked)))
+            continue
+
         # 保留**最早进库**的那条作为主事件。
         #
         # 原规则是「留信源最多的那条」，方向错了：同一条新闻第二天被另一家
@@ -524,9 +549,13 @@ def _clear_stale_suspects(store) -> int:
 
 
 def _flagged_pairs(store) -> set[frozenset]:
-    """账本里已经标记过的疑似重复组。成员顺序不同视为同一组。"""
-    return {frozenset(r["target_id"].split("|"))
-            for r in store.q("SELECT target_id FROM reviews WHERE action='flag'")}
+    """已经标记过、或人已经裁决过的疑似重复组。成员顺序不同视为同一组。
+
+    裁决过的（split / same）也算在内：人已经回答过的问题不该再问一遍，
+    否则队列里会反复冒出同一组，而它早就有结论了。
+    """
+    return {frozenset(r["target_id"].split("|")) for r in store.q(
+        "SELECT target_id FROM reviews WHERE action IN ('flag','split','same')")}
 
 
 def _flag_once(store, seen: set, ids: list[str], note: str) -> int:
