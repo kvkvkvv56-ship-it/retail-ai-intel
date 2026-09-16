@@ -313,6 +313,11 @@ def print_funnel(stats: dict, cost: dict, errors: list[str], store: Store,
         m = llm_stats.get("merge") or {}
         if m.get("orphan_rescued"):
             print(f"  孤儿挽回：{m['orphan_rescued']} 条未被模型分组的候选独立成事件")
+        if m.get("summary_supplemented"):
+            print(f"  摘要补充：{m['summary_supplemented']} 个已有事件把后续报道的"
+                  f"新信息并入了最早那版摘要")
+        if m.get("summary_merge_failed"):
+            print(f"  ⚠️  摘要合并失败 {m['summary_merge_failed']} 个，已保留原摘要")
         if v.get("backdated"):
             print(f"  回溯性旧闻拦截：{v['backdated']} 个事件的 event_date 早于观察窗口，"
                   f"判为旧闻而非新增")

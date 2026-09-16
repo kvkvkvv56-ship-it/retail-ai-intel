@@ -164,6 +164,97 @@ def _anchor_date(prev, dates) -> str | None:
     return min(cand) if cand else None
 
 
+def _prev_domains(prev) -> set[str]:
+    """库里已有的 domains。SQLite 里是 JSON 字符串，取出来要还原。"""
+    if not prev or not prev["domains"]:
+        return set()
+    v = prev["domains"]
+    if isinstance(v, str):
+        try:
+            v = json.loads(v)
+        except json.JSONDecodeError:
+            return set()
+    return set(v) if isinstance(v, list) else set()
+
+
+def _anchor_text(prev, key, new_title, new_summary):
+    """标题锚定**第一次出现**的那条；摘要先原样留住，等 _supplement_summaries 合并。
+
+    与 event_date 同一条规则：这条 upsert 是跨轮次的，后续报道只是佐证，
+    不该把事件第一次入库时的口径整体换掉。原实现每轮拿本轮成员的标题和摘要
+    直接覆盖——同一件事隔几天被另一家从别的角度转述，事件就被改名换面，
+    库里再也看不出它最初是以什么面貌出现的。
+
+    唯一的例外是首轮压根没拿到像样标题（降级成了 event_key 字符串）时，
+    允许后续报道把它补上——那不是覆盖，是填空。
+
+    摘要这里只负责「不丢」，真正的合并在 _supplement_summaries 里做：
+    要判断新报道到底带来了哪些原摘要没有的信息，只能让模型读，规则做不了。
+    """
+    if not prev:
+        return new_title, new_summary
+    title = prev["title"]
+    if not title or title == key:
+        title = new_title
+    return title, prev["summary"] or new_summary
+
+
+# 一次送几个事件给模型做摘要合并。实测每轮需要合并的事件是个位数到十几个
+# （249 个事件里只有 35 个跨过轮次），批大一点省调用，但每个事件要带原摘要
+# 加若干条新报道，批太大会把上下文撑爆、模型开始偷工减料。
+SUPPLEMENT_BATCH = 6
+
+
+def _supplement_summaries(store, llm, pending: list[dict], stats: dict) -> None:
+    """把后续报道带来的新信息合并进事件最早那版摘要。
+
+    降级方向是**保留原摘要**：调用失败、模型漏答、返回空值，一律什么都不做——
+    原摘要在 upsert 时已经写进库了。宁可少一轮补充，也不能把最早那版冲掉。
+    """
+    stats["summary_supplemented"] = 0
+    todo = [p for p in pending if p["old"] and p["new"]]
+    if not todo:
+        return
+    chunks = [todo[i:i + SUPPLEMENT_BATCH]
+              for i in range(0, len(todo), SUPPLEMENT_BATCH)]
+
+    def one(chunk):
+        try:
+            return chunk, llm.chat_json([
+                {"role": "system", "content": P.SUPPLEMENT_SYS},
+                {"role": "user", "content": P.supplement_user(chunk)},
+            ], strong=True, max_tokens=2200), None
+        except Exception as e:                                # noqa: BLE001
+            return chunk, None, f"{type(e).__name__}"
+
+    with ThreadPoolExecutor(max_workers=3) as ex:
+        for f in as_completed([ex.submit(one, c) for c in chunks]):
+            chunk, res, err = f.result()
+            if err or not res:
+                stats["summary_merge_failed"] = \
+                    stats.get("summary_merge_failed", 0) + len(chunk)
+                continue
+            # 模型偶尔直接返回裸数组而不是 {"results": [...]}，两种都收
+            arr = res if isinstance(res, list) else (res.get("results") or [])
+            for x in arr:
+                if not isinstance(x, dict):
+                    continue
+                try:
+                    tgt = chunk[int(x["i"])]
+                except (KeyError, ValueError, TypeError, IndexError):
+                    continue
+                merged = x.get("summary")
+                # null = 新报道没带来新信息，原摘要保持不动（提示词第 5 条）
+                if not isinstance(merged, str) or not merged.strip():
+                    continue
+                if merged.strip() == (tgt["old"] or "").strip():
+                    continue
+                store.db.execute("UPDATE events SET summary=? WHERE id=?",
+                                 (merged.strip(), tgt["eid"]))
+                stats["summary_supplemented"] += 1
+    store.commit()
+
+
 # ==================================================================== S4
 def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
     """事件归并：按公司分组，模型通读该公司全部候选后聚类。
@@ -196,6 +287,9 @@ def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
     stats = {"companies": len(by_company), "candidates": len(rows),
              "events": 0, "merged_away": 0, "relations": 0,
              "orphan_rescued": 0, "error": 0}
+    # 命中已有事件的那些 upsert，把新报道攒起来，池子跑完统一送模型合并摘要。
+    # as_completed 的循环体在主线程执行，这里不需要加锁。
+    supplements: list[dict] = []
 
     def one(company, cands):
         if len(cands) == 1:
@@ -240,20 +334,33 @@ def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
 
                 dates = [m.get("event_date") or (m.get("_published_at") or "")[:10]
                          for m in members]
-                doms = sorted({d for m in members for d in (m.get("domains") or [])})
 
-                prev = store.q("SELECT first_seen_at, event_date FROM events "
-                               "WHERE id=?", (eid,))
+                prev = store.q("SELECT first_seen_at, event_date, title, summary, "
+                               "domains FROM events WHERE id=?", (eid,))
                 prev = prev[0] if prev else None
+                title, summary = _anchor_text(
+                    prev, key,
+                    g.get("title") or members[0].get("event_title") or key,
+                    members[0].get("summary"))
+                # domains 也是累加的：后一轮的报道只讲某个领域，不该把首轮
+                # 标出来的领域抹掉——事件的领域归属只会变多，不会变少
+                doms = sorted({d for m in members for d in (m.get("domains") or [])}
+                              | _prev_domains(prev))
+
                 store.upsert("events", {
                     "id": eid, "event_key": key,
-                    "title": g.get("title") or members[0].get("event_title") or key,
-                    "summary": members[0].get("summary"),
+                    "title": title, "summary": summary,
                     "company": company, "domains": doms,
                     "first_seen_at": prev["first_seen_at"] if prev else _now(),
                     "last_update_at": _now(),
                     "event_date": _anchor_date(prev, dates),
                 })
+                # 首轮没摘要时 summary 就是本轮这条，它自己成了锚，没什么可合并的
+                if prev and prev["summary"]:
+                    fresh = [m.get("summary") for m in members if m.get("summary")]
+                    if fresh:
+                        supplements.append({"eid": eid, "title": title,
+                                            "old": summary, "new": fresh})
                 stats["events"] += 1
                 stats["merged_away"] += len(members) - 1
 
@@ -280,19 +387,25 @@ def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
                     continue
                 key = m["event_key"]
                 eid = "EV-" + hashlib.sha1(f"{company}:{key}".encode()).hexdigest()[:8]
-                prev = store.q("SELECT first_seen_at, event_date FROM events "
-                               "WHERE id=?", (eid,))
+                prev = store.q("SELECT first_seen_at, event_date, title, summary, "
+                               "domains FROM events WHERE id=?", (eid,))
                 prev = prev[0] if prev else None
+                title, summary = _anchor_text(prev, key,
+                                              m.get("event_title") or key,
+                                              m.get("summary"))
                 store.upsert("events", {
                     "id": eid, "event_key": key,
-                    "title": m.get("event_title") or key,
-                    "summary": m.get("summary"), "company": company,
-                    "domains": m.get("domains") or [],
+                    "title": title, "summary": summary, "company": company,
+                    "domains": sorted(set(m.get("domains") or [])
+                                      | _prev_domains(prev)),
                     "first_seen_at": prev["first_seen_at"] if prev else _now(),
                     "last_update_at": _now(),
                     "event_date": _anchor_date(prev, [
                         m.get("event_date") or (m.get("_published_at") or "")[:10]]),
                 })
+                if prev and prev["summary"] and m.get("summary"):
+                    supplements.append({"eid": eid, "title": title,
+                                        "old": summary, "new": [m["summary"]]})
                 store.db.execute(
                     "UPDATE items SET event_id=?, status='accepted' WHERE id=?",
                     (eid, m["_item_id"]))
@@ -311,6 +424,9 @@ def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
                     stats["relations"] += 1
 
     store.commit()
+    # 摘要合并放在归并全部落库之后：它要读的是已经锚定好的原摘要，
+    # 而且失败时可以安全跳过——库里已经是正确的原值了
+    _supplement_summaries(store, llm, supplements, stats)
     return stats
 
 

@@ -41,6 +41,18 @@ def _j(v):
 
 
 def export(store: Store, cfg: dict, srccfg: dict) -> dict:
+    # 先把上一版事件向量读进内存，再清目录。
+    #
+    # 导出开头 rmtree 整个 OUT，而向量只在有 JINA_API_KEY 时重算——本地手跑
+    # 一次 export（没配 key）就足以把线上的 vectors.json 删掉，语义检索静默
+    # 降级回词面匹配，页面照常渲染、接口照常 200，没人会发现。
+    # 留着上一版是严格更好的：它对新事件是缺的，但对老事件仍然准确，
+    # 比整个文件消失强。CI 有 key，正常路径下这份备份永远用不上。
+    prev_vectors = None
+    vpath = OUT / "vectors.json"
+    if vpath.exists():
+        prev_vectors = vpath.read_text(encoding="utf-8")
+
     if OUT.exists():
         shutil.rmtree(OUT)
     OUT.mkdir(parents=True, exist_ok=True)
@@ -284,7 +296,21 @@ def export(store: Store, cfg: dict, srccfg: dict) -> dict:
         # 静默降级是最难发现的故障：页面照常渲染、接口照常 200，
         # 只是检索质量悄悄退回词面匹配。必须记进 stats 并打印。
         stats["vectors"] = 0
-        stats["_warn_vectors"] = "缺 JINA_API_KEY，未生成事件向量，线上语义检索降级为词面匹配"
+        if prev_vectors is not None:
+            (OUT / "vectors.json").write_text(prev_vectors, encoding="utf-8")
+            total += len(prev_vectors)
+            try:
+                kept = len(json.loads(prev_vectors).get("vectors") or {})
+            except json.JSONDecodeError:
+                kept = 0
+            stats["vectors"] = kept
+            stats["_warn_vectors"] = (
+                f"缺 JINA_API_KEY，未重算事件向量，已保留上一版 {kept} 条"
+                f"（本轮新增/改动的事件没有向量，语义检索对它们降级为词面匹配）")
+        else:
+            stats["_warn_vectors"] = (
+                "缺 JINA_API_KEY，未生成事件向量，且没有可保留的上一版，"
+                "线上语义检索降级为词面匹配")
     if EMB.available():
         texts, ids = [], []
         for e in ev_rows:
