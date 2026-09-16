@@ -334,8 +334,6 @@
 {"from_event": "EV-978f2b8c", "to_event": "EV-d16aec06", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-14 → 2026-09-14）", "created_by": "rule"}
 {"from_event": "EV-d16aec06", "to_event": "EV-ef7169d1", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-14 → 2026-09-14）", "created_by": "rule"}
 {"from_event": "EV-ef7169d1", "to_event": "EV-3e9410af", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-14 → 2026-09-14）", "created_by": "rule"}
-{"from_event": "EV-3e9410af", "to_event": "EV-5e07ed95", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-14 → 2026-09-15）", "created_by": "rule"}
-{"from_event": "EV-5e07ed95", "to_event": "EV-c43f23fd", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
 {"from_event": "EV-c43f23fd", "to_event": "EV-596fb0db", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
 {"from_event": "EV-596fb0db", "to_event": "EV-6dda681a", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
 {"from_event": "EV-1b6ca70d", "to_event": "EV-26c76efe", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-13 → 2026-09-14）", "created_by": "rule"}
@@ -366,8 +364,6 @@
 {"from_event": "EV-33b4d59c", "to_event": "EV-3e9410af", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-14 → 2026-09-14）", "created_by": "rule"}
 {"from_event": "EV-3e9410af", "to_event": "EV-978f2b8c", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-14 → 2026-09-14）", "created_by": "rule"}
 {"from_event": "EV-ef7169d1", "to_event": "EV-596fb0db", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-14 → 2026-09-15）", "created_by": "rule"}
-{"from_event": "EV-596fb0db", "to_event": "EV-5e07ed95", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
-{"from_event": "EV-5e07ed95", "to_event": "EV-6dda681a", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
 {"from_event": "EV-6dda681a", "to_event": "EV-c43f23fd", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
 {"from_event": "EV-c43f23fd", "to_event": "EV-dba761f0", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
 {"from_event": "EV-ecd5ae05", "to_event": "EV-95452110", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-07-07 → 2026-09-15）", "created_by": "rule"}

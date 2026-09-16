@@ -141,6 +141,29 @@ def stage_extract(store, llm, cfg: dict, run_id: str, srccfg: dict) -> dict:
     return stats
 
 
+def _anchor_date(prev, dates) -> str | None:
+    """事件日期锚定在**最早**的那次报道上：只能往前提，不能往后推。
+
+    S4a 的 upsert 是跨轮次的——同一件事隔几天又被报道、模型给出同一个
+    `event_key` 时，走的是 INSERT OR REPLACE 而不是 S4b 的合并路径。
+    原来这里只拿**本轮成员**算 `min(dates)` 写回，于是老事件的 event_date
+    被后一轮的报道日直接盖掉：实测 EV-5e07ed95「OpenAI 发布 GPT-6 Astra
+    旗舰模型」09-11 首次入库、09-15 两篇解读文章进来后，event_date 被推到
+    09-15——而这个模型根本不是 09-15 发布的。
+
+    这与 S4b「只保留第一次出现的那条」是同一条规则（技术方案 §S4b），
+    只是 S4a 漏了：那边合并时取 `min` 是对的，这边 upsert 时没带上库里
+    已有的值。后续报道只作为佐证并入，不改事件本身的发生时间。
+
+    往前提是允许的：后一轮抓到一篇更早的报道，说明这件事发生得比原先
+    知道的更早，min 自然会把日期拉回去。
+    """
+    cand = [d for d in dates if d and d != "None"]
+    if prev and prev["event_date"]:
+        cand.append(prev["event_date"])
+    return min(cand) if cand else None
+
+
 # ==================================================================== S4
 def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
     """事件归并：按公司分组，模型通读该公司全部候选后聚类。
@@ -217,18 +240,19 @@ def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
 
                 dates = [m.get("event_date") or (m.get("_published_at") or "")[:10]
                          for m in members]
-                dates = sorted(d for d in dates if d and d != "None")
                 doms = sorted({d for m in members for d in (m.get("domains") or [])})
 
-                prev = store.q("SELECT first_seen_at FROM events WHERE id=?", (eid,))
+                prev = store.q("SELECT first_seen_at, event_date FROM events "
+                               "WHERE id=?", (eid,))
+                prev = prev[0] if prev else None
                 store.upsert("events", {
                     "id": eid, "event_key": key,
                     "title": g.get("title") or members[0].get("event_title") or key,
                     "summary": members[0].get("summary"),
                     "company": company, "domains": doms,
-                    "first_seen_at": prev[0]["first_seen_at"] if prev else _now(),
+                    "first_seen_at": prev["first_seen_at"] if prev else _now(),
                     "last_update_at": _now(),
-                    "event_date": dates[0] if dates else None,
+                    "event_date": _anchor_date(prev, dates),
                 })
                 stats["events"] += 1
                 stats["merged_away"] += len(members) - 1
@@ -256,16 +280,18 @@ def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
                     continue
                 key = m["event_key"]
                 eid = "EV-" + hashlib.sha1(f"{company}:{key}".encode()).hexdigest()[:8]
-                prev = store.q("SELECT first_seen_at FROM events WHERE id=?", (eid,))
+                prev = store.q("SELECT first_seen_at, event_date FROM events "
+                               "WHERE id=?", (eid,))
+                prev = prev[0] if prev else None
                 store.upsert("events", {
                     "id": eid, "event_key": key,
                     "title": m.get("event_title") or key,
                     "summary": m.get("summary"), "company": company,
                     "domains": m.get("domains") or [],
-                    "first_seen_at": prev[0]["first_seen_at"] if prev else _now(),
+                    "first_seen_at": prev["first_seen_at"] if prev else _now(),
                     "last_update_at": _now(),
-                    "event_date": m.get("event_date")
-                                  or (m.get("_published_at") or "")[:10] or None,
+                    "event_date": _anchor_date(prev, [
+                        m.get("event_date") or (m.get("_published_at") or "")[:10]]),
                 })
                 store.db.execute(
                     "UPDATE items SET event_id=?, status='accepted' WHERE id=?",
