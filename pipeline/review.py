@@ -276,11 +276,24 @@ def main() -> int:
     ps.add_argument("--note", default="")
 
     a = ap.parse_args()
+
+    # intel.db 不进版本库，clone 之后不存在。run.py 一直是先 rebuild 再跑，
+    # 这里此前没有——空库 + 结尾无条件 dump，等于把真相源清零
+    from pipeline.store import paths_for
+    data_dir, db_path = paths_for(a.dataset)
+    need_rebuild = not db_path.exists() and (data_dir / "items.jsonl").exists()
+
     store = Store(dataset=a.dataset)
     try:
+        if need_rebuild:
+            c = store.rebuild()
+            print("intel.db 不存在，已从 JSONL 重建："
+                  + "  ".join(f"{k}={v}" for k, v in c.items() if v))
         rc = {"queue": cmd_queue, "event": cmd_event, "batch": cmd_batch,
               "merge": cmd_merge, "source": cmd_source}[a.cmd](store, a)
-        if a.cmd != "queue":
+        # 失败的命令不回写。裁决没成功却照样 dump，只会把「什么都没做」
+        # 落成一次真相源改写
+        if a.cmd != "queue" and (rc or 0) == 0:
             store.dump()
     finally:
         store.close()
