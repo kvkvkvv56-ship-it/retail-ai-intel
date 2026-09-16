@@ -233,6 +233,26 @@ class Store:
     def dump(self) -> dict[str, int]:
         """SQLite → data/*.jsonl。每轮运行结束调用。"""
         self.data.mkdir(parents=True, exist_ok=True)
+
+        # 空库不许覆盖非空真相源。
+        #
+        # intel.db 是 gitignore 的，clone 之后并不存在。run.py 会先 rebuild，
+        # review.py 此前不会——于是在新 clone 上跑任何一条复核命令，都会拿一个
+        # 刚建出来的空库 dump 一遍，把 data/*.jsonl 全部写成 0 字节。实测复现：
+        # 命令本身还失败了（事件当然不存在），JSONL 照样被清空。
+        # 「整库一行都没有，而磁盘上的 JSONL 有数据」不存在任何正当情形，
+        # 一律当作没 rebuild，中止。
+        live = sum(self.db.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
+                   for t in TABLES)
+        if live == 0:
+            on_disk = sum(1 for t in TABLES
+                          if (self.data / f"{t}.jsonl").exists()
+                          and (self.data / f"{t}.jsonl").stat().st_size > 0)
+            if on_disk:
+                raise RuntimeError(
+                    f"拒绝用空库覆盖 {self.data}/ 下 {on_disk} 个非空 JSONL——"
+                    f"多半是忘了先 rebuild（intel.db 不进版本库，clone 后需重建）")
+
         counts = {}
         for table, cols in TABLES.items():
             rows = self.db.execute(f"SELECT * FROM {table}").fetchall()
