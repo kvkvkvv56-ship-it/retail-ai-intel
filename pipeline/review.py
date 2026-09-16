@@ -11,6 +11,8 @@
     python3 pipeline/review.py event EV-xxxx watch    --note "..."
     python3 pipeline/review.py merge EV-a EV-b split    # 判定为不同事件
     python3 pipeline/review.py merge EV-a EV-b same     # 判定为同一事件，合并
+    python3 pipeline/review.py unmerge EV-x             # 列出该事件的条目
+    python3 pipeline/review.py unmerge EV-x IT-a IT-b --title "..."   # 摘出来另立事件
     python3 pipeline/review.py source <id> --class B --reliability 0.9
     python3 pipeline/review.py source <id> --inactive
 
@@ -20,6 +22,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -211,6 +214,104 @@ def cmd_merge(store, a):
     return 0
 
 
+
+# ================================================================== unmerge
+def cmd_unmerge(store, a):
+    """把条目从事件里摘出来另立新事件——归并合错了的唯一退路。
+
+    S4b 的取向是「宁可漏合并也不误合并」，理由是误合并不可逆。但「不可逆」
+    此前是字面意义上的：合错之后条目全挂在幸存事件名下，原事件已删除，人
+    只能看着。实测「快手可灵」被一路归并成一个横跨 2024–2026 的事件，里面
+    混着模型发布、营收数据、融资传闻、内部工作台四件事，周报引用它的时候
+    分不清在说哪一件。
+
+    摘出来的同时记一条 split：不记的话，下一轮 S4b 会照着当初相同的理由
+    再合回去，这个命令就等于没跑。
+
+    新事件的置信度/阶段/状态留空，由下一轮 S5 全库重算填上——那是纯规则
+    判定，不该在这里复制一份实现。
+    """
+    ev = store.q("SELECT * FROM events WHERE id=?", (a.id,))
+    if not ev:
+        print(f"事件 {a.id} 不存在")
+        return 1
+    ev = ev[0]
+    items = store.q("SELECT * FROM items WHERE event_id=? ORDER BY published_at", (a.id,))
+
+    # 不给条目就是「先看看」：列出来供挑选，跟 event 子命令的只读模式一致
+    if not a.items:
+        print(f"\n{ev['id']}  {ev['title']}")
+        print(f"  公司 {ev['company']}   置信度 {ev['confidence']}   "
+              f"独立组织 {ev['independent_orgs']}   条目 {len(items)}")
+        print("=" * 92)
+        for it in items:
+            print(f"  {it['id']}  [{it['effective_class']}] "
+                  f"{(it['published_at'] or '')[:10]}  {it['title'][:52]}")
+            print(f"      {it['url'][:88]}")
+        print("\n  摘出其中若干条：")
+        print(f"  python3 pipeline/review.py unmerge {a.id} <条目id> [...] "
+              f"--title \"新事件标题\" --note \"理由\"")
+        return 0
+
+    by_id = {it["id"]: it for it in items}
+    missing = [i for i in a.items if i not in by_id]
+    if missing:
+        print(f"这些条目不属于 {a.id}：{missing}")
+        return 1
+    if len(a.items) >= len(items):
+        print(f"不能把 {len(items)} 条全部摘走——原事件至少要留一条，"
+              f"否则它会变成没有信源的空事件（S5 会直接跳过它，它将永远停在"
+              f"最后一次判定的状态上）")
+        return 1
+
+    moved = [by_id[i] for i in a.items]
+    title = (a.title or moved[0]["title"]).strip()[:120]
+    key = title[:60]
+    new_id = "EV-" + hashlib.sha1(f"{ev['company']}:{key}".encode()).hexdigest()[:8]
+    if store.one("SELECT id FROM events WHERE id=?", (new_id,)):
+        print(f"新事件 id {new_id} 与现有事件撞号（id 由 公司:标题 决定）。"
+              f"换一个 --title 再试")
+        return 1
+
+    dates = sorted(d[:10] for d in (m["published_at"] for m in moved) if d)
+    seen = sorted(d for d in (m["discovered_at"] for m in moved) if d)
+    store.upsert("events", {
+        "id": new_id, "event_key": key, "title": title,
+        "summary": None, "company": ev["company"], "domains": ev["domains"],
+        "stage": None, "stage_basis": None, "confidence": None, "status": None,
+        "first_seen_at": seen[0] if seen else _now(),
+        "last_update_at": _now(),
+        "event_date": dates[0] if dates else None,
+        "independent_orgs": 0,
+        # 人摘出来的，本身就是裁决结果，不该再回待复核队列
+        "review_state": "confirmed"})
+
+    ph = ",".join("?" * len(a.items))
+    store.db.execute(f"UPDATE items SET event_id=? WHERE id IN ({ph})",
+                     (new_id, *a.items))
+    # 只搬「由这些条目产生的」断言。recommendation 按 §7 没有 source_item_id，
+    # 它是周报针对原事件出的建议，留在原事件名下才对得上周报里的引用
+    n_cl = store.db.execute(
+        f"UPDATE claims SET event_id=? WHERE event_id=? AND source_item_id IN ({ph})",
+        (new_id, a.id, *a.items)).rowcount
+    store.db.execute("UPDATE events SET last_update_at=? WHERE id=?", (_now(), a.id))
+
+    note = a.note or "人工拆分：判定这些条目与原事件不是同一件事"
+    _log(store, "event", new_id, "unmerge",
+         f"{note}｜从 {a.id}「{ev['title'][:30]}」摘出 {len(moved)} 条条目："
+         + "、".join(a.items))
+    # 关键：不记 split 的话下一轮 S4b 会按同样的理由把它合回去
+    _log(store, "merge", f"{a.id}|{new_id}", "split",
+         f"拆分后登记：{note}（S4b 不得再合）")
+    store.commit()
+
+    print(f"✅ {new_id}「{title}」")
+    print(f"   从 {a.id} 摘出 {len(moved)} 条条目、{n_cl} 条断言")
+    print(f"   已登记 split（{a.id}|{new_id}），S4b 不会再把它们合回去")
+    print(f"   置信度/阶段/状态留空，下一轮 S5 全库重算时填上")
+    return 0
+
+
 # ==================================================================== source
 def cmd_source(store, a):
     cfg_path = ROOT / "config" / f"sources.{a.dataset}.json"
@@ -267,6 +368,12 @@ def main() -> int:
     pm.add_argument("action", choices=["split", "same"])
     pm.add_argument("--note", default="")
 
+    pu = sub.add_parser("unmerge", help="把条目从事件里摘出来另立新事件")
+    pu.add_argument("id")
+    pu.add_argument("items", nargs="*", help="要摘走的条目 id；不给则只列出候选")
+    pu.add_argument("--title", default="", help="新事件标题，默认取首条条目的标题")
+    pu.add_argument("--note", default="")
+
     ps = sub.add_parser("source", help="信源分级维护")
     ps.add_argument("id")
     ps.add_argument("--class", dest="cls", choices=list("ABCDE"))
@@ -290,7 +397,8 @@ def main() -> int:
             print("intel.db 不存在，已从 JSONL 重建："
                   + "  ".join(f"{k}={v}" for k, v in c.items() if v))
         rc = {"queue": cmd_queue, "event": cmd_event, "batch": cmd_batch,
-              "merge": cmd_merge, "source": cmd_source}[a.cmd](store, a)
+              "merge": cmd_merge, "unmerge": cmd_unmerge,
+              "source": cmd_source}[a.cmd](store, a)
         # 失败的命令不回写。裁决没成功却照样 dump，只会把「什么都没做」
         # 落成一次真相源改写
         if a.cmd != "queue" and (rc or 0) == 0:
