@@ -1,0 +1,39 @@
+name: 测试
+
+# 刻意与 pipeline.yml 分开，不挂在采集流水线里。
+#
+# 采集是有时效的（cron 一天两档，错过就得等下一轮），把测试塞进那条 workflow
+# 意味着一个断掉的断言就能让当天的数据收集全线停摆——为了守住数据正确性
+# 反而把数据丢了，方向是反的。这条只在推送和 PR 上跑，红了拦的是合并，不是采集。
+on:
+  push:
+    paths:
+      - 'pipeline/**'
+      - 'tests/**'
+      - '.github/workflows/tests.yml'
+  pull_request:
+    paths:
+      - 'pipeline/**'
+      - 'tests/**'
+      - '.github/workflows/tests.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      # 与流水线一致：零第三方依赖，无需 pip install。
+      # 测试用 StubLLM 顶掉模型调用，不需要任何 API key，也不碰 data/。
+      - name: 事件锚定回归测试
+        run: python3 tests/test_event_anchor.py
+
+      - name: 语法检查
+        run: python3 -m compileall -q pipeline scripts tests
