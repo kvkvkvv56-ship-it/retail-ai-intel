@@ -47,6 +47,42 @@ export async function api(path) {
   return p
 }
 
+/**
+ * 语义检索（词面 + 向量）。
+ *
+ * 走 Worker 的 /api/v1/search：事件向量在导出时已经算好写进 vectors.json，
+ * 线上只对用户这一句 query 调一次 embedding 接口，余弦在 Worker 里算。
+ * 返回的 mode 字段说明本次实际用到了什么（lexical / lexical+semantic）——
+ * 缺 JINA_API_KEY 时后端会静默退回纯词面，不显示出来的话用户无从知道
+ * 自己搜到的到底是不是语义结果。
+ *
+ * 不走 api() 的那张 Map 缓存：query 千变万化，缓存只会无上限地涨。
+ * 这里用一个带上限的小缓存，够覆盖「删掉一个字再加回来」这种即时往返。
+ *
+ * 失败一律返回 null，调用方退回本地词面匹配——检索框永远不该因为
+ * 接口挂了就不能用。
+ */
+const searchCache = new Map()
+const SEARCH_CACHE_MAX = 30
+
+export async function search(q, { signal } = {}) {
+  const key = q.trim().toLowerCase()
+  if (key.length < 2 || key.length > 200) return null
+  if (searchCache.has(key)) return searchCache.get(key)
+  try {
+    const r = await fetch(`/api/v1/search?q=${encodeURIComponent(key)}`, { signal })
+    if (!r.ok) return null
+    const d = await r.json()
+    if (searchCache.size >= SEARCH_CACHE_MAX) {
+      searchCache.delete(searchCache.keys().next().value)
+    }
+    searchCache.set(key, d)
+    return d
+  } catch {
+    return null              // 含 AbortError：请求被下一次输入取代，静默即可
+  }
+}
+
 /** 置信度五级的展示序（技术方案 §6.1），由高到低 */
 export const CONFIDENCE_ORDER = [
   '官方确认·多源印证', '官方一手', '多源已验证', '深度单源', '单源待确认',

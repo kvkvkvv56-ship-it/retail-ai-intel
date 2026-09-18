@@ -4,6 +4,7 @@ import { Collapse, Loading } from './components/Bits.jsx'
 import RunView from './views/RunView.jsx'
 import EventsView from './views/EventsView.jsx'
 import EventDetail from './views/EventDetail.jsx'
+import GraphView from './views/GraphView.jsx'
 import RejectsView from './views/RejectsView.jsx'
 import SourcesView from './views/SourcesView.jsx'
 import ReportView from './views/ReportView.jsx'
@@ -14,6 +15,7 @@ import DocsView from './views/DocsView.jsx'
 const VIEWS = [
   { k: 'run', to: '/', label: '运行回放' },
   { k: 'events', to: '/events', label: '事件库', n: 'events' },
+  { k: 'graph', to: '/graph', label: '知识图谱', n: 'edges' },
   { k: 'report', to: '/report', label: '周报' },
   { k: 'brief', to: '/brief', label: '定制简报' },
   { k: 'sources', to: '/sources', label: '信源', n: 'sources' },
@@ -106,6 +108,7 @@ export default function App() {
     if (ev) body = <EventDetail id={ev[1]} meta={meta} nav={nav} />
     else if (rj) body = <RejectsView runId={rj[1]} nav={nav} />
     else if (path.startsWith('/events')) body = <EventsView meta={meta} nav={nav} />
+    else if (path.startsWith('/graph')) body = <GraphView meta={meta} nav={nav} />
     else if (path.startsWith('/sources')) body = <SourcesView />
     else if (path.startsWith('/reports')) body = <ReportsIndex nav={nav} />
     else if (rp) body = <ReportView meta={meta} nav={nav} id={rp[1]} />
@@ -117,6 +120,7 @@ export default function App() {
   }
 
   const tabKey = path.startsWith('/events') ? 'events'
+    : path.startsWith('/graph') ? 'graph'
     : path.startsWith('/sources') ? 'sources'
     : path.startsWith('/report') ? 'report'
     : path.startsWith('/brief') ? 'brief'

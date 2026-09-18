@@ -426,8 +426,72 @@ a { color: inherit; text-decoration: none; }
   display: flex; gap: 20px; flex-wrap: wrap; font-size: 10.5px; color: var(--faint);
 }
 
+/* ===================== 知识图谱 =====================
+   画布是唯一一处打破 960px 栅格的地方：图需要宽度，事件一多就更需要。
+   用负外边距把它拉到视口宽度，但两侧留 16px 呼吸位。 */
+.graph-view { padding-bottom: 40px; }
+.graph-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.graph-head .sec-title { margin-bottom: 4px; }
+.graph-sub { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.graph-ctl { display: flex; gap: 8px; }
+.graph-companies { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 10px 14px; margin: 16px 0 12px; }
+
+.graph-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; margin-bottom: 12px; font-size: 11.5px; color: var(--muted); }
+.graph-legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+.graph-legend svg { display: block; overflow: visible; }
+.graph-legend .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.graph-legend .dot.solid { background: var(--text); }
+.graph-legend .dot.hollow { background: #B4B4B4; }
+
+.graph-stage {
+  position: relative; height: 620px;
+  border: 1px solid var(--line); border-radius: var(--radius-md);
+  background:
+    radial-gradient(circle at 1px 1px, var(--line-subtle) 1px, transparent 0) 0 0 / 22px 22px,
+    var(--bg);
+  overflow: hidden;
+}
+.graph-stage canvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+.graph-progress { position: absolute; left: 0; top: 0; height: 2px; width: 100%; background: var(--line-subtle); }
+.graph-progress span { display: block; height: 100%; background: var(--text); transition: width var(--duration-quick) linear; }
+.graph-hint { position: absolute; left: 14px; bottom: 12px; font-size: 10.5px; color: var(--faint); pointer-events: none; }
+
+.graph-panel {
+  position: absolute; right: 12px; top: 12px; bottom: 12px; width: 310px;
+  background: rgba(255, 255, 255, .95); backdrop-filter: blur(8px);
+  border: 1px solid var(--line); border-radius: var(--radius-md);
+  padding: 16px 16px 14px; overflow-y: auto;
+  box-shadow: var(--shadow-elevated);
+  animation: fadeIn var(--duration-fast) var(--ease-smooth-out);
+}
+.gp-close { position: absolute; right: 10px; top: 8px; background: none; border: 0; cursor: pointer; font-size: 17px; line-height: 1; color: var(--faint); }
+.gp-close:hover { color: var(--text); }
+.gp-co { font-size: 11px; color: var(--muted); padding-right: 20px; }
+.gp-title { font-size: 14px; font-weight: 600; line-height: 1.5; margin: 6px 0 6px; letter-spacing: -.01em; }
+.gp-meta { font-size: 11px; color: var(--faint); padding-bottom: 12px; border-bottom: 1px solid var(--line-subtle); }
+.gp-sub { font-size: 11px; color: var(--muted); margin: 14px 0 6px; letter-spacing: .3px; }
+.gp-links { list-style: none; }
+.gp-links li { padding: 6px 0; border-bottom: 1px solid var(--line-subtle); }
+.gp-link { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; font-size: 12px; line-height: 1.55; color: var(--text); }
+.gp-link:hover { color: var(--c-official); }
+.gp-rel { font-size: 10.5px; font-weight: 600; margin-right: 6px; white-space: nowrap; }
+.gp-links.rule .gp-link { color: var(--text-2); }
+.gp-basis { font-size: 10.5px; color: var(--faint); line-height: 1.6; margin-top: 3px; }
+.gp-go { margin-top: 16px; width: 100%; text-align: center; }
+
+.graph-note { font-size: 11.5px; color: var(--muted); line-height: 1.75; margin-top: 14px; max-width: 74ch; border-left: 2px solid var(--line); padding-left: 14px; }
+.graph-note strong { color: var(--text); font-weight: 500; }
+
+/* 检索模式外显（事件库） */
+.search-mode { font-size: 11px; color: var(--muted); margin: -8px 0 14px; }
+.search-mode .n { color: var(--faint); margin-left: 10px; font-variant-numeric: tabular-nums; }
+.pill.sem { background: #EAF1FA; color: #2a5d96; font-variant-numeric: tabular-nums; }
+
 /* ===================== 窄屏 ===================== */
 @media (max-width: 640px) {
+  .graph-stage { height: 460px; }
+  .graph-panel { left: 12px; width: auto; top: auto; height: 46%; }
+  .graph-hint { display: none; }
   .wrap { padding: 0 20px; }
   .site-header { padding-top: 16px; }
   .header-row { flex-wrap: wrap; gap: 0; }

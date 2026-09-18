@@ -41,6 +41,15 @@ def _j(v):
 
 
 def export(store: Store, cfg: dict, srccfg: dict) -> dict:
+    # 事件向量要花钱才算得出来，而导出第一步是把 OUT 整个删掉重建。
+    # 没有 JINA_API_KEY 的人跑一次导出，就会把上一轮花钱算好的 vectors.json
+    # 连带删掉——线上的语义检索随即静默退回词面匹配，页面照常 200，没人看得出来。
+    # 先把它接住，算不出新的就原样放回去。
+    prev_vectors = None
+    vp = OUT / "vectors.json"
+    if vp.exists():
+        prev_vectors = vp.read_text(encoding="utf-8")
+
     if OUT.exists():
         shutil.rmtree(OUT)
     OUT.mkdir(parents=True, exist_ok=True)
@@ -157,13 +166,17 @@ def export(store: Store, cfg: dict, srccfg: dict) -> dict:
                 continue
             seen_edge.add(key)
             m = ev_meta.get(other)
+            # 端点已不存在的边直接不导出。归并会删事件，模型也可能提议一条
+            # 指向不存在 event_key 的边（S4 现在会拦下，但历史数据里留了几条）。
+            # 从前这类边照样渲染，读者看到的是一行光秃秃的 EV 编号，点进去是空页。
+            if not m:
+                continue
             edges.append({
                 "other": other, "relation": r["relation"], "basis": r["basis"],
                 "created_by": r["created_by"],
                 "direction": "out" if r["from_event"] == e["id"] else "in",
-                "title": m["title"] if m else None,
-                "company": m["company"] if m else None,
-                "event_date": m["event_date"] if m else None,
+                "title": m["title"], "company": m["company"],
+                "event_date": m["event_date"],
             })
         edges.sort(key=lambda x: (x["relation"] != "follows", x["event_date"] or ""))
         total += _w(f"events/{e['id']}.json", {
@@ -255,6 +268,58 @@ def export(store: Store, cfg: dict, srccfg: dict) -> dict:
             "c": e["company"], "d": e["domains"]} for e in ev_rows]
     total += _w("search-index.json", idx)
 
+    # -------------------------------------------------------------- 知识图谱
+    # 一次性给出全图，前端在浏览器里跑力导向布局——289 节点 / 460 边这个量级
+    # 不值得为它做服务端布局或分页拉取，整包压缩后也就几十 KB。
+    #
+    # 字段全部用短名：节点 289 个，每个字段名多 6 个字节就是 1.7KB。
+    # basis 只给语义边：规则边的依据是模板化的「同为 X 的动作，时间相邻」，
+    # 289 条乘以三十来字，是纯粹的体积浪费，而前端本来就不展示它。
+    alive = {e["id"] for e in ev_rows}
+    g_edges, seen_g = [], set()
+    dangling = 0
+    for r in store.q("SELECT * FROM edges"):
+        f, t = r["from_event"], r["to_event"]
+        if f == t:
+            continue
+        if f not in alive or t not in alive:
+            dangling += 1
+            continue
+        k = (f, t, r["relation"])
+        if k in seen_g:
+            continue
+        seen_g.add(k)
+        rule = r["created_by"] == "rule"
+        row = {"f": f, "t": t, "r": r["relation"], "by": r["created_by"]}
+        if not rule and r["basis"]:
+            row["b"] = r["basis"][:160]
+        g_edges.append(row)
+
+    deg: dict[str, int] = defaultdict(int)
+    sem_deg: dict[str, int] = defaultdict(int)
+    for x in g_edges:
+        deg[x["f"]] += 1
+        deg[x["t"]] += 1
+        if x["by"] != "rule":
+            sem_deg[x["f"]] += 1
+            sem_deg[x["t"]] += 1
+
+    g_nodes = [{"id": e["id"], "t": e["title"][:48], "c": e["company"],
+                "d": e["domains"], "s": e["status"], "cf": e["confidence"],
+                "dt": e["event_date"], "deg": deg[e["id"]],
+                "sdeg": sem_deg[e["id"]]} for e in ev_rows]
+    total += _w("graph.json", {
+        "nodes": g_nodes, "edges": g_edges,
+        "stats": {"nodes": len(g_nodes), "edges": len(g_edges),
+                  "semantic": sum(1 for x in g_edges if x["by"] != "rule"),
+                  "rule": sum(1 for x in g_edges if x["by"] == "rule"),
+                  "isolated": sum(1 for n in g_nodes if not n["deg"]),
+                  "dangling_dropped": dangling}})
+    stats["graph"] = f"{len(g_nodes)}节点/{len(g_edges)}边"
+    if dangling:
+        stats["_warn_graph"] = (f"{dangling} 条边的端点已不存在（归并删掉的事件"
+                                f"或模型编造的 event_key），已从图中剔除")
+
     # ------------------------------------------ 降级数据（技术方案 §10.6）
     # 构建时嵌入 JS bundle。API 取不到时页面仍可读，显示「离线模式」。
     # 只放读首页与列表所需的最小集，详情页仍需在线——完整数据 350KB，
@@ -283,8 +348,16 @@ def export(store: Store, cfg: dict, srccfg: dict) -> dict:
     if not EMB.available():
         # 静默降级是最难发现的故障：页面照常渲染、接口照常 200，
         # 只是检索质量悄悄退回词面匹配。必须记进 stats 并打印。
-        stats["vectors"] = 0
-        stats["_warn_vectors"] = "缺 JINA_API_KEY，未生成事件向量，线上语义检索降级为词面匹配"
+        if prev_vectors is not None:
+            total += _w("vectors.json", json.loads(prev_vectors))
+            n = len(json.loads(prev_vectors).get("vectors") or {})
+            stats["vectors"] = n
+            stats["_warn_vectors"] = (
+                f"缺 JINA_API_KEY，未重算事件向量，沿用上一轮的 {n} 条。"
+                "本轮新增事件在语义检索里搜不到，直到有 key 的轮次补上")
+        else:
+            stats["vectors"] = 0
+            stats["_warn_vectors"] = "缺 JINA_API_KEY，未生成事件向量，线上语义检索降级为词面匹配"
     if EMB.available():
         texts, ids = [], []
         for e in ev_rows:

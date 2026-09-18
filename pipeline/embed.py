@@ -1,15 +1,20 @@
 """向量层：Embedding + 余弦检索（技术方案 §2.5、§3 的 L3）
 
-两处用途（都在事件层，不在条目层）：
-  1. S4b 全库归并复核 —— SimHash 的指纹算的是标题+正文，不同站点的模板差异
+四处用途：
+  1. S1b 条目层语义去重 —— SimHash 的指纹算的是标题+正文，不同站点的模板差异
      会让同一篇稿子指纹不同；标题精确匹配又只能抓改写前后完全一致的。换句话说
-     **改写过的转载 S1 那两层都拦不住**，跨轮次的同一件事更是完全看不见
-     （事件同一性靠 LLM 每次生成一样的 event_key 字符串）。这些都只能靠语义，
-     由 S4b 在事件层召回候选对、交模型逐对裁决。
-  2. 事件语义检索 —— 事件向量在导出时算好进快照，线上只对用户 query 调一次
+     **改写过的转载 S1 那两层都拦不住**。向量召回高相似条目对，交便宜档逐对裁决。
+  2. S4b 全库归并复核 —— 跨轮次的同一件事 S4 完全看不见（事件同一性靠 LLM
+     每次生成一样的 event_key 字符串）。只能靠语义，由 S4b 在事件层召回候选对、
+     交模型逐对裁决。
+  3. S6b 事件关系边召回 —— 余弦落在「像但不是同一件事」区间的事件对，
+     交模型判 follows / corroborates / contradicts / causes。这是双向链接的
+     唯一语义来源：规则边只会按时间把同公司事件串成一条链。
+  4. 事件语义检索 —— 事件向量在导出时算好进快照，线上只对用户 query 调一次
      接口，余弦在 Worker 里算。这样线上不必挂向量库。
 
-  注：条目层（S1）的语义去重仍未实现，向量在那一层没有调用点。
+  1 与 2/3 用的是不同粒度的文本（条目正文 vs 事件标题+摘要+事实），
+  但共用同一份缓存与同一个 band_pairs 召回循环。
 
 工程约束：
   · 向量落 data/embeddings.jsonl 缓存，键是 sha1(model+task+text)。
@@ -169,6 +174,54 @@ def nearest(vec: list[int], pool: list[tuple[str, list[int]]],
     hits = [(i, cosine(vec, v)) for i, v in pool if v]
     hits.sort(key=lambda x: -x[1])
     return [h for h in hits[:top] if h[1] >= floor]
+
+
+def band_pairs(vecs: list[list[int] | None], lo: float, hi: float = 1.01,
+               focus: set[int] | None = None,
+               top: int | None = None) -> list[tuple[int, int, float]]:
+    """两两余弦落在 [lo, hi) 内的下标对，按相似度降序。三处召回共用这一个循环：
+
+        S1b 条目转载   lo=高阈值      focus=本轮新条目   top=3
+        S4b 事件重复   lo=0.80        focus=None         top=None
+        S6b 事件关系   lo=0.62 hi=0.80 focus=本轮动过的  top=5
+
+    `focus` 限定「至少有一端属于该集合」，`top` 限定「每个 focus 成员最多取几对」。
+    两者都是为了让候选数不随库容量膨胀：0.62 以上的对在 289 事件上就有上万条，
+    逐对送模型裁决会把成本打穿，而真正需要重新判断的只有本轮动过的那些。
+    S4b 不传这两个参数——它要的就是全量重复检查，且 0.80 以上本来就只剩 1%。
+
+    纯 Python 的 O(n²)，实测 93 µs/对。focus 模式是 O(|focus|·n)，
+    每轮 focus 只有几十个，规模上限比 S4b 宽得多。
+    """
+    n = len(vecs)
+
+    if focus is None:
+        out = [(a, b, c)
+               for a in range(n) if vecs[a]
+               for b in range(a + 1, n) if vecs[b]
+               for c in (cosine(vecs[a], vecs[b]),) if lo <= c < hi]
+        out.sort(key=lambda x: -x[2])
+        return out
+
+    # focus 模式：每个成员各自取 Top-N，再按无序对全局去重。
+    # 不能先合池再全局取 Top-N——那样少数几个高相似的事件会把配额吃光，
+    # 其余 focus 成员一对都轮不到，图就只在局部长。
+    seen: set[tuple[int, int]] = set()
+    out: list[tuple[int, int, float]] = []
+    for a in sorted(focus):
+        if not (0 <= a < n) or not vecs[a]:
+            continue
+        hits = [(b, c) for b in range(n) if b != a and vecs[b]
+                for c in (cosine(vecs[a], vecs[b]),) if lo <= c < hi]
+        hits.sort(key=lambda x: -x[1])
+        for b, c in (hits[:top] if top else hits):
+            k = (a, b) if a < b else (b, a)
+            if k in seen:
+                continue
+            seen.add(k)
+            out.append((k[0], k[1], c))
+    out.sort(key=lambda x: -x[2])
+    return out
 
 
 def stats() -> dict:

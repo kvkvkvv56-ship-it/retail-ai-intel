@@ -160,8 +160,11 @@ export default {
     const route = m[1].replace(/\/$/, '')
 
     // ---------------- 元信息 ----------------
+    // graph 是整包给出的知识图谱（节点 + 边），前端在浏览器里跑布局。
+    // 289 节点 / 461 边压缩后几十 KB，不值得为它做服务端布局或分页。
     if (route === 'meta' || route === 'sources' || route === 'reviews'
-        || route === 'runs' || route === 'reports' || route === 'docs') {
+        || route === 'runs' || route === 'reports' || route === 'docs'
+        || route === 'graph') {
       const d = await snapshot(env, route)
       return d ? ok(d) : problem(503, 'snapshot_missing', `快照 ${route} 尚未生成`)
     }
