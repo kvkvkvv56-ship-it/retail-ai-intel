@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import urllib.parse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 
@@ -16,6 +17,14 @@ from pipeline.llm import LLMError
 
 STAGE_ORDER = {"概念宣传": 0, "试点探索": 1, "已上线": 2, "规模化应用": 3}
 CLASS_ORDER = {"A": 0, "B": 1, "C": 2, "D": 3, "E": 4}
+
+# 未登记信源归组用。社交平台上的不同账号是不同主体，按「域名 + 账号」区分；
+# 其余一律归到可注册域名，避免子域名（stock./field./m.）被当成不同机构。
+_SOCIAL_HOSTS = {"x.com", "twitter.com", "weibo.com", "weibo.cn",
+                 "linkedin.com", "t.me", "youtube.com", "bilibili.com"}
+# 两段公共后缀，用于从 host 里切出可注册域名（仅标准库，不引 publicsuffix）
+_MULTI_SUFFIX = {"com.cn", "net.cn", "org.cn", "gov.cn", "edu.cn", "ac.cn",
+                 "com.hk", "com.tw", "com.sg", "com.au", "co.uk", "co.jp", "co.kr"}
 
 
 def _now() -> str:
@@ -801,6 +810,34 @@ def _write_claims(store, event_id: str, data: dict) -> None:
 
 
 # ==================================================================== S5
+def _org_key(url: str) -> str:
+    """未登记信源的机构标识。
+
+    早先直接用 url[:40] 当 key，同一主体的多篇稿件只要第 40 个字符之后不同
+    就会被算成多个独立机构——实测 x.com/alibaba_cloud 的两条推文
+    （/status/2095… 与 /status/2094…）把事件抬进了「多源已验证」，
+    claude.com/blog 的两篇同理。这正是 org 去重本该拦下的「虚假多源」。
+
+    改为按可注册域名归组；社交平台按「域名 + 账号」，因为同一平台上的
+    不同账号确实是不同主体，一刀切按域名会把它们错误合并。
+    """
+    p = urllib.parse.urlsplit(url or "")
+    host = (p.netloc or "").lower().split("@")[-1].split(":")[0]
+    if host.startswith("www."):
+        host = host[4:]
+    if not host:                      # 拿不到域名时退回旧行为，至少不误合并
+        return "unregistered:" + (url or "")[:40]
+    parts = host.split(".")
+    if len(parts) > 2:
+        keep = 3 if ".".join(parts[-2:]) in _MULTI_SUFFIX else 2
+        host = ".".join(parts[-keep:])
+    if host in _SOCIAL_HOSTS:
+        seg = [s for s in p.path.split("/") if s]
+        if seg:
+            return f"unregistered:{host}/{seg[0].lower()}"
+    return "unregistered:" + host
+
+
 def stage_verify(store, cfg: dict, srccfg: dict) -> dict:
     """核验：纯规则，可回归、可审计。模型不参与可信度裁决。"""
     src_by_id = {s["id"]: s for s in srccfg["sources"]}
@@ -832,7 +869,7 @@ def stage_verify(store, cfg: dict, srccfg: dict) -> dict:
             if s:
                 orgs.add(s["org"])
             else:
-                orgs.add("unregistered:" + (it["url"] or "")[:40])
+                orgs.add(_org_key(it["url"] or ""))
             if eff == "B":
                 has_deep = True
 
