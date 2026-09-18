@@ -235,9 +235,23 @@
   "verify": {
     "min_independent_orgs": 2,
     "unknown_source_class": "D",
-    "simhash_hamming_threshold": 3,
-    "embedding_topk": 8,
-    "embedding_min_cosine": 0.82
+    "simhash_hamming_threshold": 3
+  },
+  "semantic_dedup": {
+    "enabled": true,
+    "window_days": 14,
+    "pool_max": 400,
+    "min_cosine": 0.9,
+    "topk": 3,
+    "batch": 6
+  },
+  "relate": {
+    "enabled": true,
+    "min_cosine": 0.62,
+    "max_cosine": 0.8,
+    "topk": 5,
+    "batch": 8,
+    "min_focus": 12
   },
   "search": {
     "engine": "exa",

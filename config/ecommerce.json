@@ -316,9 +316,25 @@
   "verify": {
     "min_independent_orgs": 2,
     "unknown_source_class": "D",
-    "simhash_hamming_threshold": 3,
-    "embedding_topk": 8,
-    "embedding_min_cosine": 0.82
+    "simhash_hamming_threshold": 3
+  },
+  "_dedup_note": "S1b 条目层语义去重：向量召回改写过的转载（L1/L2 的字面匹配拦不住），交便宜档逐对裁决。min_cosine 是召回阈值不是判定阈值，判定由模型做，所以宁可宽。pool 只取最近 window_days 天：转载跟着原稿走，隔两周还在转的极少，而池子每多一条就多一次向量调用。",
+  "semantic_dedup": {
+    "enabled": true,
+    "window_days": 14,
+    "pool_max": 400,
+    "min_cosine": 0.9,
+    "topk": 3,
+    "batch": 6
+  },
+  "_relate_note": "S6b 语义关系召回：余弦落在 [min_cosine, max_cosine) 的事件对＝「像但不是同一件事」，是双向链接的候选。上界必须等于 S4b 的归并召回阈值（0.80），两段刚好接上、互不重叠。每轮只问本轮动过的事件，不足 min_focus 时用还没有语义边的事件补齐——存量随轮次逐步长满，而每轮问的对数恒定在 min_focus × topk 量级。",
+  "relate": {
+    "enabled": true,
+    "min_cosine": 0.62,
+    "max_cosine": 0.8,
+    "topk": 5,
+    "batch": 8,
+    "min_focus": 12
   },
   "search": {
     "engine": "exa",

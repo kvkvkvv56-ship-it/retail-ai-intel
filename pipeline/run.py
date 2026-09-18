@@ -281,6 +281,10 @@ def print_funnel(stats: dict, cost: dict, errors: list[str], store: Store,
     print(f"    ├─ 转载近重复        -{stats['syndication']:>4}   （SimHash 判定）")
     print(f"    └─ 缺标题/链接       -{stats['no_title']:>4}")
     print(f"  入库待处理            {a:>5}   （通过率 {a / r * 100:.0f}%）" if r else "")
+    sd = (llm_stats or {}).get("semantic_dedup") or {}
+    if sd.get("dup"):
+        print(f"    └─ 语义转载再淘汰  -{sd['dup']:>4}   "
+              f"（向量召回 {sd.get('recall_pairs', 0)} 对，模型判定，省下强档抽取）")
     if stats["attributed"]:
         print(f"  原始出处归因命中      {stats['attributed']:>5}   （转载→回溯到一手信源）")
 
@@ -313,6 +317,12 @@ def print_funnel(stats: dict, cost: dict, errors: list[str], store: Store,
         m = llm_stats.get("merge") or {}
         if m.get("orphan_rescued"):
             print(f"  孤儿挽回：{m['orphan_rescued']} 条未被模型分组的候选独立成事件")
+        if m.get("relations_dropped"):
+            print(f"  关系边丢弃：{m['relations_dropped']} 条模型提议的边端点解析不到事件")
+        rl = llm_stats.get("relate") or {}
+        if rl.get("edges") or rl.get("none"):
+            print(f"  语义关系边：本轮新建 {rl.get('edges', 0)} 条，"
+                  f"判无关 {rl.get('none', 0)} 对（已记账，不再重复问）")
         if v.get("backdated"):
             print(f"  回溯性旧闻拦截：{v['backdated']} 个事件的 event_date 早于观察窗口，"
                   f"判为旧闻而非新增")
@@ -414,6 +424,17 @@ def main() -> int:
     if args.stage == "all":
         llm = LLM(mock=args.mock)
 
+        # 必须排在 S2 之前：本阶段淘汰的条目直接置为 rejected，S2/S3 只看
+        # pending/screened，于是改写转载省下的是预筛 + 强档抽取两笔钱
+        print("\n[S1b] 语义去重（向量召回 + 便宜档逐对裁决）")
+        sd = stage("S1b", PR.stage_dedup_semantic, store, llm, cfg, run_id)
+        if sd.get("skipped"):
+            print(f"  → {sd['skipped']}")
+        elif sd:
+            print(f"  → 池 {sd['pool']} 条，召回 {sd['recall_pairs']} 对疑似，"
+                  f"判为转载 {sd['dup']}，判为独立报道 {sd['kept']}"
+                  + (f"，异常 {sd['error']}" if sd["error"] else ""))
+
         print("\n[S2] LLM 预筛（便宜档，吃最大调用量）")
         ps = stage("S2", PR.stage_prescreen, store, llm, cfg, run_id)
         if ps:
@@ -459,7 +480,17 @@ def main() -> int:
         print("\n[S6] 关系边补全（规则）")
         eg = stage("S6", IN.stage_edges, store)
         if eg:
-            print(f"  → 新增 same_actor_track 边 {eg['rule_edges']}")
+            print(f"  → 新增 same_actor_track 边 {eg['rule_edges']}"
+                  + (f"，清掉端点已不存在的悬空边 {eg['pruned']}" if eg.get("pruned") else ""))
+
+        print("\n[S6b] 语义关系召回（向量召回 + LLM 逐对判关系）")
+        rl = stage("S6b", IN.stage_relate, store, llm, cfg, run_id, started)
+        if rl.get("skipped"):
+            print(f"  → {rl['skipped']}")
+        elif rl:
+            print(f"  → 聚焦 {rl['focus']} 个事件，召回 {rl['recall_pairs']} 对"
+                  f"（新问 {rl['asked']}），建边 {rl['edges']}，判无关 {rl['none']}"
+                  + (f"，异常 {rl['error']}" if rl["error"] else ""))
 
         print("\n[S7] 洞察合成（周报）")
         ins = stage("S7", IN.stage_insight, store, llm, cfg, run_id,
@@ -477,9 +508,9 @@ def main() -> int:
                   f" · 观察清单 {ins['watchlist']} · 延续性检查 {ins.get('continuity', 0)}")
             print(f"     主线：{ins.get('headline', '')}")
 
-        llm_stats = {"prescreen": ps, "extract": ex, "merge": mg,
-                     "merge_cross": xm, "verify": vf,
-                     "edges": eg, "insight": ins,
+        llm_stats = {"semantic_dedup": sd, "prescreen": ps, "extract": ex,
+                     "merge": mg, "merge_cross": xm, "verify": vf,
+                     "edges": eg, "relate": rl, "insight": ins,
                      "llm_usage": llm.usage, "llm_cost_cny": llm.cost_estimate()}
         if stage_errors:
             llm_stats["stage_errors"] = stage_errors

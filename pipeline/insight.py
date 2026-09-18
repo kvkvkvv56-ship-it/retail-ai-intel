@@ -1,8 +1,9 @@
-"""S6 关系边补全 · S7 洞察合成（周报）
+"""S6 关系边补全 · S6b 语义关系召回 · S7 洞察合成（周报）
 
-关系边分两类来源：
+关系边分三类来源：
   rule  —— 确定性规则生成（same_actor_track），零成本、可回归
-  llm   —— S4 归并时模型提议的 follows/corroborates 等，必带 basis
+  llm   —— S4 归并时模型在本轮、本公司候选内提议的 follows 等，必带 basis
+  llm   —— S6b 向量召回跨轮次、跨公司的相近事件对，模型逐对判关系
 
 周报是 **recommendation 唯一的产出点**。技术方案 §7 定死了硬边界：
 建议不能有信源——能追溯到某篇文章的就不是建议，是别人的观点。
@@ -15,6 +16,9 @@ import hashlib
 import json
 from datetime import date, datetime, timedelta, timezone
 
+from pipeline import embed as EMB
+from pipeline import process as PR
+from pipeline import prompts as P
 from pipeline.llm import parse_json
 
 WEEKLY_SYS = """你是「行业与竞对 AI 洞察情报站」的首席分析官，为零售业务团队产出情报洞察周报。
@@ -75,7 +79,25 @@ def stage_edges(store) -> dict:
     是叙事链的骨架；语义关系（follows/causes/contradicts）由 S4 的
     模型提议补充。
     """
-    stats = {"rule_edges": 0}
+    stats = {"rule_edges": 0, "pruned": 0}
+
+    # 先清掉端点已不存在的边。
+    #
+    # 归并删事件时会顺手删掉挂在它身上的边，但另有两条路径会留下悬空边：
+    # 早期 S4 直接拿模型给的 event_key 算 sha1 当端点、不校验事件是否存在
+    # （现已在 S4 拦下），以及人工 unmerge 之后的边重挂。实测库里留了 2 条，
+    # 占当时全部模型边的一半——前端拿不到标题，只能把 EV 编号打出来，
+    # 点进去是空页；知识图谱里则是一条连向虚空的线。
+    #
+    # 导出层已经会过滤它们，但真相源该是干净的：JSONL 里躺着永远解析不了的
+    # 边，下次谁再写一个消费方就要重新踩一遍。
+    alive = {r["id"] for r in store.q("SELECT id FROM events")}
+    dead = [r["id"] for r in store.q("SELECT id, from_event, to_event FROM edges")
+            if r["from_event"] not in alive or r["to_event"] not in alive]
+    for eid in dead:
+        store.db.execute("DELETE FROM edges WHERE id=?", (eid,))
+    stats["pruned"] = len(dead)
+
     existing = {(r["from_event"], r["to_event"], r["relation"])
                 for r in store.q("SELECT from_event,to_event,relation FROM edges")}
 
@@ -95,6 +117,166 @@ def stage_edges(store) -> dict:
                 "created_by": "rule"})
             existing.add(k)
             stats["rule_edges"] += 1
+    store.commit()
+    return stats
+
+
+# =================================================================== S6b
+# 语义关系召回。**双向链接真正的内容来源**。
+#
+# 在此之前，库里 463 条边有 459 条是 S6 的规则边：同一公司的事件按 event_date
+# 排序、相邻两个连一条。它给的是顺序不是关系，basis 是模板化的「时间相邻」，
+# 前端自己都判定没有信息量不予展示（EventDetail.jsx 的注释写着这件事）。
+# 剩下 4 条模型边只在 S4 内部产生——同一轮、同一公司的候选之间，
+# 于是「上个月那件事的后续」永远不会被提出来。
+#
+# 本阶段补的就是这条通道：事件向量已经为 S4b 算好了，S4b 只用了 0.80 以上
+# 那 1%，剩下的全部丢弃。而「像但不是同一件事」恰恰住在下面那一段里——
+# 0.80 以上是重复（S4b 合掉），0.62 以下基本无关，中间这段就是关系候选。
+# 边际成本接近零：向量是现成的，只多了模型逐对裁决那几次调用。
+#
+# 三道限流让每轮成本恒定，不随库容量增长：
+#   focus  只问本轮动过的事件（新建或有新证据并入的）
+#   topk   每个 focus 成员最多取 5 个邻居
+#   账本   判过「无关」的对记进 reviews，下轮不再问第二遍
+# focus 不足时用「还没有任何语义边的事件」补齐——存量会随轮次逐步长满，
+# 而每轮问的对数始终在 min_focus × topk 这个量级。
+RELATE = {"enabled": True, "min_cosine": 0.62, "max_cosine": 0.80,
+          "topk": 5, "batch": 8, "min_focus": 12}
+
+REL_KINDS = {"follows", "causes", "corroborates", "contradicts"}
+
+
+def _pair_key(a: str, b: str) -> str:
+    return "|".join(sorted((a, b)))
+
+
+def stage_relate(store, llm, cfg: dict, run_id: str,
+                 since: str | None = None) -> dict:
+    """S6b 事件关系边：向量召回「相近但不同」的事件对 + LLM 逐对判关系。
+
+    缺 JINA_API_KEY 时整段跳过——没有召回通道就只能整表通读，而事件两两组合
+    在 289 事件上是 4 万对，那是塞不进提示词的。行为退回本阶段不存在时一致。
+    """
+    conf = {**RELATE, **(cfg.get("relate") or {})}
+    stats = {"scanned": 0, "focus": 0, "recall_pairs": 0, "asked": 0,
+             "edges": 0, "none": 0, "error": 0, "skipped": None}
+    if not conf["enabled"]:
+        stats["skipped"] = "配置关闭"
+        return stats
+    if not EMB.available():
+        stats["skipped"] = "缺 JINA_API_KEY，跳过语义关系召回（图中只剩规则边）"
+        return stats
+
+    evs = store.q("""SELECT id, company, title, summary, event_date, last_update_at
+                     FROM events""")
+    stats["scanned"] = len(evs)
+    if len(evs) < 2:
+        return stats
+
+    vecs = PR.event_vectors(store, evs)
+    if vecs is None:
+        stats["skipped"] = "事件向量不可用"
+        return stats
+
+    # ---------------------------------------------------------- focus 选取
+    # 本轮动过的事件优先；不足则用「还没有任何语义边」的补齐，近期的先补。
+    sem_deg: dict[str, int] = {}
+    for r in store.q("""SELECT from_event, to_event FROM edges
+                        WHERE created_by != 'rule'"""):
+        sem_deg[r["from_event"]] = sem_deg.get(r["from_event"], 0) + 1
+        sem_deg[r["to_event"]] = sem_deg.get(r["to_event"], 0) + 1
+
+    focus = {i for i, e in enumerate(evs)
+             if since and (e["last_update_at"] or "") >= since}
+    if len(focus) < conf["min_focus"]:
+        spare = sorted((i for i, e in enumerate(evs)
+                        if i not in focus and not sem_deg.get(e["id"])),
+                       key=lambda i: (evs[i]["event_date"] or "", evs[i]["id"]),
+                       reverse=True)
+        focus.update(spare[:conf["min_focus"] - len(focus)])
+    stats["focus"] = len(focus)
+    if not focus:
+        return stats
+
+    pairs = EMB.band_pairs(vecs, conf["min_cosine"], conf["max_cosine"],
+                           focus=focus, top=conf["topk"])
+    stats["recall_pairs"] = len(pairs)
+    if not pairs:
+        return stats
+
+    # ------------------------------------------------------------ 已问过的
+    # 语义边已存在的对不再问（规则边不算已回答——same_actor_track 覆盖了同公司
+    # 所有相邻事件，把它当「已回答」会让同公司的 follows 永远问不出来）。
+    answered = {_pair_key(r["from_event"], r["to_event"]) for r in store.q(
+        "SELECT from_event, to_event FROM edges WHERE created_by != 'rule'")}
+    answered |= {r["target_id"] for r in store.q(
+        "SELECT target_id FROM reviews WHERE target_type='relate'")}
+
+    todo = [(a, b, c) for a, b, c in pairs
+            if _pair_key(evs[a]["id"], evs[b]["id"]) not in answered]
+    stats["asked"] = len(todo)
+    if not todo:
+        return stats
+
+    facts_of = {}
+
+    def side(e) -> dict:
+        if e["id"] not in facts_of:
+            facts_of[e["id"]] = [f["text"][:90] for f in store.q(
+                "SELECT text FROM claims WHERE event_id=? AND kind='fact' LIMIT 3",
+                (e["id"],))]
+        return {"id": e["id"], "company": e["company"], "title": e["title"],
+                "date": e["event_date"], "facts": facts_of[e["id"]]}
+
+    existing = {(r["from_event"], r["to_event"], r["relation"])
+                for r in store.q("SELECT from_event,to_event,relation FROM edges")}
+
+    for s0 in range(0, len(todo), conf["batch"]):
+        batch = todo[s0:s0 + conf["batch"]]
+        payload = [{"sim": c, "a": side(evs[a]), "b": side(evs[b])}
+                   for a, b, c in batch]
+        try:
+            res = llm.chat_json([
+                {"role": "system", "content": P.RELATE_SYS},
+                {"role": "user", "content": P.relate_user(payload)},
+            ], strong=True, max_tokens=1400)
+        except Exception:                                     # noqa: BLE001
+            stats["error"] += 1
+            continue
+        if isinstance(res, dict):
+            res = res.get("pairs") or []
+        verdicts = {v.get("i"): v for v in res if isinstance(v, dict)}
+
+        for j, (a, b, c) in enumerate(batch):
+            ea, eb = evs[a], evs[b]
+            v = verdicts.get(j) or {}
+            rel = (v.get("relation") or "none").strip()
+            basis = (v.get("basis") or "").strip()
+
+            # 模型没给具体依据的一律按 none 落账。RELATE_SYS 里写死了
+            # 「写不出具体依据就判 none」，这里是程序层的同一条约束——
+            # 无依据的边在图上和有依据的边长得一模一样，读图的人分不出来。
+            if rel not in REL_KINDS or len(basis) < 8:
+                store.insert("reviews", {
+                    "target_type": "relate", "target_id": _pair_key(ea["id"], eb["id"]),
+                    "action": "no_relation", "reviewer": "system",
+                    "note": f"余弦 {c:.3f}，模型判定无值得记录的关系",
+                    "created_at": _now()})
+                stats["none"] += 1
+                continue
+
+            src, dst = (ea, eb) if str(v.get("from", "A")).upper() != "B" else (eb, ea)
+            k = (src["id"], dst["id"], rel)
+            if k in existing:
+                continue
+            existing.add(k)
+            store.insert("edges", {
+                "from_event": src["id"], "to_event": dst["id"], "relation": rel,
+                "basis": f"{basis}（向量召回 {c:.2f}，模型判定）",
+                "created_by": "llm"})
+            stats["edges"] += 1
+
     store.commit()
     return stats
 
