@@ -318,7 +318,6 @@
 {"from_event": "EV-dee98723", "to_event": "EV-39eb0d6d", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-14 → 2026-09-14）", "created_by": "rule"}
 {"from_event": "EV-29cb93cf", "to_event": "EV-be1ecdd3", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-14 → 2026-09-14）", "created_by": "rule"}
 {"from_event": "EV-be1ecdd3", "to_event": "EV-d229cd84", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-14 → 2026-09-14）", "created_by": "rule"}
-{"from_event": "EV-ffe5ecf9", "to_event": "EV-5e07ed95", "relation": "follows", "basis": "条目[6]明确为 GPT-6 Astra 发布后引发的具身控制能力讨论，属同一产品发布后的后续进展。", "created_by": "llm"}
 {"from_event": "EV-581e517d", "to_event": "EV-df9323fa", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-05-19 → 2026-05-22）", "created_by": "rule"}
 {"from_event": "EV-df9323fa", "to_event": "EV-1c9c9501", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-05-22 → 2026-05-25）", "created_by": "rule"}
 {"from_event": "EV-da2f0aa7", "to_event": "EV-e2ac0bc1", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-04-30 → 2026-06-01）", "created_by": "rule"}
@@ -374,7 +373,6 @@
 {"from_event": "EV-fcf23f65", "to_event": "EV-347a2589", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2024-06-06 → 2024-09-30）", "created_by": "rule"}
 {"from_event": "EV-d4817f6f", "to_event": "EV-a0515eb2", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2025-05-08 → 2026-04-22）", "created_by": "rule"}
 {"from_event": "EV-a0515eb2", "to_event": "EV-6e1b01a3", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-04-22 → 2026-08-31）", "created_by": "rule"}
-{"from_event": "EV-b2035e1b", "to_event": "EV-1b02e531", "relation": "follows", "basis": "同属Seedance视频生成模型产品线，条目1为6月15日上线Seedance 2.0 Mini并公布定价，条目2为8、9月Seedance 2.0/2.5版主动打折降价，属同一产品后续定价阶段进展。", "created_by": "llm"}
 {"from_event": "EV-010f2d29", "to_event": "EV-1178c0d3", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
 {"from_event": "EV-1178c0d3", "to_event": "EV-2be0964e", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
 {"from_event": "EV-6a2f4e8e", "to_event": "EV-6f9dc3e1", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
@@ -461,3 +459,5 @@
 {"from_event": "EV-5f71dac1", "to_event": "EV-c9a9605e", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-17 → 2026-09-18）", "created_by": "rule"}
 {"from_event": "EV-c9a9605e", "to_event": "EV-08de124d", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-18 → 2026-09-18）", "created_by": "rule"}
 {"from_event": "EV-a0515eb2", "to_event": "EV-4d32dd2b", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-04-22 → 2026-08-03）", "created_by": "rule"}
+{"from_event": "EV-5f71dac1", "to_event": "EV-08de124d", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-17 → 2026-09-18）", "created_by": "rule"}
+{"from_event": "EV-08de124d", "to_event": "EV-c9a9605e", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-18 → 2026-09-18）", "created_by": "rule"}

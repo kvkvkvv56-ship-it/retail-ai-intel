@@ -426,6 +426,11 @@ a { color: inherit; text-decoration: none; }
   display: flex; gap: 20px; flex-wrap: wrap; font-size: 10.5px; color: var(--faint);
 }
 
+/* 检索模式外显（事件库） */
+.search-mode { font-size: 11px; color: var(--muted); margin: -8px 0 14px; }
+.search-mode .n { color: var(--faint); margin-left: 10px; font-variant-numeric: tabular-nums; }
+.pill.sem { background: #EAF1FA; color: #2a5d96; font-variant-numeric: tabular-nums; }
+
 /* ===================== 窄屏 ===================== */
 @media (max-width: 640px) {
   .wrap { padding: 0 20px; }

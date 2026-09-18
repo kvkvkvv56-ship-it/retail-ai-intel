@@ -1,6 +1,6 @@
-"""S2 预筛 · S3 抽取 · S4 归并 · S5 核验
+"""S1b 语义去重 · S2 预筛 · S3 抽取 · S4 归并 · S5 核验
 
-S2/S3/S4 用 LLM，S5 是纯规则。
+S1b/S2/S3/S4 用 LLM，S5 是纯规则。
 分工原则（技术方案 §0）：**模型只做抽取，可信度由规则裁决。**
 """
 from __future__ import annotations
@@ -20,6 +20,127 @@ CLASS_ORDER = {"A": 0, "B": 1, "C": 2, "D": 3, "E": 4}
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+# =================================================================== S1b
+# 条目层语义去重（技术方案 §3 的 L3）。
+#
+# S1 的三层全是字面匹配：L1 比 URL、L2a 比归一化标题、L2b 比正文 SimHash。
+# 改写过的转载三层都拦不住——换了标题、重排了段落，指纹就不同了。这些条目
+# 会一路走到 S3 花掉强档抽取的钱，最后在 S4b 的事件层被合掉。
+#
+# 本阶段把这道拦截提前到 S2 之前：向量召回高相似条目对，**便宜档逐对裁决**。
+# 为什么不像 L1/L2 那样阈值直接判：字面近重复几乎必然是转载，语义近重复不是
+# ——两家媒体各自采写同一事件，向量同样很高，而那恰恰是多源印证。见
+# prompts.SYNDICATION_SYS 的说明。判错一次，一个事件就永远停在「单源待确认」。
+DEFAULT_L3 = {"enabled": True, "window_days": 14, "pool_max": 400,
+              "min_cosine": 0.90, "topk": 3, "batch": 6}
+
+
+def _l3_text(title: str, content: str | None) -> str:
+    return f"{title}。{(content or '')[:600]}"
+
+
+def stage_dedup_semantic(store, llm, cfg: dict, run_id: str) -> dict:
+    """S1b 条目层语义去重：向量召回 + 便宜档逐对裁决。
+
+    比对池刻意只取最近 window_days 天、且至多 pool_max 条：转载是跟着原稿
+    走的，隔了两周还在转的极少，而池子每扩一条就多一次向量调用。首轮会把
+    池子整个算一遍，之后命中缓存，每轮只为新条目付费。
+
+    缺 JINA_API_KEY 时整段跳过，行为与本阶段不存在时完全一致。
+    """
+    conf = {**DEFAULT_L3, **(cfg.get("semantic_dedup") or {})}
+    stats = {"input": 0, "pool": 0, "recall_pairs": 0, "dup": 0,
+             "kept": 0, "error": 0, "skipped": None}
+    if not conf["enabled"]:
+        stats["skipped"] = "配置关闭"
+        return stats
+    if not EMB.available():
+        stats["skipped"] = "缺 JINA_API_KEY，跳过语义去重（改写转载将在 S4b 事件层兜底）"
+        return stats
+
+    fresh = [dict(r) for r in store.q(
+        "SELECT * FROM items WHERE status='pending' ORDER BY id")]
+    stats["input"] = len(fresh)
+    if not fresh:
+        return stats
+
+    since = (datetime.now(timezone.utc)
+             - timedelta(days=conf["window_days"])).isoformat()
+    fresh_ids = {r["id"] for r in fresh}
+    pool = [dict(r) for r in store.q(
+        """SELECT * FROM items WHERE status NOT IN ('rejected')
+           AND COALESCE(published_at, discovered_at) >= ?
+           ORDER BY COALESCE(published_at, discovered_at) DESC LIMIT ?""",
+        (since, conf["pool_max"]))]
+    pool = [r for r in pool if r["id"] not in fresh_ids]
+    stats["pool"] = len(pool)
+
+    # 新条目排在前面，下标 0..len(fresh)-1 即 focus 集合
+    rows = fresh + pool
+    vecs = EMB.embed([_l3_text(r["title"], r["content"]) for r in rows])
+    pairs = EMB.band_pairs(vecs, conf["min_cosine"], focus=set(range(len(fresh))),
+                           top=conf["topk"])
+    stats["recall_pairs"] = len(pairs)
+    if not pairs:
+        return stats
+
+    src_name = {s["id"]: s["name"] for s in store.q("SELECT id, name FROM sources")}
+
+    def side(r: dict) -> dict:
+        return {"title": r["title"],
+                "source": src_name.get(r["source_id"] or "", "未登记来源"),
+                "date": (r["published_at"] or r["discovered_at"] or "")[:10],
+                "text": (r["content"] or "")[:420].replace("\n", " ")}
+
+    # 已在本阶段判掉的不再作为存活方参与后续对——A 并进 B 之后，
+    # 若 B 又被判给 C，A 的台账会指向一个已经作废的条目
+    dropped: set[str] = set()
+    batches = [pairs[i:i + conf["batch"]]
+               for i in range(0, len(pairs), conf["batch"])]
+
+    for batch in batches:
+        payload = [{"sim": c, "a": side(rows[a]), "b": side(rows[b])}
+                   for a, b, c in batch]
+        try:
+            res = llm.chat_json([
+                {"role": "system", "content": P.SYNDICATION_SYS},
+                {"role": "user", "content": P.syndication_user(payload)},
+            ], max_tokens=900)
+        except Exception:                                     # noqa: BLE001
+            stats["error"] += 1
+            continue
+        if isinstance(res, dict):
+            res = res.get("results") or res.get("pairs") or []
+        verdicts = {v.get("i"): v for v in res if isinstance(v, dict)}
+
+        for j, (a, b, c) in enumerate(batch):
+            v = verdicts.get(j)
+            if not v or not v.get("dup"):
+                stats["kept"] += 1
+                continue
+            # a 一定来自 focus（新条目）；b 可能是池里的老条目，也可能是本轮另一条。
+            # 无论哪种，丢掉更晚发现的那条，留下先入库的——与 L2 的取向一致。
+            new, old = (rows[a], rows[b]) if rows[a]["discovered_at"] >= \
+                rows[b]["discovered_at"] else (rows[b], rows[a])
+            if new["id"] in dropped or old["id"] in dropped:
+                continue
+            dropped.add(new["id"])
+            store.db.execute("UPDATE items SET status='rejected' WHERE id=?",
+                             (new["id"],))
+            store.insert("rejects", {
+                "run_id": run_id, "item_id": new["id"], "url": new["url"],
+                "title": new["title"][:200],
+                "source_name": src_name.get(new["source_id"] or "", "未登记"),
+                "stage": "semantic_dedup", "reason_code": "syndication",
+                "reason_detail": f"与 {old['id']} 语义近重复（余弦 {c:.3f}），"
+                                 f"模型判定为同一篇稿件的转载/改写：{v.get('why', '')}",
+                "merged_into": old["id"], "created_at": _now()})
+            stats["dup"] += 1
+
+    store.commit()
+    return stats
 
 
 # ==================================================================== S2
@@ -207,6 +328,10 @@ def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
                        "relations": []}
                 stats["merge_fallback"] = stats.get("merge_fallback", 0) + len(cands)
 
+            # 模型在 relations 里引用的 event_key，可能是归并后的 canonical_key，
+            # 也可能是某个成员原本的 key。两者都登记，下面按它解析边的端点。
+            key2eid: dict[str, str] = {}
+
             for g in res.get("groups", []):
                 members = [cands[i] for i in g.get("members", [])
                            if isinstance(i, int) and 0 <= i < len(cands)]
@@ -214,6 +339,9 @@ def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
                     continue
                 key = g.get("canonical_key") or members[0]["event_key"]
                 eid = "EV-" + hashlib.sha1(f"{company}:{key}".encode()).hexdigest()[:8]
+                key2eid[key] = eid
+                for m in members:
+                    key2eid.setdefault(m["event_key"], eid)
 
                 dates = [m.get("event_date") or (m.get("_published_at") or "")[:10]
                          for m in members]
@@ -256,6 +384,7 @@ def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
                     continue
                 key = m["event_key"]
                 eid = "EV-" + hashlib.sha1(f"{company}:{key}".encode()).hexdigest()[:8]
+                key2eid.setdefault(key, eid)
                 prev = store.q("SELECT first_seen_at FROM events WHERE id=?", (eid,))
                 store.upsert("events", {
                     "id": eid, "event_key": key,
@@ -274,15 +403,23 @@ def stage_merge(store, llm, cfg: dict, run_id: str) -> dict:
                 stats["events"] += 1
                 stats["orphan_rescued"] += 1
 
+            # 关系边的端点必须解析到**本轮真的写进库的事件**。
+            #
+            # 原实现直接拿模型给的 key 算 sha1 当事件 id，不校验它是否存在。
+            # 模型很容易在 relations 里引用一个它自己临时编的 key（或者被归并
+            # 改写掉的旧 key），于是边指向一个从未存在过的 EV 编号：实测库里
+            # 4 条模型边有 2 条是这样的悬空边——一半。前端拿不到标题，只能把
+            # 原始编号打出来，点进去是空页；知识图谱里则是一条连向虚空的线。
             for rel in res.get("relations", []):
-                a = "EV-" + hashlib.sha1(f"{company}:{rel.get('from')}".encode()).hexdigest()[:8]
-                b = "EV-" + hashlib.sha1(f"{company}:{rel.get('to')}".encode()).hexdigest()[:8]
-                if a != b and rel.get("basis"):
-                    store.insert("edges", {
-                        "from_event": a, "to_event": b,
-                        "relation": rel.get("relation") or "follows",
-                        "basis": rel["basis"], "created_by": "llm"})
-                    stats["relations"] += 1
+                a, b = key2eid.get(rel.get("from")), key2eid.get(rel.get("to"))
+                if not a or not b or a == b or not rel.get("basis"):
+                    stats["relations_dropped"] = stats.get("relations_dropped", 0) + 1
+                    continue
+                store.insert("edges", {
+                    "from_event": a, "to_event": b,
+                    "relation": rel.get("relation") or "follows",
+                    "basis": rel["basis"], "created_by": "llm"})
+                stats["relations"] += 1
 
     store.commit()
     return stats
@@ -303,25 +440,22 @@ def _event_vec_text(store, e) -> str:
             + "".join(f' {f["text"][:80]}' for f in facts))
 
 
-def _xmerge_pairs(store, evs: list) -> list[tuple[int, int, float]] | None:
-    """向量召回：返回值得送去裁决的事件对。无 embedding 能力时返回 None。"""
+def event_vectors(store, evs: list) -> list[list[int] | None] | None:
+    """事件向量。文本构造与 export.py 的线上检索向量**逐字一致**——
+    一条事件因此只算一次、只付一次费，S4b、S6b 与线上检索三处共用。
+    无 embedding 能力或几乎全部取不到时返回 None，调用方各自降级。"""
     if not EMB.available():
         return None
     vecs = EMB.embed([_event_vec_text(store, e) for e in evs])
-    if sum(1 for v in vecs if v) < 2:
+    return vecs if sum(1 for v in vecs if v) >= 2 else None
+
+
+def _xmerge_pairs(store, evs: list) -> list[tuple[int, int, float]] | None:
+    """向量召回：返回值得送去裁决的事件对。无 embedding 能力时返回 None。"""
+    vecs = event_vectors(store, evs)
+    if vecs is None:
         return None
-    out = []
-    for a in range(len(evs)):
-        if not vecs[a]:
-            continue
-        for b in range(a + 1, len(evs)):
-            if not vecs[b]:
-                continue
-            c = EMB.cosine(vecs[a], vecs[b])
-            if c >= XMERGE_FLOOR:
-                out.append((a, b, c))
-    out.sort(key=lambda x: -x[2])
-    return out
+    return EMB.band_pairs(vecs, XMERGE_FLOOR)
 
 
 def stage_merge_cross(store, llm, run_id: str) -> dict:
