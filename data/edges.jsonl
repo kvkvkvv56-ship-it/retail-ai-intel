@@ -148,8 +148,6 @@
 {"from_event": "EV-916cecd6", "to_event": "EV-d48e6bf3", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-05-27 → 2026-08-07）", "created_by": "rule"}
 {"from_event": "EV-50b9307e", "to_event": "EV-ee1d8795", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-08 → 2026-09-08）", "created_by": "rule"}
 {"from_event": "EV-ee1d8795", "to_event": "EV-eed53a4d", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-08 → 2026-09-09）", "created_by": "rule"}
-{"from_event": "EV-eed53a4d", "to_event": "EV-16ee7eff", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-09 → 2026-09-09）", "created_by": "rule"}
-{"from_event": "EV-16ee7eff", "to_event": "EV-466dd8ea", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-09 → 2026-09-09）", "created_by": "rule"}
 {"from_event": "EV-ce74c67a", "to_event": "EV-8d9cd745", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-04-02 → 2026-05-21）", "created_by": "rule"}
 {"from_event": "EV-fc53a8c4", "to_event": "EV-6c318d06", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-05-27 → 2026-06-29）", "created_by": "rule"}
 {"from_event": "EV-b54b3231", "to_event": "EV-a215fa2f", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2023-11-02 → 2025-09-25）", "created_by": "rule"}
@@ -184,7 +182,6 @@
 {"from_event": "EV-a57a20c7", "to_event": "EV-80973f54", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-01 → 2026-09-02）", "created_by": "rule"}
 {"from_event": "EV-0dc9d6ea", "to_event": "EV-33cabf69", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-07 → 2026-09-07）", "created_by": "rule"}
 {"from_event": "EV-33cabf69", "to_event": "EV-50b9307e", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-07 → 2026-09-08）", "created_by": "rule"}
-{"from_event": "EV-ee1d8795", "to_event": "EV-16ee7eff", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-08 → 2026-09-09）", "created_by": "rule"}
 {"from_event": "EV-466dd8ea", "to_event": "EV-eed53a4d", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-09 → 2026-09-09）", "created_by": "rule"}
 {"from_event": "EV-ce74c67a", "to_event": "EV-99a689d8", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2025-10-16 → 2026-01-13）", "created_by": "rule"}
 {"from_event": "EV-99a689d8", "to_event": "EV-3bb14a38", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-01-13 → 2026-01-23）", "created_by": "rule"}
@@ -461,3 +458,26 @@
 {"from_event": "EV-a0515eb2", "to_event": "EV-4d32dd2b", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-04-22 → 2026-08-03）", "created_by": "rule"}
 {"from_event": "EV-5f71dac1", "to_event": "EV-08de124d", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-17 → 2026-09-18）", "created_by": "rule"}
 {"from_event": "EV-08de124d", "to_event": "EV-c9a9605e", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-18 → 2026-09-18）", "created_by": "rule"}
+{"from_event": "EV-2c9759d9", "to_event": "EV-a5994073", "relation": "follows", "basis": "月之暗面条目概述中提及「遭 Anthropic 蒸馏指控」，与 Anthropic 9月10日报告点名中国 AI 公司蒸馏 Claude 为同一指控事件的后续关联，但主体与动作不同，故不合并。", "created_by": "llm"}
+{"from_event": "EV-3211f7e0", "to_event": "EV-0aa37505", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-18 → 2026-09-18）", "created_by": "rule"}
+{"from_event": "EV-ee1d8795", "to_event": "EV-466dd8ea", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-08 → 2026-09-09）", "created_by": "rule"}
+{"from_event": "EV-9ef6626f", "to_event": "EV-a5994073", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-10 → 2026-09-10）", "created_by": "rule"}
+{"from_event": "EV-a5994073", "to_event": "EV-0f8c512f", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-10 → 2026-09-12）", "created_by": "rule"}
+{"from_event": "EV-534fa9d3", "to_event": "EV-c43f23fd", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-13 → 2026-09-13）", "created_by": "rule"}
+{"from_event": "EV-c43f23fd", "to_event": "EV-33b4d59c", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-13 → 2026-09-14）", "created_by": "rule"}
+{"from_event": "EV-aaf39e56", "to_event": "EV-dba761f0", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
+{"from_event": "EV-e52f4dee", "to_event": "EV-2c9759d9", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-16 → 2026-09-17）", "created_by": "rule"}
+{"from_event": "EV-2c9759d9", "to_event": "EV-c91024f6", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-17 → 2026-09-18）", "created_by": "rule"}
+{"from_event": "EV-9026fc2e", "to_event": "EV-0aa37505", "relation": "follows", "basis": "A为Seedance 2.0发布及定价，B为2.0/2.5版本落地汽车IP广告量产，属同产品线后续应用（向量召回 0.79，模型判定）", "created_by": "llm"}
+{"from_event": "EV-5d609004", "to_event": "EV-6a2f4e8e", "relation": "follows", "basis": "A为9月14日豆包手机助手消费者版发布，B为9月15日搭载该版本的努比亚NaviX Ultra预约破36万台（向量召回 0.77，模型判定）", "created_by": "llm"}
+{"from_event": "EV-1b6ca70d", "to_event": "EV-e2e2a1c7", "relation": "corroborates", "basis": "A称红果热播榜AI短剧占77席，B称广电总局披露AI剧占比超九成，不同主体印证AI短剧爆发（向量召回 0.76，模型判定）", "created_by": "llm"}
+{"from_event": "EV-6a2f4e8e", "to_event": "EV-f2c13c14", "relation": "follows", "basis": "A为9月15日豆包手机预约破36万台，B为9月16日二代改走A2A协议路线发布，属同产品线后续（向量召回 0.76，模型判定）", "created_by": "llm"}
+{"from_event": "EV-5d609004", "to_event": "EV-f2c13c14", "relation": "follows", "basis": "9月14日豆包手机助手消费者版发布SAEP协议，9月16日二代改走A2A协议，为同一产品线迭代（向量召回 0.74，模型判定）", "created_by": "llm"}
+{"from_event": "EV-fa51aee5", "to_event": "EV-0aa37505", "relation": "follows", "basis": "A为Seedance商业化早期（ARR 20亿美元、扣子试用客户几百个），B为Seedance 2.0/2.5量产广告落地，属同一产品线后续进展（向量召回 0.72，模型判定）", "created_by": "llm"}
+{"from_event": "EV-6acbe345", "to_event": "EV-0aa37505", "relation": "follows", "basis": "A为2026年2月即梦接入Seedance 2.0/2.5发布，B为9月火山引擎用2.0/2.5量产广告，同产品线后续落地（向量召回 0.72，模型判定）", "created_by": "llm"}
+{"from_event": "EV-ee1d8795", "to_event": "EV-a5994073", "relation": "corroborates", "basis": "美NSA/FBI 9月8日指控6家中国AI企业蒸馏，Anthropic 9月10日指控7家中国公司蒸馏Claude，不同主体互证同一指控（向量召回 0.70，模型判定）", "created_by": "llm"}
+{"from_event": "EV-e2e2a1c7", "to_event": "EV-fa485fc5", "relation": "corroborates", "basis": "广电总局称AI剧占比超九成、AI短剧市场220亿，金鸡奖设AI影展要求AI画面≥50%，同证AI内容主流化（向量召回 0.69，模型判定）", "created_by": "llm"}
+{"from_event": "EV-08de124d", "to_event": "EV-ef7169d1", "relation": "corroborates", "basis": "Qwen3.8-Omni-Flash发布与Qwen3.8-Flash同天发布、Flash系列成旗舰替代品，同证Flash低价替代趋势（向量召回 0.68，模型判定）", "created_by": "llm"}
+{"from_event": "EV-fb173374", "to_event": "EV-f2c13c14", "relation": "follows", "basis": "微信6月开放A2A Agent接入京东等，豆包手机二代9月改走A2A路线，承接此前GUI Agent被封的教训（向量召回 0.67，模型判定）", "created_by": "llm"}
+{"from_event": "EV-e2ac0bc1", "to_event": "EV-a5994073", "relation": "follows", "basis": "A（6月）已描述Anthropic检测蒸馏能力，B（9月10日）是其第三次公开指控7家中国公司工业规模蒸馏（向量召回 0.66，模型判定）", "created_by": "llm"}
+{"from_event": "EV-7f136683", "to_event": "EV-c9a9605e", "relation": "corroborates", "basis": "百度沈抖提产业智能体三层框架、搭子调用70万次，与阿里蒋林泉谈企业AI转型落地路径互相印证（向量召回 0.64，模型判定）", "created_by": "llm"}
