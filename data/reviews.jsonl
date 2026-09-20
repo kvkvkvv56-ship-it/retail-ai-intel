@@ -275,3 +275,24 @@
 {"target_type": "relate", "target_id": "EV-20b2b246|EV-31f2343b", "action": "no_relation", "note": "余弦 0.648，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-19T16:00:23.734275+00:00"}
 {"target_type": "relate", "target_id": "EV-1d196cd1|EV-5d609004", "action": "no_relation", "note": "余弦 0.636，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-19T16:00:23.734295+00:00"}
 {"target_type": "relate", "target_id": "EV-46550d1f|EV-dec1ef4c", "action": "no_relation", "note": "余弦 0.623，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-19T16:00:23.734382+00:00"}
+{"target_type": "merge", "target_id": "EV-ce74c67a|EV-2ce536ba", "action": "flag", "note": "模型标记疑似重复，证据不足未自动合并：均为美团开源LongCat系列模型（233为万亿参数大模型LongCat-2.0，293为数字人视频模型LongCat-Video-Avatar 1.5），主体同为美团、同属LongCat品牌但为不同产品线，疑似同一开源系列的不同发布，不确定是否同一事件。｜涉及：美团发布并开源万亿参数大模型LongCat-2.0(meituan) / 美团开源数字人视频模型LongCat-Video-A(meituan)", "reviewer": "system", "created_at": "2026-09-20T05:06:51.786490+00:00"}
+{"target_type": "relate", "target_id": "EV-0d128ad8|EV-2ce536ba", "action": "no_relation", "note": "余弦 0.773，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:55.217796+00:00"}
+{"target_type": "relate", "target_id": "EV-2be0964e|EV-3183dadf", "action": "no_relation", "note": "余弦 0.751，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:55.217879+00:00"}
+{"target_type": "relate", "target_id": "EV-4194e14e|EV-c4f443b9", "action": "no_relation", "note": "余弦 0.744，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:55.217921+00:00"}
+{"target_type": "relate", "target_id": "EV-1d196cd1|EV-2be0964e", "action": "no_relation", "note": "余弦 0.740，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:55.217937+00:00"}
+{"target_type": "relate", "target_id": "EV-2be0964e|EV-7aafdd99", "action": "no_relation", "note": "余弦 0.735，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:55.217949+00:00"}
+{"target_type": "relate", "target_id": "EV-2ce536ba|EV-6c318d06", "action": "no_relation", "note": "余弦 0.726，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:55.217961+00:00"}
+{"target_type": "relate", "target_id": "EV-2be0964e|EV-9d7c7a73", "action": "no_relation", "note": "余弦 0.724，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:55.217971+00:00"}
+{"target_type": "relate", "target_id": "EV-2ce536ba|EV-31e40df4", "action": "no_relation", "note": "余弦 0.702，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:56.752536+00:00"}
+{"target_type": "relate", "target_id": "EV-a9378b74|EV-c4f443b9", "action": "no_relation", "note": "余弦 0.697，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:56.752630+00:00"}
+{"target_type": "relate", "target_id": "EV-41defc09|EV-c4f443b9", "action": "no_relation", "note": "余弦 0.697，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:56.752646+00:00"}
+{"target_type": "relate", "target_id": "EV-2ce536ba|EV-4f7895ed", "action": "no_relation", "note": "余弦 0.693，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:56.752658+00:00"}
+{"target_type": "relate", "target_id": "EV-14e2833c|EV-31f2343b", "action": "no_relation", "note": "余弦 0.692，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:56.752670+00:00"}
+{"target_type": "relate", "target_id": "EV-2ce536ba|EV-2f9b6dd2", "action": "no_relation", "note": "余弦 0.687，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:56.752682+00:00"}
+{"target_type": "relate", "target_id": "EV-c4f443b9|EV-fcf23f65", "action": "no_relation", "note": "余弦 0.682，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:58.344940+00:00"}
+{"target_type": "relate", "target_id": "EV-249b9993|EV-c4f443b9", "action": "no_relation", "note": "余弦 0.675，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:58.345001+00:00"}
+{"target_type": "relate", "target_id": "EV-22c10bf7|EV-fa4102f6", "action": "no_relation", "note": "余弦 0.669，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:58.345017+00:00"}
+{"target_type": "relate", "target_id": "EV-22c10bf7|EV-94c34a45", "action": "no_relation", "note": "余弦 0.659，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:58.345030+00:00"}
+{"target_type": "relate", "target_id": "EV-22c10bf7|EV-b9207350", "action": "no_relation", "note": "余弦 0.656，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:58.345041+00:00"}
+{"target_type": "relate", "target_id": "EV-1d196cd1|EV-22c10bf7", "action": "no_relation", "note": "余弦 0.648，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:58.345052+00:00"}
+{"target_type": "relate", "target_id": "EV-22c10bf7|EV-317c97e5", "action": "no_relation", "note": "余弦 0.647，模型判定无值得记录的关系", "reviewer": "system", "created_at": "2026-09-20T05:06:58.345062+00:00"}

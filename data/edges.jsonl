@@ -494,3 +494,17 @@
 {"from_event": "EV-5d609004", "to_event": "EV-c81feeaa", "relation": "corroborates", "basis": "豆包SAEP屏幕自动化协议与支付宝AHA跨端互联协议，均指向智能体跨端协同标准（向量召回 0.66，模型判定）", "created_by": "llm"}
 {"from_event": "EV-5d609004", "to_event": "EV-77058599", "relation": "corroborates", "basis": "豆包9月14日发布SAEP屏幕自动化操作声明协议，蚂蚁9月10日发布智能体安全协议ASL，均为Agent终端操作安全协议（向量召回 0.63，模型判定）", "created_by": "llm"}
 {"from_event": "EV-50b9307e", "to_event": "EV-9a728661", "relation": "corroborates", "basis": "Unit 42披露隐藏指令攻击骗过AI审核，ZCode被曝默认上传用户项目与修改历史，同证Agent数据与指令安全风险（向量召回 0.63，模型判定）", "created_by": "llm"}
+{"from_event": "EV-977f2bd4", "to_event": "EV-6e8ef758", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
+{"from_event": "EV-6e8ef758", "to_event": "EV-f2c13c14", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-15 → 2026-09-16）", "created_by": "rule"}
+{"from_event": "EV-31f2343b", "to_event": "EV-c4f443b9", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-19 → 2026-09-19）", "created_by": "rule"}
+{"from_event": "EV-dba761f0", "to_event": "EV-468d92da", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
+{"from_event": "EV-468d92da", "to_event": "EV-59f74965", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-15 → 2026-09-16）", "created_by": "rule"}
+{"from_event": "EV-2c9759d9", "to_event": "EV-9a728661", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-17 → 2026-09-18）", "created_by": "rule"}
+{"from_event": "EV-9a728661", "to_event": "EV-c91024f6", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-18 → 2026-09-18）", "created_by": "rule"}
+{"from_event": "EV-8d9cd745", "to_event": "EV-2ce536ba", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-05-21 → 2026-05-25）", "created_by": "rule"}
+{"from_event": "EV-2ce536ba", "to_event": "EV-7a30a325", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-05-25 → 2026-05-26）", "created_by": "rule"}
+{"from_event": "EV-c9a9605e", "to_event": "EV-d6f1f41e", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-18 → 2026-09-20）", "created_by": "rule"}
+{"from_event": "EV-9aadb723", "to_event": "EV-22c10bf7", "relation": "same_actor_track", "basis": "同为 xiaohongshu 的动作，时间相邻（2026-09-16 → 2026-09-20）", "created_by": "rule"}
+{"from_event": "EV-2be0964e", "to_event": "EV-85c636af", "relation": "corroborates", "basis": "飞书ARR增速2.5倍、超九成客户采购AI，与WorkBuddy上线同证企业AI办公竞争加剧（向量召回 0.74，模型判定）", "created_by": "llm"}
+{"from_event": "EV-5d609004", "to_event": "EV-6e8ef758", "relation": "follows", "basis": "9月14日豆包手机助手消费者版发布，次日努比亚NaviX Ultra宣布内置该助手（向量召回 0.70，模型判定）", "created_by": "llm"}
+{"from_event": "EV-6e8ef758", "to_event": "EV-f2c13c14", "relation": "follows", "basis": "9月15日努比亚NaviX Ultra内置豆包助手，9月16日豆包手机二代改走A2A协议路线（向量召回 0.70，模型判定）", "created_by": "llm"}
