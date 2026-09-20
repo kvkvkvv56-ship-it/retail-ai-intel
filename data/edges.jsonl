@@ -508,3 +508,23 @@
 {"from_event": "EV-2be0964e", "to_event": "EV-85c636af", "relation": "corroborates", "basis": "飞书ARR增速2.5倍、超九成客户采购AI，与WorkBuddy上线同证企业AI办公竞争加剧（向量召回 0.74，模型判定）", "created_by": "llm"}
 {"from_event": "EV-5d609004", "to_event": "EV-6e8ef758", "relation": "follows", "basis": "9月14日豆包手机助手消费者版发布，次日努比亚NaviX Ultra宣布内置该助手（向量召回 0.70，模型判定）", "created_by": "llm"}
 {"from_event": "EV-6e8ef758", "to_event": "EV-f2c13c14", "relation": "follows", "basis": "9月15日努比亚NaviX Ultra内置豆包助手，9月16日豆包手机二代改走A2A协议路线（向量召回 0.70，模型判定）", "created_by": "llm"}
+{"from_event": "EV-2be0964e", "to_event": "EV-6e8ef758", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
+{"from_event": "EV-6e8ef758", "to_event": "EV-6f9dc3e1", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
+{"from_event": "EV-c4f443b9", "to_event": "EV-4b6c116e", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-19 → 2026-09-20）", "created_by": "rule"}
+{"from_event": "EV-f20d427d", "to_event": "EV-2b2366a2", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-18 → 2026-09-20）", "created_by": "rule"}
+{"from_event": "EV-2b2366a2", "to_event": "EV-37b34e21", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-20 → 2026-09-20）", "created_by": "rule"}
+{"from_event": "EV-0faaf4ce", "to_event": "EV-468d92da", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
+{"from_event": "EV-468d92da", "to_event": "EV-4a48bc2d", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
+{"from_event": "EV-95452110", "to_event": "EV-0463c259", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-09-15 → 2026-09-20）", "created_by": "rule"}
+{"from_event": "EV-d6f1f41e", "to_event": "EV-87a0e287", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-20 → 2026-09-20）", "created_by": "rule"}
+{"from_event": "EV-5a965f93", "to_event": "EV-8e1ad34d", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-09-15 → 2026-09-20）", "created_by": "rule"}
+{"from_event": "EV-8ef85982", "to_event": "EV-4b6c116e", "relation": "follows", "basis": "8月即梦AI上线付费会员，9月剪映Hub可调用即梦等平台生成素材，同产品线迭代（向量召回 0.78，模型判定）", "created_by": "llm"}
+{"from_event": "EV-ce74c67a", "to_event": "EV-0463c259", "relation": "follows", "basis": "2025年10月发布袋鼠管家等商家AI助手，2026年9月升级为智能掌柜与CatPaw工作台（向量召回 0.78，模型判定）", "created_by": "llm"}
+{"from_event": "EV-85c636af", "to_event": "EV-8e1ad34d", "relation": "corroborates", "basis": "9月2日WorkBuddy开放平台上线，9月20日沙利文报告称其桌面智能体双榜第一（向量召回 0.76，模型判定）", "created_by": "llm"}
+{"from_event": "EV-95b37a41", "to_event": "EV-4b6c116e", "relation": "corroborates", "basis": "Miora与剪映Hub均为创意智能体工作室，均支持Skills定制，不同主体印证同一趋势（向量召回 0.72，模型判定）", "created_by": "llm"}
+{"from_event": "EV-6cbc73d5", "to_event": "EV-4b6c116e", "relation": "corroborates", "basis": "RHTV与剪映Hub均为Agent驱动的内容创作平台，均内置行业级Skills，不同主体印证同一趋势（向量召回 0.70，模型判定）", "created_by": "llm"}
+{"from_event": "EV-9b1433b7", "to_event": "EV-87a0e287", "relation": "follows", "basis": "A于9月1日演示Qwen-Image 3.0视觉流水线，B于9月20日开源同系列Qwen-Image-2.1图像模型，属同产品线后续进展（向量召回 0.70，模型判定）", "created_by": "llm"}
+{"from_event": "EV-ef065929", "to_event": "EV-87a0e287", "relation": "corroborates", "basis": "OpenAI GPT Image 2.5与阿里Qwen-Image-2.1均主打文生图与图像编辑统一，不同主体印证同一能力趋势（向量召回 0.69，模型判定）", "created_by": "llm"}
+{"from_event": "EV-33cabf69", "to_event": "EV-2b2366a2", "relation": "corroborates", "basis": "最高法明确AI仿冒名人带货可惩罚性赔偿，与市监总局用AI筛查直播违法线索同向强化AI电商监管（向量召回 0.65，模型判定）", "created_by": "llm"}
+{"from_event": "EV-67af6f96", "to_event": "EV-8e1ad34d", "relation": "follows", "basis": "9月3日香港Agent Day展示WorkBuddy，9月20日沙利文报告将其列为桌面智能体双榜第一（向量召回 0.65，模型判定）", "created_by": "llm"}
+{"from_event": "EV-d6f1f41e", "to_event": "EV-e5a86319", "relation": "corroborates", "basis": "王朝阳称电力占AI基础设施成本六成，乌兰察布以0.32元低电价与绿电直连印证电力对算力布局的关键性（向量召回 0.64，模型判定）", "created_by": "llm"}
