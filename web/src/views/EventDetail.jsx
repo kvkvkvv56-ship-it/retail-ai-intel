@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { api, CLASS_LABEL, CLASS_SHORT, fmtDate } from '../api.js'
-import { Confidence, Status, TimeMark, Empty, Loading } from '../components/Bits.jsx'
+import { Confidence, Status, TimeMark, ReviewNote, Empty, Loading } from '../components/Bits.jsx'
 
 const REL_LABEL = {
   follows: '后续进展', same_actor_track: '同主体动作',
@@ -44,15 +44,7 @@ export default function EventDetail({ id, meta, nav }) {
           <span className="note">{e.stage_basis}</span>
         </div>
       )}
-      {e.review_state && e.review_state !== 'none' && (
-        <div className="callout warn">
-          <span className="k">人工复核</span>
-          <span className="v">
-            {e.review_state === 'pending' ? '单源待确认，已进复核队列'
-              : '疑似与其他事件重复，待人工判定'}
-          </span>
-        </div>
-      )}
+      <ReviewNote value={e.review_state} />
 
       <h3 className="sub-title">事实 <span className="n">{e.facts.length}</span></h3>
       {e.facts.length === 0 ? <Empty>—</Empty> : (

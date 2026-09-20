@@ -139,6 +139,9 @@ a { color: inherit; text-decoration: none; }
 .pill.cont { background: var(--line-subtle); color: var(--text); }
 .pill.old { background: transparent; color: var(--faint); }
 .pill.warn { background: #FBF3E7; color: #8A6D3B; }
+/* 已裁决的复核态：与「待复核」区分开，不用警示色——它们是结论不是待办 */
+.pill.obs { background: #EDF1F5; color: var(--c-official); }
+.pill.rej { background: rgba(0, 0, 0, .04); color: var(--faint); }
 
 .conf { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; }
 .conf-v { color: var(--c-verified); }

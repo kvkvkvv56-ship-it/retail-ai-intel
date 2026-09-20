@@ -102,8 +102,12 @@ def live_blocks(store, cfg: dict | None = None) -> dict[str, str]:
             f"| `{r[0]}` | {r[1]:,} |\n" for r in store.db.execute(
                 "SELECT stage, COUNT(*) FROM rejects GROUP BY 1 ORDER BY 2 DESC")),
 
+        # 已驳回此前不出现在这一行。库里一条都没有时看不出来，一旦有了，
+        # 四个数字就加不回事件总数——而「不丢弃只降级并记账」的账正是记在
+        # 这里。缺一档等于把驳回过的事件从台账上抹掉
         "review": (f"复核态：持续观察 {rev.get('watching', 0)} · "
                    f"已确认 {rev.get('confirmed', 0)} · "
+                   f"已驳回 {rev.get('rejected', 0)} · "
                    f"无需复核 {rev.get('none', 0)} · "
                    f"**待复核 {rev.get('pending', 0) + rev.get('suspect_duplicate', 0)}**"),
 

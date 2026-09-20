@@ -312,7 +312,6 @@
 {"from_event": "EV-978f2b8c", "to_event": "EV-ef7169d1", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-14 → 2026-09-14）", "created_by": "rule"}
 {"from_event": "EV-5d609004", "to_event": "EV-26c76efe", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-14 → 2026-09-14）", "created_by": "rule"}
 {"from_event": "EV-ac067885", "to_event": "EV-dee98723", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-11 → 2026-09-14）", "created_by": "rule"}
-{"from_event": "EV-dee98723", "to_event": "EV-39eb0d6d", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-14 → 2026-09-14）", "created_by": "rule"}
 {"from_event": "EV-29cb93cf", "to_event": "EV-be1ecdd3", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-14 → 2026-09-14）", "created_by": "rule"}
 {"from_event": "EV-be1ecdd3", "to_event": "EV-d229cd84", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-14 → 2026-09-14）", "created_by": "rule"}
 {"from_event": "EV-581e517d", "to_event": "EV-df9323fa", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-05-19 → 2026-05-22）", "created_by": "rule"}
@@ -336,8 +335,6 @@
 {"from_event": "EV-010f2d29", "to_event": "EV-2be0964e", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
 {"from_event": "EV-27c823da", "to_event": "EV-0d128ad8", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-01-26 → 2026-02-10）", "created_by": "rule"}
 {"from_event": "EV-0d128ad8", "to_event": "EV-487a4e66", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-02-10 → 2026-03-30）", "created_by": "rule"}
-{"from_event": "EV-ac067885", "to_event": "EV-39eb0d6d", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-11 → 2026-09-14）", "created_by": "rule"}
-{"from_event": "EV-39eb0d6d", "to_event": "EV-dee98723", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-14 → 2026-09-14）", "created_by": "rule"}
 {"from_event": "EV-bd7c1184", "to_event": "EV-317c97e5", "relation": "same_actor_track", "basis": "同为 xiaohongshu 的动作，时间相邻（2026-06-08 → 2026-08-06）", "created_by": "rule"}
 {"from_event": "EV-317c97e5", "to_event": "EV-0d11fcbc", "relation": "same_actor_track", "basis": "同为 xiaohongshu 的动作，时间相邻（2026-08-06 → 2026-09-09）", "created_by": "rule"}
 {"from_event": "EV-20b2b246", "to_event": "EV-271e741b", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-04-01 → 2026-04-07）", "created_by": "rule"}

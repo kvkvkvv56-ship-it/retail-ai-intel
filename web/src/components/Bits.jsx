@@ -26,6 +26,39 @@ export function Status({ value }) {
   </span>
 }
 
+/* 复核态：pending / suspect_duplicate 是待办，watching / rejected / confirmed
+   是已下的判断。列表页此前按「非 none 非 confirmed 即待复核」渲染，详情页更粗，
+   非 none 一律当待办、且只分「单源待确认」与「疑似重复」两句话——于是每一个
+   转持续观察或被驳回的事件，在站上都还挂着「待复核」，详情页还写成「疑似与其他
+   事件重复，待人工判定」。已经做完的判断被读成没做的事，复核记录展示在线上也就
+   失去了意义。状态到文案的映射集中在这里，两处共用。 */
+const REVIEW = {
+  pending:           { pill: '待复核',  cls: 'warn', note: '单源待确认，已进复核队列' },
+  suspect_duplicate: { pill: '待复核',  cls: 'warn', note: '疑似与其他事件重复，待人工判定' },
+  watching:          { pill: '持续观察', cls: 'obs',  note: '已复核：内容可核但只有单一独立信源，转持续观察，待第二信源印证后由核验规则自动升档' },
+  rejected:          { pill: '已驳回',  cls: 'rej',  note: '已复核：判定不予采信，记录保留备查' },
+  confirmed:         { pill: null,      cls: '',     note: '已复核：确认保留' },
+}
+
+/** 列表页的复核标记。已确认的不占位——没有异常才是常态，不需要每张卡都说一句 */
+export function ReviewPill({ value }) {
+  const r = REVIEW[value]
+  if (!r?.pill) return null
+  return <span className={`pill ${r.cls}`}>{r.pill}</span>
+}
+
+/** 详情页的复核说明。未进过复核流程的（none）不显示 */
+export function ReviewNote({ value }) {
+  const r = REVIEW[value]
+  if (!r) return null
+  return (
+    <div className={`callout${r.cls === 'warn' ? ' warn' : ''}`}>
+      <span className="k">人工复核</span>
+      <span className="v">{r.note}</span>
+    </div>
+  )
+}
+
 /** 阶段刻度：四档全列，当前档加重——一眼看出落地进度而不是只给一个词 */
 export function StageScale({ stages, value }) {
   const i = stages.indexOf(value)

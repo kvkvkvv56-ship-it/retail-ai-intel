@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { api, search, CONFIDENCE_ORDER } from '../api.js'
-import { Confidence, Status, StageScale, Empty, Loading, stagger } from '../components/Bits.jsx'
+import { Confidence, Status, StageScale, ReviewPill, Empty, Loading, stagger } from '../components/Bits.jsx'
 
 /**
  * 语义检索接线。
@@ -128,8 +128,7 @@ export default function EventsView({ meta, nav }) {
               <span className="pill co">{compName[r.company] || r.company}</span>
               <Status value={r.status} />
               <Confidence value={r.confidence} />
-              {r.review_state && r.review_state !== 'none' && r.review_state !== 'confirmed' &&
-                <span className="pill warn">待复核</span>}
+              <ReviewPill value={r.review_state} />
               {/* 语义命中要标出来：标题里没有这个词却排在前面，不说明理由
                   会让人以为搜错了 */}
               {r._m?.by === 'semantic' && (
