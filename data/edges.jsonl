@@ -187,14 +187,11 @@
 {"from_event": "EV-99a689d8", "to_event": "EV-3bb14a38", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-01-13 → 2026-01-23）", "created_by": "rule"}
 {"from_event": "EV-487a4e66", "to_event": "EV-8d9cd745", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-03-30 → 2026-05-21）", "created_by": "rule"}
 {"from_event": "EV-a7cfb796", "to_event": "EV-47371401", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-09 → 2026-09-09）", "created_by": "rule"}
-{"from_event": "EV-47371401", "to_event": "EV-ca337a00", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-09 → 2026-09-10）", "created_by": "rule"}
 {"from_event": "EV-9dc26522", "to_event": "EV-56135920", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-09 → 2026-09-09）", "created_by": "rule"}
 {"from_event": "EV-56135920", "to_event": "EV-c40e3fd4", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-09 → 2026-09-10）", "created_by": "rule"}
 {"from_event": "EV-c40e3fd4", "to_event": "EV-1c6408ec", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-10 → 2026-09-10）", "created_by": "rule"}
 {"from_event": "EV-b9207350", "to_event": "EV-fa4102f6", "relation": "same_actor_track", "basis": "同为 xiaohongshu 的动作，时间相邻（2026-04-30 → 2026-04-30）", "created_by": "rule"}
 {"from_event": "EV-fa4102f6", "to_event": "EV-bd7c1184", "relation": "same_actor_track", "basis": "同为 xiaohongshu 的动作，时间相邻（2026-04-30 → 2026-06-08）", "created_by": "rule"}
-{"from_event": "EV-a7cfb796", "to_event": "EV-ca337a00", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-09 → 2026-09-10）", "created_by": "rule"}
-{"from_event": "EV-ca337a00", "to_event": "EV-fb4e9c1a", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-10 → 2026-09-10）", "created_by": "rule"}
 {"from_event": "EV-5dd463d5", "to_event": "EV-5ee00ca5", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-09 → 2026-09-09）", "created_by": "rule"}
 {"from_event": "EV-5ee00ca5", "to_event": "EV-66bd4d85", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-09 → 2026-09-09）", "created_by": "rule"}
 {"from_event": "EV-ef065929", "to_event": "EV-0290e63c", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-09 → 2026-09-10）", "created_by": "rule"}
@@ -516,15 +513,42 @@
 {"from_event": "EV-0faaf4ce", "to_event": "EV-468d92da", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
 {"from_event": "EV-468d92da", "to_event": "EV-4a48bc2d", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
 {"from_event": "EV-95452110", "to_event": "EV-0463c259", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-09-15 → 2026-09-20）", "created_by": "rule"}
-{"from_event": "EV-d6f1f41e", "to_event": "EV-87a0e287", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-20 → 2026-09-20）", "created_by": "rule"}
 {"from_event": "EV-5a965f93", "to_event": "EV-8e1ad34d", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-09-15 → 2026-09-20）", "created_by": "rule"}
 {"from_event": "EV-8ef85982", "to_event": "EV-4b6c116e", "relation": "follows", "basis": "8月即梦AI上线付费会员，9月剪映Hub可调用即梦等平台生成素材，同产品线迭代（向量召回 0.78，模型判定）", "created_by": "llm"}
 {"from_event": "EV-ce74c67a", "to_event": "EV-0463c259", "relation": "follows", "basis": "2025年10月发布袋鼠管家等商家AI助手，2026年9月升级为智能掌柜与CatPaw工作台（向量召回 0.78，模型判定）", "created_by": "llm"}
 {"from_event": "EV-85c636af", "to_event": "EV-8e1ad34d", "relation": "corroborates", "basis": "9月2日WorkBuddy开放平台上线，9月20日沙利文报告称其桌面智能体双榜第一（向量召回 0.76，模型判定）", "created_by": "llm"}
 {"from_event": "EV-95b37a41", "to_event": "EV-4b6c116e", "relation": "corroborates", "basis": "Miora与剪映Hub均为创意智能体工作室，均支持Skills定制，不同主体印证同一趋势（向量召回 0.72，模型判定）", "created_by": "llm"}
 {"from_event": "EV-6cbc73d5", "to_event": "EV-4b6c116e", "relation": "corroborates", "basis": "RHTV与剪映Hub均为Agent驱动的内容创作平台，均内置行业级Skills，不同主体印证同一趋势（向量召回 0.70，模型判定）", "created_by": "llm"}
-{"from_event": "EV-9b1433b7", "to_event": "EV-87a0e287", "relation": "follows", "basis": "A于9月1日演示Qwen-Image 3.0视觉流水线，B于9月20日开源同系列Qwen-Image-2.1图像模型，属同产品线后续进展（向量召回 0.70，模型判定）", "created_by": "llm"}
-{"from_event": "EV-ef065929", "to_event": "EV-87a0e287", "relation": "corroborates", "basis": "OpenAI GPT Image 2.5与阿里Qwen-Image-2.1均主打文生图与图像编辑统一，不同主体印证同一能力趋势（向量召回 0.69，模型判定）", "created_by": "llm"}
 {"from_event": "EV-33cabf69", "to_event": "EV-2b2366a2", "relation": "corroborates", "basis": "最高法明确AI仿冒名人带货可惩罚性赔偿，与市监总局用AI筛查直播违法线索同向强化AI电商监管（向量召回 0.65，模型判定）", "created_by": "llm"}
 {"from_event": "EV-67af6f96", "to_event": "EV-8e1ad34d", "relation": "follows", "basis": "9月3日香港Agent Day展示WorkBuddy，9月20日沙利文报告将其列为桌面智能体双榜第一（向量召回 0.65，模型判定）", "created_by": "llm"}
 {"from_event": "EV-d6f1f41e", "to_event": "EV-e5a86319", "relation": "corroborates", "basis": "王朝阳称电力占AI基础设施成本六成，乌兰察布以0.32元低电价与绿电直连印证电力对算力布局的关键性（向量召回 0.64，模型判定）", "created_by": "llm"}
+{"from_event": "EV-c91024f6", "to_event": "EV-4e1a8af9", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-18 → 2026-09-18）", "created_by": "rule"}
+{"from_event": "EV-4e1a8af9", "to_event": "EV-596fb0db", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-18 → 2026-09-19）", "created_by": "rule"}
+{"from_event": "EV-596fb0db", "to_event": "EV-c7f09668", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-19 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-a7cfb796", "to_event": "EV-fb4e9c1a", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-09 → 2026-09-10）", "created_by": "rule"}
+{"from_event": "EV-2fc14049", "to_event": "EV-0ea1a0a8", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-17 → 2026-09-20）", "created_by": "rule"}
+{"from_event": "EV-d6f1f41e", "to_event": "EV-bb23e55b", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-20 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-fb173374", "to_event": "EV-6bbbc36e", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-06-09 → 2026-07-21）", "created_by": "rule"}
+{"from_event": "EV-6bbbc36e", "to_event": "EV-85c636af", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-07-21 → 2026-09-02）", "created_by": "rule"}
+{"from_event": "EV-12fc279d", "to_event": "EV-5a965f93", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-09-04 → 2026-09-15）", "created_by": "rule"}
+{"from_event": "EV-d4817f6f", "to_event": "EV-01ca4b1d", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2025-05-08 → 2026-02-21）", "created_by": "rule"}
+{"from_event": "EV-01ca4b1d", "to_event": "EV-a0515eb2", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-02-21 → 2026-04-22）", "created_by": "rule"}
+{"from_event": "EV-6e1b01a3", "to_event": "EV-7f68bd93", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-08-31 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-347a2589", "to_event": "EV-01ca4b1d", "relation": "follows", "basis": "可灵AI 2024年9月第十次更新上线对口型/API，2026年2月迭代至3.0系列模型内测（向量召回 0.79，模型判定）", "created_by": "llm"}
+{"from_event": "EV-6bbbc36e", "to_event": "EV-5a965f93", "relation": "follows", "basis": "B为2026年6月小微内测，A为9月刘炽平回应灰测反馈并披露能力边界（向量召回 0.78，模型判定）", "created_by": "llm"}
+{"from_event": "EV-325d1982", "to_event": "EV-0ea1a0a8", "relation": "follows", "basis": "A发布具身智能数据采集基础设施，B显示其落地为员工佩戴JoyEcoCam采集动作数据（向量召回 0.77，模型判定）", "created_by": "llm"}
+{"from_event": "EV-e47c84e6", "to_event": "EV-6bbbc36e", "relation": "follows", "basis": "B为6月微信AI内测接入小程序，A为7月小微内测并披露WeLM主模型（向量召回 0.77，模型判定）", "created_by": "llm"}
+{"from_event": "EV-ef7169d1", "to_event": "EV-c7f09668", "relation": "contradicts", "basis": "A称Token均价三个月腰斩、Flash成旗舰替代，B称智谱FlashX定价涨至2.5倍、算力涨价（向量召回 0.75，模型判定）", "created_by": "llm"}
+{"from_event": "EV-af0c8480", "to_event": "EV-9b1433b7", "relation": "follows", "basis": "B为2026年2月发布的Qwen-Image-2.0，A为9月演示的Qwen-Image 3.0，同产品线迭代升级（向量召回 0.73，模型判定）", "created_by": "llm"}
+{"from_event": "EV-1d196cd1", "to_event": "EV-6bbbc36e", "relation": "follows", "basis": "A为3月报道微信AI智能体计划三季度上线，B为6月微信原生AI助手小微内测，属同一动作推进（向量召回 0.73，模型判定）", "created_by": "llm"}
+{"from_event": "EV-6ac990c0", "to_event": "EV-01ca4b1d", "relation": "corroborates", "basis": "B发布可灵3.0内测，A测评可灵3.0与Seedance 2.0，双方印证可灵3.0已具备视频转视频能力（向量召回 0.72，模型判定）", "created_by": "llm"}
+{"from_event": "EV-a215fa2f", "to_event": "EV-0ea1a0a8", "relation": "follows", "basis": "A提出物理世界数据采集流水线，B落地JoyEcoCam采集器让10万员工记录动作数据（向量召回 0.72，模型判定）", "created_by": "llm"}
+{"from_event": "EV-39eb0d6d", "to_event": "EV-bb23e55b", "relation": "corroborates", "basis": "京东建万卡集群、阿里云披露超节点单卡推理提升40%，双方印证大厂加码AI算力基建（向量召回 0.72，模型判定）", "created_by": "llm"}
+{"from_event": "EV-b99aa21e", "to_event": "EV-46550d1f", "relation": "follows", "basis": "京犀APP（2025-09）为超级入口内测，东东APP（2026-04）落地整合外卖购物问诊（向量召回 0.71，模型判定）", "created_by": "llm"}
+{"from_event": "EV-469536b5", "to_event": "EV-bb23e55b", "relation": "corroborates", "basis": "大厂投入Agent训练环境，阿里云称应用转向多Agent任务链，同证Agent趋势（向量召回 0.71，模型判定）", "created_by": "llm"}
+{"from_event": "EV-af0c8480", "to_event": "EV-dd55ef15", "relation": "corroborates", "basis": "Qwen-Image-2.0与GPT Image 2均主打图像生成编辑，不同主体印证同方向（向量召回 0.71，模型判定）", "created_by": "llm"}
+{"from_event": "EV-2f9b6dd2", "to_event": "EV-01ca4b1d", "relation": "corroborates", "basis": "MiniMax H3与快手可灵3.0均为2026年发布的多模态视频生成模型，同证多模态生成竞赛（向量召回 0.70，模型判定）", "created_by": "llm"}
+{"from_event": "EV-46550d1f", "to_event": "EV-fb173374", "relation": "corroborates", "basis": "京东“东东”AI助手与微信开放京东Agent接入，同证京东AI购物助手向多终端扩展（向量召回 0.70，模型判定）", "created_by": "llm"}
+{"from_event": "EV-01ca4b1d", "to_event": "EV-4d32dd2b", "relation": "follows", "basis": "可灵3.0于2026年2月内测，8月快手已用可灵产出AIGC微短剧并实现2000万日消耗（向量召回 0.70，模型判定）", "created_by": "llm"}
+{"from_event": "EV-af0c8480", "to_event": "EV-ef065929", "relation": "corroborates", "basis": "阿里Qwen-Image-2.0与OpenAI GPT Image 2.5同期发布，同证图像生成编辑模型竞争（向量召回 0.69，模型判定）", "created_by": "llm"}
+{"from_event": "EV-fb173374", "to_event": "EV-6bbbc36e", "relation": "follows", "basis": "6月微信开放AI生态并接近启动AI助手测试，7月原生助手“小微”已开启内测（向量召回 0.69，模型判定）", "created_by": "llm"}
