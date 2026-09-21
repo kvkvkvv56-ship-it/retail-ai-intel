@@ -552,3 +552,19 @@
 {"from_event": "EV-01ca4b1d", "to_event": "EV-4d32dd2b", "relation": "follows", "basis": "可灵3.0于2026年2月内测，8月快手已用可灵产出AIGC微短剧并实现2000万日消耗（向量召回 0.70，模型判定）", "created_by": "llm"}
 {"from_event": "EV-af0c8480", "to_event": "EV-ef065929", "relation": "corroborates", "basis": "阿里Qwen-Image-2.0与OpenAI GPT Image 2.5同期发布，同证图像生成编辑模型竞争（向量召回 0.69，模型判定）", "created_by": "llm"}
 {"from_event": "EV-fb173374", "to_event": "EV-6bbbc36e", "relation": "follows", "basis": "6月微信开放AI生态并接近启动AI助手测试，7月原生助手“小微”已开启内测（向量召回 0.69，模型判定）", "created_by": "llm"}
+{"from_event": "EV-37b34e21", "to_event": "EV-9247a8ba", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-20 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-9247a8ba", "to_event": "EV-f5b9c12b", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-f473accc", "to_event": "EV-9a728661", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2025-05-21 → 2025-09-18）", "created_by": "rule"}
+{"from_event": "EV-9a728661", "to_event": "EV-c5756060", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2025-09-18 → 2026-03-01）", "created_by": "rule"}
+{"from_event": "EV-2c9759d9", "to_event": "EV-4e1a8af9", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-17 → 2026-09-18）", "created_by": "rule"}
+{"from_event": "EV-4e1a8af9", "to_event": "EV-c91024f6", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-18 → 2026-09-18）", "created_by": "rule"}
+{"from_event": "EV-c7f09668", "to_event": "EV-3ec7a2b5", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-3ec7a2b5", "to_event": "EV-05efc5e1", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-05efc5e1", "to_event": "EV-fe6b65d6", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-bb23e55b", "to_event": "EV-1182db07", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-0290e63c", "to_event": "EV-05efc5e1", "relation": "follows", "basis": "9月10日Muse购物代理个人体验展示，9月21日宣布与Shopify合作上线Shop Pay智能体结账，同一产品线推进（向量召回 0.75，模型判定）", "created_by": "llm"}
+{"from_event": "EV-c81feeaa", "to_event": "EV-1182db07", "relation": "follows", "basis": "9月9日支付宝设智能体涌现奖、升级阿宝，9月21日蚂蚁合并三大板块组建新支付宝事业群推进智能体商业（向量召回 0.70，模型判定）", "created_by": "llm"}
+{"from_event": "EV-93801eb1", "to_event": "EV-1182db07", "relation": "follows", "basis": "9月10日阿宝接入携程等酒旅商家，9月21日蚂蚁组织调整组建新支付宝事业群推进智能体商业（向量召回 0.69，模型判定）", "created_by": "llm"}
+{"from_event": "EV-d51cd765", "to_event": "EV-fe6b65d6", "relation": "corroborates", "basis": "Shopify AI Toolkit 与 Krea Agent 均通过 MCP 协议让 AI Agent 接入并操作外部工作流（向量召回 0.67，模型判定）", "created_by": "llm"}
+{"from_event": "EV-d51cd765", "to_event": "EV-05efc5e1", "relation": "follows", "basis": "Shopify 4月上线 MCP AI Toolkit，9月与 Meta Muse 合作落地 Shop Pay 智能体结账（向量召回 0.64，模型判定）", "created_by": "llm"}
+{"from_event": "EV-9247a8ba", "to_event": "EV-05efc5e1", "relation": "corroborates", "basis": "Amazon 封禁 Muse 购物与 Shopify 同日上线 Muse 结账，同证 Muse 智能体购物能力（向量召回 0.63，模型判定）", "created_by": "llm"}
