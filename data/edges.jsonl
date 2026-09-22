@@ -568,3 +568,37 @@
 {"from_event": "EV-d51cd765", "to_event": "EV-fe6b65d6", "relation": "corroborates", "basis": "Shopify AI Toolkit 与 Krea Agent 均通过 MCP 协议让 AI Agent 接入并操作外部工作流（向量召回 0.67，模型判定）", "created_by": "llm"}
 {"from_event": "EV-d51cd765", "to_event": "EV-05efc5e1", "relation": "follows", "basis": "Shopify 4月上线 MCP AI Toolkit，9月与 Meta Muse 合作落地 Shop Pay 智能体结账（向量召回 0.64，模型判定）", "created_by": "llm"}
 {"from_event": "EV-9247a8ba", "to_event": "EV-05efc5e1", "relation": "corroborates", "basis": "Amazon 封禁 Muse 购物与 Shopify 同日上线 Muse 结账，同证 Muse 智能体购物能力（向量召回 0.63，模型判定）", "created_by": "llm"}
+{"from_event": "EV-05efc5e1", "to_event": "EV-85e15fa2", "relation": "follows", "basis": "Muse 个人 Agent 先上线并登顶 App Store（条目2、5），随后与 Shopify 合作接入 Shop Pay 代理式结账（条目3、6），属同一产品从发布到功能扩展的不同阶段。", "created_by": "llm"}
+{"from_event": "EV-976622d5", "to_event": "EV-6f744a2a", "relation": "follows", "basis": "Qwen4训练中为当前进展，5-10T参数模型为其后续版本（Qwen4.5/Qwen5）的扩展规划，属同一模型路线的阶段递进。", "created_by": "llm"}
+{"from_event": "EV-715d530c", "to_event": "EV-1ded04b4", "relation": "follows", "basis": "50万卡超节点集群（算力约1GW）是2032年20GW数据中心目标下的具体算力集群落地规划，属同一AI基础设施战略的阶段动作。", "created_by": "llm"}
+{"from_event": "EV-43965de5", "to_event": "EV-79ce1112", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-06-22 → 2026-07-01）", "created_by": "rule"}
+{"from_event": "EV-79ce1112", "to_event": "EV-fa51aee5", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-07-01 → 2026-07-07）", "created_by": "rule"}
+{"from_event": "EV-f5b9c12b", "to_event": "EV-6fd1ee76", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-6fd1ee76", "to_event": "EV-b9ba8751", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-b9ba8751", "to_event": "EV-0070e6a5", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-21 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-0070e6a5", "to_event": "EV-b918f5e3", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-a2659f03", "to_event": "EV-4b26f72b", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-07-20 → 2026-07-22）", "created_by": "rule"}
+{"from_event": "EV-4b26f72b", "to_event": "EV-07b75227", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-07-22 → 2026-09-01）", "created_by": "rule"}
+{"from_event": "EV-596fb0db", "to_event": "EV-3ec7a2b5", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-19 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-3ec7a2b5", "to_event": "EV-c7f09668", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-c7f09668", "to_event": "EV-fe6b65d6", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-fe6b65d6", "to_event": "EV-05efc5e1", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-05efc5e1", "to_event": "EV-4dc02b99", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-4dc02b99", "to_event": "EV-785371a1", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-785371a1", "to_event": "EV-85e15fa2", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-21 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-85e15fa2", "to_event": "EV-9fa5bffd", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-d4817f6f", "to_event": "EV-2ba0d137", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2025-05-08 → 2026-02-07）", "created_by": "rule"}
+{"from_event": "EV-2ba0d137", "to_event": "EV-01ca4b1d", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-02-07 → 2026-02-21）", "created_by": "rule"}
+{"from_event": "EV-a0515eb2", "to_event": "EV-15e4d4ec", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-04-22 → 2026-06-04）", "created_by": "rule"}
+{"from_event": "EV-15e4d4ec", "to_event": "EV-4d32dd2b", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-06-04 → 2026-08-03）", "created_by": "rule"}
+{"from_event": "EV-0ea1a0a8", "to_event": "EV-22fb9ce3", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-20 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-d6f1f41e", "to_event": "EV-1182db07", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-20 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-1182db07", "to_event": "EV-bb23e55b", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-bb23e55b", "to_event": "EV-715d530c", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-21 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-715d530c", "to_event": "EV-1ded04b4", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-1ded04b4", "to_event": "EV-5cceec30", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-5cceec30", "to_event": "EV-ac476269", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-ac476269", "to_event": "EV-976622d5", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-976622d5", "to_event": "EV-6f744a2a", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-6f744a2a", "to_event": "EV-758f5cd3", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-758f5cd3", "to_event": "EV-7cb4b94b", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
