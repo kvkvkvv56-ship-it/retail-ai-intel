@@ -602,3 +602,36 @@
 {"from_event": "EV-976622d5", "to_event": "EV-6f744a2a", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
 {"from_event": "EV-6f744a2a", "to_event": "EV-758f5cd3", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
 {"from_event": "EV-758f5cd3", "to_event": "EV-7cb4b94b", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-81373f4f", "to_event": "EV-59c641a8", "relation": "follows", "basis": "吴泳铭的战略定调为云栖大会开场战略层，李飞飞的Agentic Cloud及AgentCore产品发布为同场后续落地动作，属同一大会中战略到产品的递进关系。", "created_by": "llm"}
+{"from_event": "EV-08bba083", "to_event": "EV-81373f4f", "relation": "follows", "basis": "千问Personal Agent与阿里云Agentic Cloud同属2026云栖大会发布的Agent方向动作，前者面向个人用户、后者面向企业云平台，属同场同主题下的不同产品线。", "created_by": "llm"}
+{"from_event": "EV-37b34e21", "to_event": "EV-6fd1ee76", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-20 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-6fd1ee76", "to_event": "EV-9247a8ba", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-9247a8ba", "to_event": "EV-b9ba8751", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-b9ba8751", "to_event": "EV-f5b9c12b", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-f5b9c12b", "to_event": "EV-0070e6a5", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-21 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-b918f5e3", "to_event": "EV-d8b6b0b6", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-d8b6b0b6", "to_event": "EV-73338736", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-73338736", "to_event": "EV-53a9e773", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-4b6c116e", "to_event": "EV-7ba5280f", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-20 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-a4823535", "to_event": "EV-492c1a11", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-08 → 2026-09-08）", "created_by": "rule"}
+{"from_event": "EV-492c1a11", "to_event": "EV-0ecc4790", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-08 → 2026-09-09）", "created_by": "rule"}
+{"from_event": "EV-596fb0db", "to_event": "EV-05efc5e1", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-19 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-05efc5e1", "to_event": "EV-3ec7a2b5", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-3ec7a2b5", "to_event": "EV-4dc02b99", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-785371a1", "to_event": "EV-c7f09668", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-21 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-fe6b65d6", "to_event": "EV-85e15fa2", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-21 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-9fa5bffd", "to_event": "EV-03d37e69", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-03d37e69", "to_event": "EV-c0e0829b", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-c0e0829b", "to_event": "EV-225bf78a", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-bb23e55b", "to_event": "EV-1ded04b4", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-21 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-5cceec30", "to_event": "EV-6f744a2a", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-6f744a2a", "to_event": "EV-715d530c", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-715d530c", "to_event": "EV-758f5cd3", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-758f5cd3", "to_event": "EV-976622d5", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-976622d5", "to_event": "EV-ac476269", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-ac476269", "to_event": "EV-59c641a8", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-59c641a8", "to_event": "EV-81373f4f", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-81373f4f", "to_event": "EV-7cb4b94b", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-7cb4b94b", "to_event": "EV-eb20bb6e", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-eb20bb6e", "to_event": "EV-08bba083", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-8e1ad34d", "to_event": "EV-96c13cde", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-09-20 → 2026-09-22）", "created_by": "rule"}
