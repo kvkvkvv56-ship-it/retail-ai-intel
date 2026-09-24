@@ -719,3 +719,24 @@
 {"from_event": "EV-97688ae2", "to_event": "EV-9af074c9", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-23 → 2026-09-23）", "created_by": "rule"}
 {"from_event": "EV-9af074c9", "to_event": "EV-a3525059", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-23 → 2026-09-23）", "created_by": "rule"}
 {"from_event": "EV-c88b847d", "to_event": "EV-dbd65ca9", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-23 → 2026-09-23）", "created_by": "rule"}
+{"from_event": "EV-48ab335b", "to_event": "EV-758f5cd3", "relation": "follows", "basis": "同属 2026 云栖大会千问/Qwen 产品线发布，先有模型参数规模规划（条目[3][4]），后有 Qwen Intelligence 进入 AI 手机及终端硬件（条目[2]），为同一产品线的不同阶段进展。", "created_by": "llm"}
+{"from_event": "EV-99363fa5", "to_event": "EV-c20be9f5", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-24 → 2026-09-24）", "created_by": "rule"}
+{"from_event": "EV-596fb0db", "to_event": "EV-0b68ce2e", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-19 → 2026-09-19）", "created_by": "rule"}
+{"from_event": "EV-0b68ce2e", "to_event": "EV-05efc5e1", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-19 → 2026-09-21）", "created_by": "rule"}
+{"from_event": "EV-c0e0829b", "to_event": "EV-69542c84", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-22 → 2026-09-23）", "created_by": "rule"}
+{"from_event": "EV-69542c84", "to_event": "EV-73c72534", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-23 → 2026-09-23）", "created_by": "rule"}
+{"from_event": "EV-cea36819", "to_event": "EV-74809e1b", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-23 → 2026-09-24）", "created_by": "rule"}
+{"from_event": "EV-74809e1b", "to_event": "EV-9d1b4f77", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-24 → 2026-09-24）", "created_by": "rule"}
+{"from_event": "EV-9d1b4f77", "to_event": "EV-4ed19dc0", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-24 → 2026-09-24）", "created_by": "rule"}
+{"from_event": "EV-4ed19dc0", "to_event": "EV-0dcee619", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-24 → 2026-09-24）", "created_by": "rule"}
+{"from_event": "EV-cab540e6", "to_event": "EV-e7a255a8", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2025-12-01 → 2025-12-01）", "created_by": "rule"}
+{"from_event": "EV-e7a255a8", "to_event": "EV-af6b9d74", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2025-12-01 → 2026-01-13）", "created_by": "rule"}
+{"from_event": "EV-715d530c", "to_event": "EV-7cb4b94b", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-ac476269", "to_event": "EV-adfb5504", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-adfb5504", "to_event": "EV-b662d750", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-eb20bb6e", "to_event": "EV-d4caa171", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-d4caa171", "to_event": "EV-48ab335b", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-48ab335b", "to_event": "EV-0a94c6fc", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-22 → 2026-09-23）", "created_by": "rule"}
+{"from_event": "EV-dbd65ca9", "to_event": "EV-03ef8503", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-23 → 2026-09-24）", "created_by": "rule"}
+{"from_event": "EV-03ef8503", "to_event": "EV-758f5cd3", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-24 → 2026-09-24）", "created_by": "rule"}
+{"from_event": "EV-22c10bf7", "to_event": "EV-225ccfce", "relation": "same_actor_track", "basis": "同为 xiaohongshu 的动作，时间相邻（2026-09-20 → 2026-09-24）", "created_by": "rule"}
