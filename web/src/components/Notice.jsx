@@ -48,11 +48,9 @@ export default function Notice() {
           <p>
             由于 <b>Exa Search</b> 本月额度耗尽，网络搜索结果可能不全或暂停更新。
           </p>
-          <ul className="notice-status">
-            <li><span className="dot warn" />当前：部分检索结果缺失 / 延迟</li>
-            <li><span className="dot" />正在修复中</li>
-            <li><span className="dot" />后续将接入 <b>Agent Reach</b></li>
-          </ul>
+          <p className="notice-next">
+            后续将接入 <b>Agent Reach</b> 等服务，增强可用性。
+          </p>
           <div className="notice-foot">
             <span className="notice-date">2026-09-27</span>
             <button ref={btn} className="notice-btn" onClick={close}>我知道了</button>
