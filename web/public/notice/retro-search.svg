@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" role="img" aria-label="复古终端与放大镜">
+  <defs>
+    <pattern id="dots" width="8" height="8" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="4" r="0.9" fill="#fff" opacity=".22"/>
+    </pattern>
+    <pattern id="dots-dense" width="5" height="5" patternUnits="userSpaceOnUse">
+      <circle cx="2.5" cy="2.5" r="1.1" fill="#fff" opacity=".35"/>
+    </pattern>
+    <pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="1.4" fill="#fff" opacity=".08"/>
+    </pattern>
+    <pattern id="scan-big" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="2.6" fill="#fff" opacity=".1"/>
+    </pattern>
+    <radialGradient id="glow" cx="50%" cy="45%" r="55%">
+      <stop offset="0" stop-color="#fff" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fade-floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".5"/>
+    </linearGradient>
+    <clipPath id="floor"><rect x="0" y="400" width="400" height="120"/></clipPath>
+    <clipPath id="lens"><circle cx="286" cy="236" r="56"/></clipPath>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="table" tableValues="0 .14"/></feComponentTransfer>
+    </filter>
+  </defs>
+
+  <!-- 底 -->
+  <rect width="400" height="520" fill="#0c0c0c"/>
+  <rect width="400" height="520" fill="url(#dots)"/>
+  <ellipse cx="190" cy="200" rx="210" ry="190" fill="url(#glow)"/>
+
+  <!-- 顶部标签 -->
+  <g font-family="ui-monospace, Menlo, Consolas, monospace" fill="#fff" font-size="10" letter-spacing="1.5">
+    <text x="24" y="38" opacity=".9">SEARCH/SYS v0.9</text>
+    <text x="376" y="38" text-anchor="end" opacity=".55">QUOTA 000%</text>
+    <line x1="24" y1="48" x2="376" y2="48" stroke="#fff" stroke-opacity=".25" stroke-dasharray="2 4"/>
+  </g>
+
+  <!-- 透视地面网格 -->
+  <g clip-path="url(#floor)" stroke="#fff" stroke-width="1" fill="none" opacity=".45">
+    <path d="M200 400 L-400 520 M200 400 L-250 520 M200 400 L-100 520 M200 400 L50 520 M200 400 L200 520 M200 400 L350 520 M200 400 L500 520 M200 400 L650 520 M200 400 L800 520"/>
+    <path d="M0 404 H400 M0 410 H400 M0 419 H400 M0 431 H400 M0 447 H400 M0 468 H400 M0 494 H400"/>
+  </g>
+  <line x1="0" y1="400" x2="400" y2="400" stroke="#fff" stroke-opacity=".6"/>
+  <rect x="0" y="400" width="400" height="120" fill="url(#fade-floor)" opacity=".25"/>
+
+  <!-- 显示器 -->
+  <g stroke="#fff" stroke-width="2" fill="#0c0c0c" stroke-linejoin="round">
+    <rect x="52" y="92" width="222" height="196" rx="14"/>
+    <rect x="68" y="108" width="190" height="142" rx="20" fill="#141414"/>
+    <path d="M136 288 L128 316 H198 L190 288" />
+    <rect x="96" y="316" width="134" height="10" rx="3"/>
+    <circle cx="238" cy="270" r="5" fill="#fff"/>
+    <line x1="72" y1="270" x2="150" y2="270" stroke-width="1" stroke-opacity=".6"/>
+    <line x1="72" y1="276" x2="150" y2="276" stroke-width="1" stroke-opacity=".6"/>
+  </g>
+  <rect x="68" y="108" width="190" height="142" rx="20" fill="url(#scan)"/>
+
+  <!-- 屏幕内容 -->
+  <g font-family="ui-monospace, Menlo, Consolas, monospace" fill="#fff" font-size="10.5" letter-spacing=".6">
+    <text x="84" y="134">&gt; web.search(</text>
+    <text x="96" y="150" opacity=".75">"retail AI"</text>
+    <text x="84" y="166">)</text>
+    <text x="84" y="190" opacity=".75">SEARCHING...</text>
+    <rect x="84" y="198" width="120" height="10" fill="none" stroke="#fff" stroke-width="1"/>
+    <rect x="86" y="200" width="40" height="6" fill="#fff"/>
+    <text x="84" y="228">ERR 402 QUOTA</text>
+    <rect x="178" y="220" width="7" height="10" fill="#fff"/>
+  </g>
+
+  <!-- 键盘 -->
+  <g stroke="#fff" stroke-width="1.6" fill="#0c0c0c" stroke-linejoin="round">
+    <path d="M70 346 H286 L300 382 H56 Z"/>
+    <path d="M78 354 H280 M74 362 H284 M70 371 H290" stroke-width="1" stroke-opacity=".7"/>
+    <path d="M96 350 V378 M122 350 V378 M148 350 V378 M174 350 V378 M200 350 V378 M226 350 V378 M252 350 V378" stroke-width="1" stroke-opacity=".7"/>
+  </g>
+
+  <!-- 放大镜 -->
+  <g clip-path="url(#lens)">
+    <rect x="220" y="170" width="140" height="140" fill="#0c0c0c"/>
+    <rect x="220" y="170" width="140" height="140" fill="url(#dots-dense)"/>
+    <rect x="220" y="170" width="140" height="140" fill="url(#scan-big)"/>
+    <text x="286" y="262" text-anchor="middle" font-family="ui-monospace, Menlo, Consolas, monospace"
+          font-size="74" font-weight="700" fill="#fff">?</text>
+  </g>
+  <circle cx="286" cy="236" r="56" fill="none" stroke="#fff" stroke-width="9"/>
+  <circle cx="286" cy="236" r="64" fill="none" stroke="#fff" stroke-width="1.2" stroke-opacity=".5"/>
+  <path d="M252 206 A44 44 0 0 1 290 190" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+  <g transform="rotate(-45 286 236)">
+    <rect x="278" y="296" width="16" height="16" fill="#fff"/>
+    <rect x="276" y="312" width="20" height="62" rx="5" fill="#0c0c0c" stroke="#fff" stroke-width="2.5"/>
+    <path d="M280 326 H292 M280 338 H292 M280 350 H292 M280 362 H292" stroke="#fff" stroke-width="1.5"/>
+  </g>
+
+  <!-- 零星像素 -->
+  <g fill="#fff">
+    <rect x="336" y="96" width="4" height="4"/><rect x="344" y="104" width="4" height="4" opacity=".5"/>
+    <rect x="30" y="226" width="4" height="4" opacity=".6"/><rect x="22" y="234" width="4" height="4"/>
+    <rect x="360" y="150" width="3" height="3" opacity=".4"/><rect x="40" y="120" width="3" height="3" opacity=".4"/>
+  </g>
+
+  <!-- 底部标签 -->
+  <g font-family="ui-monospace, Menlo, Consolas, monospace" fill="#fff" font-size="10" letter-spacing="1.5">
+    <text x="24" y="500" opacity=".7">SIGNAL // PARTIAL</text>
+    <text x="376" y="500" text-anchor="end" opacity=".7">→ AGENT REACH</text>
+  </g>
+
+  <rect width="400" height="520" filter="url(#grain)"/>
+</svg>
