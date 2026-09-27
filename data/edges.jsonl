@@ -799,3 +799,5 @@
 {"from_event": "EV-8f7ce56b", "to_event": "EV-b85a541e", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-26 → 2026-09-26）", "created_by": "rule"}
 {"from_event": "EV-47371401", "to_event": "EV-6bf2f05c", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-09 → 2026-09-09）", "created_by": "rule"}
 {"from_event": "EV-6bf2f05c", "to_event": "EV-a7cfb796", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-09 → 2026-09-09）", "created_by": "rule"}
+{"from_event": "EV-ce217869", "to_event": "EV-a0eda6dd", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-26 → 2026-09-27）", "created_by": "rule"}
+{"from_event": "EV-ff90bafe", "to_event": "EV-4f520581", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-23 → 2026-09-28）", "created_by": "rule"}
