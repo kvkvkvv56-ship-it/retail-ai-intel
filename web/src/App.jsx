@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { api, offline, onOffline } from './api.js'
 import { Collapse, Loading } from './components/Bits.jsx'
+import Notice from './components/Notice.jsx'
 import RunView from './views/RunView.jsx'
 import EventsView from './views/EventsView.jsx'
 import EventDetail from './views/EventDetail.jsx'
@@ -125,6 +126,7 @@ export default function App() {
 
   return (
     <div className="wrap">
+      <Notice />
       <header className="site-header">
         <div className="header-row">
           <div>
