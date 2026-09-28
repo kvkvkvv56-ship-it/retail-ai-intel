@@ -805,3 +805,17 @@
 {"from_event": "EV-fe2c6cc5", "to_event": "EV-a0eda6dd", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-26 → 2026-09-27）", "created_by": "rule"}
 {"from_event": "EV-a0eda6dd", "to_event": "EV-3bc63ed7", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-27 → 2026-09-27）", "created_by": "rule"}
 {"from_event": "EV-9faa3189", "to_event": "EV-29b6254a", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-25 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-5ef32e38", "to_event": "EV-218d2b4b", "relation": "follows", "basis": "条目[2]明确说明 OpenAI 是在 Meta Muse 获摩根大通 Assistant Benchmark 排名第一后加速推出「o」，属于对竞品发布的跟进动作。", "created_by": "llm"}
+{"from_event": "EV-fe2c6cc5", "to_event": "EV-3bc63ed7", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-26 → 2026-09-27）", "created_by": "rule"}
+{"from_event": "EV-3bc63ed7", "to_event": "EV-a0eda6dd", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-27 → 2026-09-27）", "created_by": "rule"}
+{"from_event": "EV-a4823535", "to_event": "EV-218d2b4b", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-08 → 2026-09-08）", "created_by": "rule"}
+{"from_event": "EV-218d2b4b", "to_event": "EV-0ecc4790", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-08 → 2026-09-09）", "created_by": "rule"}
+{"from_event": "EV-9faa3189", "to_event": "EV-5ef32e38", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-25 → 2026-09-28）", "created_by": "rule"}
+{"from_event": "EV-5ef32e38", "to_event": "EV-47e5d464", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-28 → 2026-09-28）", "created_by": "rule"}
+{"from_event": "EV-47e5d464", "to_event": "EV-29b6254a", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-28 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-f1d32107", "to_event": "EV-31fbfc05", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-06-01 → 2026-06-01）", "created_by": "rule"}
+{"from_event": "EV-31fbfc05", "to_event": "EV-47c05a1a", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-06-01 → 2026-07-01）", "created_by": "rule"}
+{"from_event": "EV-dbd65ca9", "to_event": "EV-2975824e", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-23 → 2026-09-23）", "created_by": "rule"}
+{"from_event": "EV-2975824e", "to_event": "EV-03ef8503", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-23 → 2026-09-24）", "created_by": "rule"}
+{"from_event": "EV-96c13cde", "to_event": "EV-4941413b", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-4941413b", "to_event": "EV-dc0b2b3a", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-09-22 → 2026-09-25）", "created_by": "rule"}
