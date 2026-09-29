@@ -842,3 +842,24 @@
 {"from_event": "EV-5feb5d0a", "to_event": "EV-f5907243", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-28 → 2026-09-28）", "created_by": "rule"}
 {"from_event": "EV-8e1ad34d", "to_event": "EV-4941413b", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-09-20 → 2026-09-22）", "created_by": "rule"}
 {"from_event": "EV-4941413b", "to_event": "EV-96c13cde", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-5a4b50b9", "to_event": "EV-049b9155", "relation": "follows", "basis": "综述条目以 Manus Cue 发布为分析素材，讨论其人格化与独立身份特征，时间上晚于 Cue 发布。", "created_by": "llm"}
+{"from_event": "EV-5a4b50b9", "to_event": "EV-72a3e7f9", "relation": "follows", "basis": "综述条目引用 Meta Muse 在 Connect 大会的展示作为案例，晚于 Muse 走红报道。", "created_by": "llm"}
+{"from_event": "EV-fec32ca5", "to_event": "EV-77f73dc0", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-28 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-4c53037d", "to_event": "EV-f3facd50", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-24 → 2026-09-24）", "created_by": "rule"}
+{"from_event": "EV-f3facd50", "to_event": "EV-2e247356", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-24 → 2026-09-24）", "created_by": "rule"}
+{"from_event": "EV-2e247356", "to_event": "EV-c3e3ec80", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-24 → 2026-09-27）", "created_by": "rule"}
+{"from_event": "EV-47e5d464", "to_event": "EV-4c81bb8a", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-28 → 2026-09-28）", "created_by": "rule"}
+{"from_event": "EV-4c81bb8a", "to_event": "EV-5ab849a3", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-28 → 2026-09-28）", "created_by": "rule"}
+{"from_event": "EV-5ab849a3", "to_event": "EV-5ef32e38", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-28 → 2026-09-28）", "created_by": "rule"}
+{"from_event": "EV-5ef32e38", "to_event": "EV-7780aaab", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-28 → 2026-09-28）", "created_by": "rule"}
+{"from_event": "EV-7780aaab", "to_event": "EV-8b767d8b", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-28 → 2026-09-28）", "created_by": "rule"}
+{"from_event": "EV-8b767d8b", "to_event": "EV-9067cbd7", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-28 → 2026-09-28）", "created_by": "rule"}
+{"from_event": "EV-9067cbd7", "to_event": "EV-9ea27405", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-28 → 2026-09-28）", "created_by": "rule"}
+{"from_event": "EV-9ea27405", "to_event": "EV-049b9155", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-28 → 2026-09-28）", "created_by": "rule"}
+{"from_event": "EV-049b9155", "to_event": "EV-c009656a", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-28 → 2026-09-28）", "created_by": "rule"}
+{"from_event": "EV-c009656a", "to_event": "EV-29b6254a", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-28 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-29b6254a", "to_event": "EV-f115d53a", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-f115d53a", "to_event": "EV-72a3e7f9", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-72a3e7f9", "to_event": "EV-0258df4a", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-0258df4a", "to_event": "EV-5a4b50b9", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-4661515d", "to_event": "EV-1c674d7e", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-09-28 → 2026-09-28）", "created_by": "rule"}
