@@ -901,3 +901,21 @@
 {"from_event": "EV-8e1cf38d", "to_event": "EV-dd2ee4a4", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-29）", "created_by": "rule"}
 {"from_event": "EV-dd2ee4a4", "to_event": "EV-85e15fa2", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-30）", "created_by": "rule"}
 {"from_event": "EV-a0502069", "to_event": "EV-d15d8228", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-29 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-b7294a3b", "to_event": "EV-daa8187b", "relation": "follows", "basis": "条目 2 的赛道综述将 OpenAI dots 发布作为其覆盖的落子事件之一，属于对条目 0 发布事件的后续横向汇总。", "created_by": "llm"}
+{"from_event": "EV-b7294a3b", "to_event": "EV-08bbd49b", "relation": "follows", "basis": "条目 2 的赛道综述将 Meta Muse 发布及其上线 12 天数据作为覆盖内容，属于对条目 1 发布事件的后续横向汇总。", "created_by": "llm"}
+{"from_event": "EV-c16ac83e", "to_event": "EV-08bbd49b", "relation": "follows", "basis": "条目 3 在战略对比中引用 Meta 9 月上线的消费级 AI Agent 产品，属于对条目 1 发布事件的后续战略层面解读。", "created_by": "llm"}
+{"from_event": "EV-77f73dc0", "to_event": "EV-7f80c11d", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-29 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-7f80c11d", "to_event": "EV-44f43ac0", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-30 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-b1029a4e", "to_event": "EV-f5d7ca46", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-29 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-a4823535", "to_event": "EV-b7294a3b", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-08 → 2026-09-08）", "created_by": "rule"}
+{"from_event": "EV-b7294a3b", "to_event": "EV-0ecc4790", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-08 → 2026-09-09）", "created_by": "rule"}
+{"from_event": "EV-72a3e7f9", "to_event": "EV-8e1cf38d", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-8e1cf38d", "to_event": "EV-b1f1d648", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-b1f1d648", "to_event": "EV-dd2ee4a4", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-dd2ee4a4", "to_event": "EV-f115d53a", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-f115d53a", "to_event": "EV-daa8187b", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-daa8187b", "to_event": "EV-85e15fa2", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-85e15fa2", "to_event": "EV-08bbd49b", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-30 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-08bbd49b", "to_event": "EV-c16ac83e", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-30 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-4661515d", "to_event": "EV-e6fee505", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-09-28 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-d15d8228", "to_event": "EV-9b3c4c81", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-30 → 2026-09-30）", "created_by": "rule"}
