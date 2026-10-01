@@ -919,3 +919,19 @@
 {"from_event": "EV-08bbd49b", "to_event": "EV-c16ac83e", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-30 → 2026-09-30）", "created_by": "rule"}
 {"from_event": "EV-4661515d", "to_event": "EV-e6fee505", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-09-28 → 2026-09-30）", "created_by": "rule"}
 {"from_event": "EV-d15d8228", "to_event": "EV-9b3c4c81", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-30 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-87d60cf4", "to_event": "EV-931be405", "relation": "follows", "basis": "Muse 智能体软件先上线，随后 Meta 计划在假日购物季前推出内置 Muse 的 Muse Charm 硬件设备，属同一产品从软件到硬件的后续阶段。", "created_by": "llm"}
+{"from_event": "EV-3cda677d", "to_event": "EV-931be405", "relation": "follows", "basis": "OpenAI 先于 DevDay 发布 Dots 智能体平台，其与 Jony Ive 合作的专用硬件最早 2027 年 2 月出货，属同一智能体产品从软件到硬件的后续阶段。", "created_by": "llm"}
+{"from_event": "EV-77f73dc0", "to_event": "EV-44f43ac0", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-29 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-44f43ac0", "to_event": "EV-7f80c11d", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-30 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-b7294a3b", "to_event": "EV-87d60cf4", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-08 → 2026-09-08）", "created_by": "rule"}
+{"from_event": "EV-87d60cf4", "to_event": "EV-0ecc4790", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-08 → 2026-09-09）", "created_by": "rule"}
+{"from_event": "EV-b1f1d648", "to_event": "EV-daa8187b", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-daa8187b", "to_event": "EV-dd2ee4a4", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-f115d53a", "to_event": "EV-3cda677d", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-3cda677d", "to_event": "EV-08bbd49b", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-29 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-08bbd49b", "to_event": "EV-85e15fa2", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-30 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-85e15fa2", "to_event": "EV-c16ac83e", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-30 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-c16ac83e", "to_event": "EV-08a441a1", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-30 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-08a441a1", "to_event": "EV-931be405", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-30 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-a0502069", "to_event": "EV-9b3c4c81", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-29 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-9b3c4c81", "to_event": "EV-d15d8228", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-09-30 → 2026-09-30）", "created_by": "rule"}
