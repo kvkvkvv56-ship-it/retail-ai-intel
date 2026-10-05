@@ -1031,3 +1031,12 @@
 {"from_event": "EV-1b2ac5c1", "to_event": "EV-24048f6a", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-02 → 2026-10-03）", "created_by": "rule"}
 {"from_event": "EV-d8434685", "to_event": "EV-74446f61", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-04-28 → 2026-05-11）", "created_by": "rule"}
 {"from_event": "EV-74446f61", "to_event": "EV-c4bddba6", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-05-11 → 2026-05-11）", "created_by": "rule"}
+{"from_event": "EV-d0ef0366", "to_event": "EV-5d759c6f", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-01 → 2026-09-01）", "created_by": "rule"}
+{"from_event": "EV-5d759c6f", "to_event": "EV-80973f54", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-09-01 → 2026-09-02）", "created_by": "rule"}
+{"from_event": "EV-f992090d", "to_event": "EV-3fb6b011", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-10-01 → 2026-10-05）", "created_by": "rule"}
+{"from_event": "EV-b7294a3b", "to_event": "EV-211b5959", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-08 → 2026-09-08）", "created_by": "rule"}
+{"from_event": "EV-211b5959", "to_event": "EV-0ecc4790", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-08 → 2026-09-09）", "created_by": "rule"}
+{"from_event": "EV-dbe570b1", "to_event": "EV-91eeb0a8", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-30 → 2026-09-30）", "created_by": "rule"}
+{"from_event": "EV-91eeb0a8", "to_event": "EV-41cce3d0", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-30 → 2026-10-01）", "created_by": "rule"}
+{"from_event": "EV-e59730f3", "to_event": "EV-1b2ac5c1", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-01 → 2026-10-02）", "created_by": "rule"}
+{"from_event": "EV-1b2ac5c1", "to_event": "EV-4da30d30", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-02 → 2026-10-02）", "created_by": "rule"}
