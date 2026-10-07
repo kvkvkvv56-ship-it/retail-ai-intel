@@ -1077,3 +1077,15 @@
 {"from_event": "EV-df5ea6d3", "to_event": "EV-e599f47b", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-06 → 2026-10-07）", "created_by": "rule"}
 {"from_event": "EV-ff90bafe", "to_event": "EV-c2d9fc68", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-23 → 2026-09-23）", "created_by": "rule"}
 {"from_event": "EV-c2d9fc68", "to_event": "EV-4f520581", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-23 → 2026-09-28）", "created_by": "rule"}
+{"from_event": "EV-eadbae4f", "to_event": "EV-5aabd4fe", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-10-04 → 2026-10-06）", "created_by": "rule"}
+{"from_event": "EV-5aabd4fe", "to_event": "EV-efbd925c", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-10-06 → 2026-10-06）", "created_by": "rule"}
+{"from_event": "EV-977f2bd4", "to_event": "EV-41631858", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-15 → 2026-09-15）", "created_by": "rule"}
+{"from_event": "EV-41631858", "to_event": "EV-f2c13c14", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-09-15 → 2026-09-16）", "created_by": "rule"}
+{"from_event": "EV-4ca4f8c1", "to_event": "EV-6ebd1bbe", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-6ebd1bbe", "to_event": "EV-9fa5bffd", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-22 → 2026-09-22）", "created_by": "rule"}
+{"from_event": "EV-c0543fbd", "to_event": "EV-43ae1dea", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-28 → 2026-09-28）", "created_by": "rule"}
+{"from_event": "EV-43ae1dea", "to_event": "EV-0258df4a", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-09-28 → 2026-09-29）", "created_by": "rule"}
+{"from_event": "EV-e599f47b", "to_event": "EV-028c8f9c", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-07 → 2026-10-07）", "created_by": "rule"}
+{"from_event": "EV-d6ff2955", "to_event": "EV-3fa168aa", "relation": "same_actor_track", "basis": "同为 kuaishou 的动作，时间相邻（2026-10-06 → 2026-10-07）", "created_by": "rule"}
+{"from_event": "EV-22fb9ce3", "to_event": "EV-c2d9fc68", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-22 → 2026-09-23）", "created_by": "rule"}
+{"from_event": "EV-c2d9fc68", "to_event": "EV-ff90bafe", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-09-23 → 2026-09-23）", "created_by": "rule"}
