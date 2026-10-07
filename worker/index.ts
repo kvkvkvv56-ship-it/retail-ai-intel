@@ -1,3 +1,5 @@
+import { eventChat } from './event-chat'
+
 /**
  * 线上只读服务（技术方案 §2.1、§15）
  *
@@ -189,6 +191,9 @@ export default {
       }
       return ok({ total: rows.length, results: rows.slice(0, limit) })
     }
+
+    const chat = route.match(/^events\/(EV-[A-Za-z0-9-]+)\/chat$/)
+    if (chat) return eventChat(request, env, chat[1], snapshot, problem)
 
     // ---------------- 详情类 ----------------
     const detail = route.match(/^(events|runs|reports|docs)\/([A-Za-z0-9\-]+)$/)

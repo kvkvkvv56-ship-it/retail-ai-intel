@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { lazy, Suspense, useEffect, useState } from 'react'
 import { api, CLASS_LABEL, CLASS_SHORT, fmtDate } from '../api.js'
 import { Confidence, Status, TimeMark, Empty, Loading } from '../components/Bits.jsx'
+
+const EventAssistant = lazy(() => import('../components/EventAssistant.jsx'))
 
 const REL_LABEL = {
   follows: '后续进展', same_actor_track: '同主体动作',
@@ -12,18 +14,20 @@ export default function EventDetail({ id, meta, nav }) {
   const [err, setErr] = useState(null)
   useEffect(() => {
     setE(null); setErr(null)
-    api(`events/${id}`).then(setE).catch((x) => setErr(String(x)))
+    let active = true
+    api(`events/${id}`).then(data => { if (active) setE(data) }).catch(x => { if (active) setErr(String(x)) })
+    return () => { active = false }
   }, [id])
 
   if (err) return <div className="error">加载失败：{err}</div>
-  if (!e) return <Loading />
+  if (!e || e.id !== id) return <Loading />
 
   const domName = Object.fromEntries(meta.domains.map((d) => [d.id, d.name]))
   const compName = Object.fromEntries(meta.companies.map((c) => [c.id, c.name]))
   const byId = Object.fromEntries((e.items || []).map((i) => [i.id, i]))
 
   return (
-    <div className="view">
+    <div className="view event-detail">
       <button className="back" onClick={() => nav('/events')}>← 事件库</button>
 
       <h2 className="detail-title">{e.title}</h2>
@@ -36,6 +40,10 @@ export default function EventDetail({ id, meta, nav }) {
         <span>{e.independent_orgs} 个独立组织</span>
       </div>
       {e.summary && <p className="ev-sum" style={{ margin: "16px 0", maxWidth: "68ch" }}>{e.summary}</p>}
+
+      <Suspense fallback={null}>
+        <EventAssistant key={id} event={e} />
+      </Suspense>
 
       {e.stage && (
         <div className="callout">
@@ -112,6 +120,7 @@ export default function EventDetail({ id, meta, nav }) {
       <h3 className="sub-title">
         原始信源 <span className="n">{e.items.length}</span>
       </h3>
+      <div className="event-sources-scroll" role="region" aria-label="原始信源" tabIndex={0}>
       <table className="tbl src-tbl">
         <colgroup>
           <col /><col style={{ width: '9em' }} /><col style={{ width: '6.5em' }} />
@@ -149,6 +158,7 @@ export default function EventDetail({ id, meta, nav }) {
           ))}
         </tbody>
       </table>
+      </div>
 
       {e.edges?.length > 0 && (
         <>
