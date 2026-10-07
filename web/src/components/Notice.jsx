@@ -7,7 +7,7 @@ import React, { useEffect, useRef, useState } from 'react'
  * 当天不再弹、次日照常弹，直到公告下线（从 App 里移除 <Notice />）。
  * 换公告只需改 NOTICE_ID。隐私模式等场景读写会抛错 —— 吞掉即可，最坏情况是每次都弹。
  */
-const NOTICE_ID = 'exa-quota-2026-09'
+const NOTICE_ID = 'exa-restored-2026-10-07'
 // 与旧版「关过就永不再弹」的 `notice:${NOTICE_ID}` 键区分开，已关过的访客也会重新看到
 const KEY = `notice:${NOTICE_ID}:snoozed-on`
 
@@ -51,16 +51,16 @@ export default function Notice() {
       <div className="notice" role="dialog" aria-modal="true" aria-labelledby="notice-title"
            onClick={(e) => e.stopPropagation()}>
         <div className="notice-art">
-          <img src="/notice/retro-search.svg" alt="" />
+          <img src="/notice/search-restored.svg" alt="" />
         </div>
         <div className="notice-body">
-          <div className="notice-kicker">公告 · NOTICE · 2026-09-27</div>
-          <h2 id="notice-title">网络搜索服务暂时受限</h2>
+          <div className="notice-kicker">公告 · NOTICE · 2026-10-07</div>
+          <h2 id="notice-title">网络搜索服务已恢复</h2>
           <p>
-            由于 <b>Exa Search</b> 本月额度耗尽，网络搜索结果可能不全或暂停更新。
+            <b>网络搜索已恢复可用</b>，现在可以继续检索公开信息，为简报补充网络来源。
           </p>
           <p className="notice-next">
-            后续将接入 <b>Agent Reach</b> 等服务，增强可用性。
+            感谢你的耐心等待。你可以继续探索行业动态，生成所需的洞察简报。
           </p>
           <div className="notice-foot">
             <label className="notice-snooze">

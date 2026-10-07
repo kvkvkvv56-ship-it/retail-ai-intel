@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="720" viewBox="0 0 640 720" fill="none">
+  <title>网络搜索已恢复</title>
+  <desc>深色网格上的地球与搜索放大镜，以绿色连接和勾号表示服务恢复。</desc>
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" stroke="#fff" stroke-opacity=".045"/>
+    </pattern>
+    <radialGradient id="glow">
+      <stop stop-color="#28a948" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#28a948" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <path fill="#0c0c0c" d="M0 0h640v720H0z"/>
+  <path fill="url(#grid)" d="M0 0h640v720H0z"/>
+  <circle cx="320" cy="320" r="280" fill="url(#glow)"/>
+  <g stroke="#82eb8d" stroke-opacity=".32" stroke-width="2">
+    <path d="M110 206l108 69M439 258l96-83M190 370l-88 78M437 378l79 98"/>
+    <circle cx="110" cy="206" r="7" fill="#0c0c0c"/>
+    <circle cx="535" cy="175" r="7" fill="#0c0c0c"/>
+    <circle cx="102" cy="448" r="7" fill="#0c0c0c"/>
+    <circle cx="516" cy="476" r="7" fill="#0c0c0c"/>
+  </g>
+  <g stroke="#e6e6e6" stroke-width="2.5">
+    <circle cx="312" cy="310" r="126" fill="#111813"/>
+    <ellipse cx="312" cy="310" rx="55" ry="126"/>
+    <path d="M186 310h252M204 246h216M204 374h216M312 184v252"/>
+  </g>
+  <path d="M397 402l68 68" stroke="#0c0c0c" stroke-width="36" stroke-linecap="round"/>
+  <path d="M397 402l68 68" stroke="#e6e6e6" stroke-width="20" stroke-linecap="round"/>
+  <circle cx="399" cy="397" r="44" fill="#82eb8d" stroke="#0c0c0c" stroke-width="8"/>
+  <path d="M381 397l12 12 24-26" stroke="#003a00" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="224" y="524" width="192" height="40" rx="20" fill="#15231a" stroke="#294532"/>
+  <circle cx="251" cy="544" r="5" fill="#82eb8d"/>
+  <text x="272" y="549" fill="#b9f5bc" font-family="ui-monospace,monospace" font-size="14" letter-spacing="2">BACK ONLINE</text>
+  <path d="M280 603h80" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+</svg>
