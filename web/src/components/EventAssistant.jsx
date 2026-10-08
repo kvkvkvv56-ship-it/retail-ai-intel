@@ -13,7 +13,6 @@ const idlePrompts = [
   '想看来源？我帮你找。',
   '还有疑问？我听着。',
 ]
-let lastIdlePromptAt = 0
 let idlePromptIndex = Math.floor(Math.random() * idlePrompts.length)
 
 function Avatar({ state = 'default', size = 34 }) {
@@ -39,12 +38,13 @@ export default function EventAssistant({ event }) {
   const [quickInput, setQuickInput] = useState('')
   const [launcherActive, setLauncherActive] = useState(false)
   const [pageVisible, setPageVisible] = useState(!document.hidden)
+  const [noticeOpen, setNoticeOpen] = useState(() => Boolean(document.querySelector('.notice-backdrop')))
   const [hint, setHint] = useState('')
   const [hintCount, setHintCount] = useState(0)
   const pending = useRef(null), log = useRef(null), field = useRef(null)
   const launcher = useRef(null), launcherButton = useRef(null), quickField = useRef(null)
   const panel = useRef(null), follow = useRef(true)
-  const lastActivityAt = useRef(Date.now())
+  const pageEnteredAt = useRef(Date.now()), lastBotUseAt = useRef(0), lastHintAt = useRef(0)
   const sources = new Set([...(event.items || []).map(i => i.url), ...webSources])
 
   useEffect(() => () => pending.current?.abort(), [])
@@ -53,26 +53,29 @@ export default function EventAssistant({ event }) {
     document.addEventListener('visibilitychange', onVisibilityChange)
     return () => document.removeEventListener('visibilitychange', onVisibilityChange)
   }, [])
+  useEffect(() => setNoticeOpen(Boolean(document.querySelector('.notice-backdrop'))), [])
   useEffect(() => {
-    const noteActivity = () => { lastActivityAt.current = Date.now() }
-    const events = ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchmove', 'scroll']
-    events.forEach(name => document.addEventListener(name, noteActivity, { passive: true, capture: true }))
-    return () => events.forEach(name => document.removeEventListener(name, noteActivity, true))
-  }, [])
+    if (!noticeOpen) return
+    const notice = document.querySelector('.notice-backdrop')
+    if (!notice) { setNoticeOpen(false); return }
+    const observer = new MutationObserver(() => {
+      if (!notice.isConnected) { setNoticeOpen(false); observer.disconnect() }
+    })
+    observer.observe(notice.parentElement, { childList: true })
+    return () => observer.disconnect()
+  }, [noticeOpen])
   useEffect(() => {
-    if (open || busy || quickInput.trim() || launcherActive || !pageVisible || hintCount >= 3 || hint) return
-    const interval = hintCount === 0 ? 12000 : 60000
-    let timer
-    const showWhenIdle = () => {
-      const wait = Math.max(lastActivityAt.current + 12000, lastIdlePromptAt + 45000) - Date.now()
-      if (wait > 0) { timer = setTimeout(showWhenIdle, wait); return }
-      lastIdlePromptAt = Date.now()
+    if (open || busy || quickInput.trim() || launcherActive || !pageVisible || noticeOpen || hint) return
+    const dueAt = hintCount === 0 && !lastBotUseAt.current
+      ? pageEnteredAt.current + 5000
+      : Math.max(lastBotUseAt.current, lastHintAt.current) + 60000
+    const timer = setTimeout(() => {
+      lastHintAt.current = Date.now()
       setHint(idlePrompts[idlePromptIndex++ % idlePrompts.length])
       setHintCount(count => count + 1)
-    }
-    timer = setTimeout(showWhenIdle, Math.max(interval, lastIdlePromptAt + 45000 - Date.now()))
+    }, Math.max(0, dueAt - Date.now()))
     return () => clearTimeout(timer)
-  }, [open, busy, quickInput, launcherActive, pageVisible, hintCount, hint])
+  }, [open, busy, quickInput, launcherActive, pageVisible, noticeOpen, hintCount, hint])
   useEffect(() => {
     if (!hint) return
     const timer = setTimeout(() => setHint(''), 4800)
@@ -85,12 +88,13 @@ export default function EventAssistant({ event }) {
     if (!open) return
     const onKeyDown = e => {
       if (e.key === 'Escape') {
+        markBotUse()
         setOpen(false)
         launcherButton.current?.focus({ preventScroll: true })
       }
     }
     const onPointerDown = e => {
-      if (!panel.current?.contains(e.target) && !launcher.current?.contains(e.target)) setOpen(false)
+      if (!panel.current?.contains(e.target) && !launcher.current?.contains(e.target)) { markBotUse(); setOpen(false) }
     }
     document.addEventListener('keydown', onKeyDown)
     document.addEventListener('pointerdown', onPointerDown)
@@ -101,7 +105,7 @@ export default function EventAssistant({ event }) {
   }, [open])
 
   function toggle() {
-    setHint('')
+    markBotUse()
     if (open) {
       setOpen(false)
     } else {
@@ -115,7 +119,7 @@ export default function EventAssistant({ event }) {
     const question = quickInput.trim()
     if (!question || busy) { toggle(); return }
     setQuickInput('')
-    setHint('')
+    markBotUse()
     setOpen(true)
     ask(question)
     requestAnimationFrame(() => panel.current?.focus({ preventScroll: true }))
@@ -123,6 +127,11 @@ export default function EventAssistant({ event }) {
 
   function syncLauncherActive() {
     requestAnimationFrame(() => setLauncherActive(launcher.current?.matches(':hover, :focus-within') || false))
+  }
+
+  function markBotUse() {
+    lastBotUseAt.current = Date.now()
+    setHint('')
   }
 
   async function ask(question, previous = messages, searchEnabled = webSearch) {
@@ -174,7 +183,7 @@ export default function EventAssistant({ event }) {
         <span className="assistant-panel-title">事件助手</span>
         <div className="assistant-panel-actions">
           {messages.length > 0 && <button type="button" onClick={reset} disabled={busy} title="新对话" aria-label="新对话"><Icon name="new" /></button>}
-          <button type="button" onClick={() => { setOpen(false); launcherButton.current?.focus({ preventScroll: true }) }} title="关闭" aria-label="关闭事件助手"><Icon name="close" /></button>
+          <button type="button" onClick={() => { markBotUse(); setOpen(false); launcherButton.current?.focus({ preventScroll: true }) }} title="关闭" aria-label="关闭事件助手"><Icon name="close" /></button>
         </div>
       </header>
       <div className={`assistant-log ${messages.length ? 'has-messages' : 'is-empty'}`} ref={log} role="region" aria-label="问答记录" tabIndex={0}
@@ -220,14 +229,14 @@ export default function EventAssistant({ event }) {
       <span className="sr-only" role="status" aria-live="polite">{busy ? '正在回答' : error || ''}</span>
     </section>}
     {hint && !open && !launcherActive && <button type="button" className="assistant-idle-hint"
-      onClick={() => { setHint(''); quickField.current?.focus({ preventScroll: true }) }}>
+      onClick={() => { markBotUse(); quickField.current?.focus({ preventScroll: true }) }}>
       {hint}
     </button>}
     <form ref={launcher} className="assistant-launcher" onSubmit={submitQuick}
       onPointerEnter={() => { setLauncherActive(true); setHint('') }} onPointerLeave={syncLauncherActive}
-      onFocusCapture={() => { setLauncherActive(true); setHint('') }} onBlurCapture={syncLauncherActive}>
+      onFocusCapture={() => { markBotUse(); setLauncherActive(true) }} onBlurCapture={syncLauncherActive}>
       <input ref={quickField} className="assistant-launcher-input" type="text" aria-label="快速提问"
-        autoComplete="off" maxLength={2000} value={quickInput} onChange={e => setQuickInput(e.target.value)}
+        autoComplete="off" maxLength={2000} value={quickInput} onChange={e => { markBotUse(); setQuickInput(e.target.value) }}
         placeholder="问问这件事…" disabled={open || busy} />
       <button ref={launcherButton} type="submit" className={`assistant-launcher-action ${quickInput.trim() && !open && !busy ? 'has-draft' : ''}`}
         aria-label={quickInput.trim() && !open && !busy ? '发送快速提问' : open ? '关闭事件助手' : '打开事件助手'}
