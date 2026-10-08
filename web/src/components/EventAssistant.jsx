@@ -15,7 +15,6 @@ function Icon({ name }) {
   if (name === 'new') return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16.5V6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v8a2.5 2.5 0 0 1-2.5 2.5H9l-4 3v-3.5Z" /><path d="M12 7.5v6m-3-3h6" /></svg>
   if (name === 'close') return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19" /></svg>
   if (name === 'stop') return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
-  if (name === 'web') return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c2.3 2.3 3.5 5.1 3.5 8.5S14.3 18.2 12 20.5M12 3.5C9.7 5.8 8.5 8.6 8.5 12s1.2 6.2 3.5 8.5" /></svg>
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6" /></svg>
 }
 
@@ -145,10 +144,9 @@ export default function EventAssistant({ event }) {
           placeholder="问问这件事…" disabled={busy}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && e.keyCode !== 229) { e.preventDefault(); ask(input) } }} />
         <div className="assistant-compose-bottom">
-          <button type="button" className={`assistant-search-option ${webSearch ? 'is-active' : ''}`}
+          <button type="button" className={`fchip assistant-search-option ${webSearch ? 'on' : ''}`}
             aria-pressed={webSearch} disabled={busy} onClick={() => setWebSearch(value => !value)}>
-            <Icon name="web" />
-            <span>联网搜索</span>
+            联网搜索
           </button>
           <div className="assistant-compose-actions">
             {busy ? <button type="button" aria-label="停止生成" title="停止生成" onClick={() => pending.current?.abort()}><Icon name="stop" /></button>
