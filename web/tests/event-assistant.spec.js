@@ -13,9 +13,11 @@ async function open(page) {
   await expect(page.getByRole('textbox', { name: '关于当前事件的问题' })).toBeVisible()
   const search = page.getByRole('button', { name: '联网搜索' })
   await expect(search).toHaveAttribute('aria-pressed', 'false')
-  const size = await search.boundingBox()
-  expect(size.width).toBeLessThan(90)
-  expect(size.height).toBeLessThanOrEqual(30)
+  const searchSize = await search.boundingBox()
+  const sendSize = await page.getByRole('button', { name: '发送问题' }).boundingBox()
+  expect(searchSize.width).toBeLessThan(90)
+  expect(searchSize.height).toBe(32)
+  expect(sendSize.height).toBe(searchSize.height)
 }
 
 test('floating launcher, question, follow-up context, reset and event isolation', async ({ page }) => {
