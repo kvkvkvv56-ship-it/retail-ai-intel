@@ -5,6 +5,16 @@ import Markdown from 'react-markdown'
 import { readChatStream, recentConversation } from '../lib/event-chat.js'
 
 const suggestions = ['概括这件事', '哪些仍需核实？']
+const idlePrompts = [
+  '想问哪一条？我在。',
+  '这件事的重点，要我捋捋吗？',
+  '哪里还没核实？问我呀。',
+  '一句话也行，问我看看。',
+  '想看来源？我帮你找。',
+  '还有疑问？我听着。',
+]
+let lastIdlePromptAt = 0
+let idlePromptIndex = Math.floor(Math.random() * idlePrompts.length)
 
 function Avatar({ state = 'default', size = 34 }) {
   return <BotAvatar type="clover" state={state} size={size} color="#8076cc" theme="light"
@@ -26,11 +36,48 @@ export default function EventAssistant({ event }) {
   const [error, setError] = useState('')
   const [webSearch, setWebSearch] = useState(false)
   const [webSources, setWebSources] = useState([])
+  const [quickInput, setQuickInput] = useState('')
+  const [launcherActive, setLauncherActive] = useState(false)
+  const [pageVisible, setPageVisible] = useState(!document.hidden)
+  const [hint, setHint] = useState('')
+  const [hintCount, setHintCount] = useState(0)
   const pending = useRef(null), log = useRef(null), field = useRef(null)
-  const launcher = useRef(null), panel = useRef(null), follow = useRef(true)
+  const launcher = useRef(null), launcherButton = useRef(null), quickField = useRef(null)
+  const panel = useRef(null), follow = useRef(true)
+  const lastActivityAt = useRef(Date.now())
   const sources = new Set([...(event.items || []).map(i => i.url), ...webSources])
 
   useEffect(() => () => pending.current?.abort(), [])
+  useEffect(() => {
+    const onVisibilityChange = () => setPageVisible(!document.hidden)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [])
+  useEffect(() => {
+    const noteActivity = () => { lastActivityAt.current = Date.now() }
+    const events = ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchmove', 'scroll']
+    events.forEach(name => document.addEventListener(name, noteActivity, { passive: true, capture: true }))
+    return () => events.forEach(name => document.removeEventListener(name, noteActivity, true))
+  }, [])
+  useEffect(() => {
+    if (open || busy || quickInput.trim() || launcherActive || !pageVisible || hintCount >= 3 || hint) return
+    const interval = hintCount === 0 ? 12000 : 60000
+    let timer
+    const showWhenIdle = () => {
+      const wait = Math.max(lastActivityAt.current + 12000, lastIdlePromptAt + 45000) - Date.now()
+      if (wait > 0) { timer = setTimeout(showWhenIdle, wait); return }
+      lastIdlePromptAt = Date.now()
+      setHint(idlePrompts[idlePromptIndex++ % idlePrompts.length])
+      setHintCount(count => count + 1)
+    }
+    timer = setTimeout(showWhenIdle, Math.max(interval, lastIdlePromptAt + 45000 - Date.now()))
+    return () => clearTimeout(timer)
+  }, [open, busy, quickInput, launcherActive, pageVisible, hintCount, hint])
+  useEffect(() => {
+    if (!hint) return
+    const timer = setTimeout(() => setHint(''), 4800)
+    return () => clearTimeout(timer)
+  }, [hint])
   useEffect(() => {
     if (open && follow.current && log.current) log.current.scrollTop = log.current.scrollHeight
   }, [messages, busy, error, open])
@@ -39,7 +86,7 @@ export default function EventAssistant({ event }) {
     const onKeyDown = e => {
       if (e.key === 'Escape') {
         setOpen(false)
-        launcher.current?.focus({ preventScroll: true })
+        launcherButton.current?.focus({ preventScroll: true })
       }
     }
     const onPointerDown = e => {
@@ -54,12 +101,28 @@ export default function EventAssistant({ event }) {
   }, [open])
 
   function toggle() {
+    setHint('')
     if (open) {
       setOpen(false)
     } else {
       setOpen(true)
       requestAnimationFrame(() => field.current?.focus({ preventScroll: true }))
     }
+  }
+
+  function submitQuick(e) {
+    e.preventDefault()
+    const question = quickInput.trim()
+    if (!question || busy) { toggle(); return }
+    setQuickInput('')
+    setHint('')
+    setOpen(true)
+    ask(question)
+    requestAnimationFrame(() => panel.current?.focus({ preventScroll: true }))
+  }
+
+  function syncLauncherActive() {
+    requestAnimationFrame(() => setLauncherActive(launcher.current?.matches(':hover, :focus-within') || false))
   }
 
   async function ask(question, previous = messages, searchEnabled = webSearch) {
@@ -106,12 +169,12 @@ export default function EventAssistant({ event }) {
 
   const retryQuestion = messages.at(-2)?.content
   return createPortal(<div className={`event-assistant-float ${open ? 'is-open' : ''}`}>
-    {open && <section ref={panel} id="event-assistant-panel" className="assistant-panel" role="dialog" aria-label="事件助手">
+    {open && <section ref={panel} id="event-assistant-panel" className="assistant-panel" role="dialog" aria-label="事件助手" tabIndex={-1}>
       <header className="assistant-panel-head">
         <span className="assistant-panel-title">事件助手</span>
         <div className="assistant-panel-actions">
           {messages.length > 0 && <button type="button" onClick={reset} disabled={busy} title="新对话" aria-label="新对话"><Icon name="new" /></button>}
-          <button type="button" onClick={() => { setOpen(false); launcher.current?.focus({ preventScroll: true }) }} title="关闭" aria-label="关闭事件助手"><Icon name="close" /></button>
+          <button type="button" onClick={() => { setOpen(false); launcherButton.current?.focus({ preventScroll: true }) }} title="关闭" aria-label="关闭事件助手"><Icon name="close" /></button>
         </div>
       </header>
       <div className={`assistant-log ${messages.length ? 'has-messages' : 'is-empty'}`} ref={log} role="region" aria-label="问答记录" tabIndex={0}
@@ -156,10 +219,21 @@ export default function EventAssistant({ event }) {
       </form>
       <span className="sr-only" role="status" aria-live="polite">{busy ? '正在回答' : error || ''}</span>
     </section>}
-    <button ref={launcher} type="button" className="assistant-launcher" onClick={toggle}
-      aria-label={open ? '关闭事件助手' : '打开事件助手'} aria-expanded={open} aria-haspopup="dialog" aria-controls="event-assistant-panel">
-      <span className="assistant-launcher-avatar"><Avatar state={busy ? 'working' : 'default'} size={34} /></span>
-      <span className="assistant-launcher-prompt" aria-hidden="true">问问这件事…</span>
-    </button>
+    {hint && !open && !launcherActive && <button type="button" className="assistant-idle-hint"
+      onClick={() => { setHint(''); quickField.current?.focus({ preventScroll: true }) }}>
+      {hint}
+    </button>}
+    <form ref={launcher} className="assistant-launcher" onSubmit={submitQuick}
+      onPointerEnter={() => { setLauncherActive(true); setHint('') }} onPointerLeave={syncLauncherActive}
+      onFocusCapture={() => { setLauncherActive(true); setHint('') }} onBlurCapture={syncLauncherActive}>
+      <input ref={quickField} className="assistant-launcher-input" type="text" aria-label="快速提问"
+        autoComplete="off" maxLength={2000} value={quickInput} onChange={e => setQuickInput(e.target.value)}
+        placeholder="问问这件事…" disabled={open || busy} />
+      <button ref={launcherButton} type="submit" className={`assistant-launcher-action ${quickInput.trim() && !open && !busy ? 'has-draft' : ''}`}
+        aria-label={quickInput.trim() && !open && !busy ? '发送快速提问' : open ? '关闭事件助手' : '打开事件助手'}
+        aria-expanded={open} aria-haspopup="dialog" aria-controls="event-assistant-panel">
+        {quickInput.trim() && !open && !busy ? <Icon name="send" /> : <Avatar state={busy ? 'working' : 'default'} size={34} />}
+      </button>
+    </form>
   </div>, document.body)
 }
