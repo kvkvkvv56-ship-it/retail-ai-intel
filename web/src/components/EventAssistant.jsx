@@ -232,7 +232,8 @@ export default function EventAssistant({ event }) {
       <button ref={launcherButton} type="submit" className={`assistant-launcher-action ${quickInput.trim() && !open && !busy ? 'has-draft' : ''}`}
         aria-label={quickInput.trim() && !open && !busy ? '发送快速提问' : open ? '关闭事件助手' : '打开事件助手'}
         aria-expanded={open} aria-haspopup="dialog" aria-controls="event-assistant-panel">
-        {quickInput.trim() && !open && !busy ? <Icon name="send" /> : <Avatar state={busy ? 'working' : 'default'} size={34} />}
+        <span className="assistant-launcher-bot" aria-hidden="true"><Avatar state={busy ? 'working' : 'default'} size={34} /></span>
+        <span className="assistant-launcher-send" aria-hidden="true"><Icon name="send" /></span>
       </button>
     </form>
   </div>, document.body)

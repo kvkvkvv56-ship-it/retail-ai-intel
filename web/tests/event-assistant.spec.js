@@ -11,7 +11,11 @@ async function open(page) {
   await page.getByRole('button', { name: '打开事件助手' }).click()
   await expect(page.getByRole('dialog', { name: '事件助手' })).toBeVisible()
   await expect(page.getByRole('textbox', { name: '关于当前事件的问题' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '联网搜索' })).toHaveAttribute('aria-pressed', 'false')
+  const search = page.getByRole('button', { name: '联网搜索' })
+  await expect(search).toHaveAttribute('aria-pressed', 'false')
+  const size = await search.boundingBox()
+  expect(size.width).toBeLessThan(90)
+  expect(size.height).toBeLessThanOrEqual(30)
 }
 
 test('floating launcher, question, follow-up context, reset and event isolation', async ({ page }) => {
@@ -33,7 +37,8 @@ test('floating launcher, question, follow-up context, reset and event isolation'
   await expect(quickField).toHaveAttribute('placeholder', '问问这件事…')
   await quickField.fill('这件事的重点是什么？')
   await expect(page.getByRole('button', { name: '发送快速提问' })).toBeVisible()
-  await expect(page.locator('.assistant-launcher-action svg')).toBeVisible()
+  await expect(page.locator('.assistant-launcher-send')).toHaveCSS('opacity', '1')
+  await expect(page.locator('.assistant-launcher-bot')).toHaveCSS('opacity', '0')
   await page.screenshot({ path: '/private/tmp/event-assistant-hover.png', animations: 'disabled' })
   await quickField.press('Enter')
   await expect(page.getByRole('dialog', { name: '事件助手' })).toBeVisible()
@@ -65,6 +70,25 @@ test('floating launcher, question, follow-up context, reset and event isolation'
   await page.locator('.edge-item').first().click()
   await expect(page.locator('.assistant-message')).toHaveCount(0)
   expect(errors).toEqual([])
+})
+
+test('launcher avatar and send arrow crossfade without remounting', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.goto(pagePath)
+  await page.getByRole('button', { name: '我知道了', exact: true }).click()
+  const bot = page.locator('.assistant-launcher-bot')
+  const send = page.locator('.assistant-launcher-send')
+  const field = page.getByRole('textbox', { name: '快速提问' })
+  await field.focus()
+  await bot.evaluate(el => { el.dataset.stable = 'yes' })
+  expect(await send.evaluate(el => getComputedStyle(el).transitionDuration)).not.toBe('0s')
+  await field.fill('有什么变化？')
+  await expect(bot).toHaveCSS('opacity', '0')
+  await expect(send).toHaveCSS('opacity', '1')
+  await expect(bot).toHaveAttribute('data-stable', 'yes')
+  await field.fill('')
+  await expect(bot).toHaveCSS('opacity', '1')
+  await expect(send).toHaveCSS('opacity', '0')
 })
 
 test('mobile floating layout, close, retry and stop', async ({ page }) => {
