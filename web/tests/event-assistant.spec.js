@@ -142,9 +142,11 @@ test('bot invitation appears after five seconds even while browsing the page', a
   await expect(hint).toHaveText(/问|疑问|来源|重点/)
   const firstHint = await hint.textContent()
   await page.screenshot({ path: '/private/tmp/event-assistant-idle.png', animations: 'disabled' })
-  await page.clock.runFor(4800)
+  await page.clock.runFor(6500)
+  await expect(hint).toBeVisible()
+  await page.clock.runFor(2500)
   await expect(hint).toHaveCount(0)
-  await page.clock.runFor(55000)
+  await page.clock.runFor(51000)
   await expect(hint).toBeVisible()
   expect(await hint.textContent()).not.toBe(firstHint)
   await hint.click()
@@ -175,6 +177,34 @@ test('invitation waits for the site notice and resets after bot use', async ({ p
   await expect(hint).toHaveCount(0)
   await page.clock.runFor(1500)
   await expect(hint).toBeVisible()
+})
+
+test('invitation clouds flow and the bubble exits before removal', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.clock.install({ time: new Date('2026-10-08T12:00:00Z') })
+  await page.goto(pagePath)
+  await page.getByRole('button', { name: '我知道了', exact: true }).click()
+  await expect(page.locator('.notice-backdrop')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '打开事件助手' })).toBeVisible()
+  await page.clock.runFor(5500)
+  const hint = page.locator('.assistant-idle-hint')
+  await expect(hint).toHaveClass(/is-visible/)
+  const motion = await hint.locator('.assistant-idle-hint-cloud').evaluate(el => ({
+    before: getComputedStyle(el, '::before').animationDuration,
+    after: getComputedStyle(el, '::after').animationDuration,
+    exit: getComputedStyle(el.parentElement).transitionDuration,
+  }))
+  expect(motion.before).toBe('8s')
+  expect(motion.after).toBe('10s')
+  expect(motion.exit).toContain('0.25s')
+  await hint.screenshot({ path: '/private/tmp/event-assistant-cloud.png' })
+  await page.clock.runFor(7000)
+  await expect(hint).toBeVisible()
+  await hint.click()
+  await expect(hint).toHaveCount(1)
+  await expect(hint).not.toHaveClass(/is-visible/)
+  await page.clock.runFor(300)
+  await expect(hint).toHaveCount(0)
 })
 
 test('stream interruption and untrusted markdown stay safe', async ({ page }) => {

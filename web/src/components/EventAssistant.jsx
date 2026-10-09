@@ -40,6 +40,7 @@ export default function EventAssistant({ event }) {
   const [pageVisible, setPageVisible] = useState(!document.hidden)
   const [noticeOpen, setNoticeOpen] = useState(() => Boolean(document.querySelector('.notice-backdrop')))
   const [hint, setHint] = useState('')
+  const [hintPhase, setHintPhase] = useState('hidden')
   const [hintCount, setHintCount] = useState(0)
   const pending = useRef(null), log = useRef(null), field = useRef(null)
   const launcher = useRef(null), launcherButton = useRef(null), quickField = useRef(null)
@@ -65,22 +66,34 @@ export default function EventAssistant({ event }) {
     return () => observer.disconnect()
   }, [noticeOpen])
   useEffect(() => {
-    if (open || busy || quickInput.trim() || launcherActive || !pageVisible || noticeOpen || hint) return
+    if (open || busy || quickInput.trim() || launcherActive || !pageVisible || noticeOpen || hintPhase !== 'hidden') return
     const dueAt = hintCount === 0 && !lastBotUseAt.current
       ? pageEnteredAt.current + 5000
       : Math.max(lastBotUseAt.current, lastHintAt.current) + 60000
     const timer = setTimeout(() => {
       lastHintAt.current = Date.now()
       setHint(idlePrompts[idlePromptIndex++ % idlePrompts.length])
+      setHintPhase('entering')
       setHintCount(count => count + 1)
     }, Math.max(0, dueAt - Date.now()))
     return () => clearTimeout(timer)
-  }, [open, busy, quickInput, launcherActive, pageVisible, noticeOpen, hintCount, hint])
+  }, [open, busy, quickInput, launcherActive, pageVisible, noticeOpen, hintCount, hintPhase])
   useEffect(() => {
-    if (!hint) return
-    const timer = setTimeout(() => setHint(''), 4800)
-    return () => clearTimeout(timer)
-  }, [hint])
+    if (hintPhase === 'entering') {
+      const frame = requestAnimationFrame(() => setHintPhase('visible'))
+      return () => cancelAnimationFrame(frame)
+    }
+    if (hintPhase === 'visible') {
+      const timer = setTimeout(() => setHintPhase('leaving'), 8500)
+      return () => clearTimeout(timer)
+    }
+    if (hintPhase === 'leaving') {
+      const delay = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 250
+      const timer = setTimeout(() => { setHint(''); setHintPhase('hidden') }, delay)
+      return () => clearTimeout(timer)
+    }
+  }, [hintPhase])
+  useEffect(() => { if (!pageVisible) hideHint() }, [pageVisible])
   useEffect(() => {
     if (open && follow.current && log.current) log.current.scrollTop = log.current.scrollHeight
   }, [messages, busy, error, open])
@@ -131,7 +144,11 @@ export default function EventAssistant({ event }) {
 
   function markBotUse() {
     lastBotUseAt.current = Date.now()
-    setHint('')
+    hideHint()
+  }
+
+  function hideHint() {
+    setHintPhase(phase => phase === 'entering' || phase === 'visible' ? 'leaving' : phase)
   }
 
   async function ask(question, previous = messages, searchEnabled = webSearch) {
@@ -228,12 +245,14 @@ export default function EventAssistant({ event }) {
       </form>
       <span className="sr-only" role="status" aria-live="polite">{busy ? '正在回答' : error || ''}</span>
     </section>}
-    {hint && !open && !launcherActive && <button type="button" className="assistant-idle-hint"
+    {hint && <button type="button" className={`assistant-idle-hint ${hintPhase === 'visible' ? 'is-visible' : ''}`}
+      aria-hidden={hintPhase !== 'visible'} tabIndex={hintPhase === 'visible' ? 0 : -1}
       onClick={() => { markBotUse(); quickField.current?.focus({ preventScroll: true }) }}>
-      {hint}
+      <span className="assistant-idle-hint-cloud" aria-hidden="true" />
+      <span className="assistant-idle-hint-copy">{hint}</span>
     </button>}
     <form ref={launcher} className="assistant-launcher" onSubmit={submitQuick}
-      onPointerEnter={() => { setLauncherActive(true); setHint('') }} onPointerLeave={syncLauncherActive}
+      onPointerEnter={() => { setLauncherActive(true); hideHint() }} onPointerLeave={syncLauncherActive}
       onFocusCapture={() => { markBotUse(); setLauncherActive(true) }} onBlurCapture={syncLauncherActive}>
       <input ref={quickField} className="assistant-launcher-input" type="text" aria-label="快速提问"
         autoComplete="off" maxLength={2000} value={quickInput} onChange={e => { markBotUse(); setQuickInput(e.target.value) }}
