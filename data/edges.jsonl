@@ -1189,3 +1189,9 @@
 {"from_event": "EV-b792c703", "to_event": "EV-c20164b9", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-11 → 2026-10-11）", "created_by": "rule"}
 {"from_event": "EV-96c13cde", "to_event": "EV-1032f6fd", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-09-22 → 2026-09-24）", "created_by": "rule"}
 {"from_event": "EV-1032f6fd", "to_event": "EV-dc0b2b3a", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-09-24 → 2026-09-25）", "created_by": "rule"}
+{"from_event": "EV-e8803eaa", "to_event": "EV-5052660c", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-10-11 → 2026-10-11）", "created_by": "rule"}
+{"from_event": "EV-63258b17", "to_event": "EV-6b9b48f2", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-08 → 2026-10-08）", "created_by": "rule"}
+{"from_event": "EV-6b9b48f2", "to_event": "EV-9d34e780", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-08 → 2026-10-08）", "created_by": "rule"}
+{"from_event": "EV-f1e774a6", "to_event": "EV-245c37be", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-08 → 2026-10-08）", "created_by": "rule"}
+{"from_event": "EV-245c37be", "to_event": "EV-162cf134", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-08 → 2026-10-09）", "created_by": "rule"}
+{"from_event": "EV-c20164b9", "to_event": "EV-d0ef303f", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-11 → 2026-10-11）", "created_by": "rule"}
