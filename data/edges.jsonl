@@ -1210,3 +1210,17 @@
 {"from_event": "EV-aa65a512", "to_event": "EV-5052660c", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-10-10 → 2026-10-11）", "created_by": "rule"}
 {"from_event": "EV-c4d6370c", "to_event": "EV-ad16cf66", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-10-12 → 2026-10-12）", "created_by": "rule"}
 {"from_event": "EV-d0ef303f", "to_event": "EV-19305fa6", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-11 → 2026-10-12）", "created_by": "rule"}
+{"from_event": "EV-bf5326ee", "to_event": "EV-04af461e", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-10-10 → 2026-10-12）", "created_by": "rule"}
+{"from_event": "EV-04af461e", "to_event": "EV-eb080dd8", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-10-12 → 2026-10-12）", "created_by": "rule"}
+{"from_event": "EV-eb080dd8", "to_event": "EV-eeb93152", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-10-12 → 2026-10-12）", "created_by": "rule"}
+{"from_event": "EV-eeb93152", "to_event": "EV-423d5d23", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-10-12 → 2026-10-12）", "created_by": "rule"}
+{"from_event": "EV-e8803eaa", "to_event": "EV-ad16cf66", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-10-11 → 2026-10-12）", "created_by": "rule"}
+{"from_event": "EV-c4d6370c", "to_event": "EV-74e5fc29", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-10-12 → 2026-10-13）", "created_by": "rule"}
+{"from_event": "EV-74e5fc29", "to_event": "EV-b4c0cec7", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-10-13 → 2026-10-13）", "created_by": "rule"}
+{"from_event": "EV-19305fa6", "to_event": "EV-e19a4358", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-12 → 2026-10-13）", "created_by": "rule"}
+{"from_event": "EV-e19a4358", "to_event": "EV-d26108dc", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-13 → 2026-10-13）", "created_by": "rule"}
+{"from_event": "EV-d26108dc", "to_event": "EV-f1fbcf7f", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-13 → 2026-10-13）", "created_by": "rule"}
+{"from_event": "EV-f1fbcf7f", "to_event": "EV-9952b5cb", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-13 → 2026-10-13）", "created_by": "rule"}
+{"from_event": "EV-14186761", "to_event": "EV-52d5fb9f", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-10-12 → 2026-10-13）", "created_by": "rule"}
+{"from_event": "EV-52d5fb9f", "to_event": "EV-423b409f", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-10-13 → 2026-10-13）", "created_by": "rule"}
+{"from_event": "EV-e1e43dbe", "to_event": "EV-0da7b366", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-10-09 → 2026-10-13）", "created_by": "rule"}
