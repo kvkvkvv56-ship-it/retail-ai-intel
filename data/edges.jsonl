@@ -1704,3 +1704,13 @@
 {"from_event": "EV-7b3e8f5f", "to_event": "EV-0f84ecb2", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-05-19 → 2026-05-26）", "created_by": "rule"}
 {"from_event": "EV-0d2f2b9e", "to_event": "EV-1faf3906", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-10-18 → 2026-10-19）", "created_by": "rule"}
 {"from_event": "EV-1faf3906", "to_event": "EV-e18d4c0c", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-10-19 → 2026-10-19）", "created_by": "rule"}
+{"from_event": "EV-3d3d1f23", "to_event": "EV-9d1c5e14", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-10-20 → 2026-10-20）", "created_by": "rule"}
+{"from_event": "EV-3039cf19", "to_event": "EV-22a3772d", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-17 → 2026-10-17）", "created_by": "rule"}
+{"from_event": "EV-22a3772d", "to_event": "EV-516e2eb6", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-17 → 2026-10-19）", "created_by": "rule"}
+{"from_event": "EV-ea39bb37", "to_event": "EV-90f19cdf", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-19 → 2026-10-20）", "created_by": "rule"}
+{"from_event": "EV-90f19cdf", "to_event": "EV-ffba797e", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-20 → 2026-10-20）", "created_by": "rule"}
+{"from_event": "EV-ffba797e", "to_event": "EV-021de280", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-10-20 → 2026-10-20）", "created_by": "rule"}
+{"from_event": "EV-db9e22b6", "to_event": "EV-f00d0b5a", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-10-16 → 2026-10-16）", "created_by": "rule"}
+{"from_event": "EV-f00d0b5a", "to_event": "EV-245032f3", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-10-16 → 2026-10-18）", "created_by": "rule"}
+{"from_event": "EV-4fc0a775", "to_event": "EV-090d4b3e", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-10-19 → 2026-10-20）", "created_by": "rule"}
+{"from_event": "EV-e18d4c0c", "to_event": "EV-b9e4b5ec", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-10-19 → 2026-10-19）", "created_by": "rule"}
