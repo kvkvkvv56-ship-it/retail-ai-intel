@@ -2077,3 +2077,7 @@
 {"from_event": "EV-7f483ce6", "to_event": "EV-534763a4", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-10-30 → 2026-10-31）", "created_by": "rule"}
 {"from_event": "EV-ecd5ae05", "to_event": "EV-b53d7456", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-07-07 → 2026-07-08）", "created_by": "rule"}
 {"from_event": "EV-b53d7456", "to_event": "EV-1066ebe9", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-07-08 → 2026-07-27）", "created_by": "rule"}
+{"from_event": "EV-f8b8bb2a", "to_event": "EV-1e8ae9ee", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-10-30 → 2026-11-01）", "created_by": "rule"}
+{"from_event": "EV-271e741b", "to_event": "EV-1e94609b", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-04-07 → 2026-04-08）", "created_by": "rule"}
+{"from_event": "EV-1e94609b", "to_event": "EV-d10f2b39", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-04-08 → 2026-04-08）", "created_by": "rule"}
+{"from_event": "EV-534763a4", "to_event": "EV-065505b7", "relation": "same_actor_track", "basis": "同为 wechat 的动作，时间相邻（2026-10-31 → 2026-11-01）", "created_by": "rule"}
