@@ -2534,3 +2534,22 @@
 {"from_event": "EV-0fa4d851", "to_event": "EV-5101df7c", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-11-14 → 2026-11-15）", "created_by": "rule"}
 {"from_event": "EV-5101df7c", "to_event": "EV-f0e09ee9", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-11-15 → 2026-11-30）", "created_by": "rule"}
 {"from_event": "EV-fa6fe0ea", "to_event": "EV-3397f549", "relation": "same_actor_track", "basis": "同为 meituan 的动作，时间相邻（2026-11-13 → 2026-11-15）", "created_by": "rule"}
+{"from_event": "EV-a0998319", "to_event": "EV-2799e418", "relation": "follows", "basis": "千问办公于11月16日将新发布的Qwen4-Max纳入可选模型列表，其上线动作以Qwen4-Max发布为前提，属发布后的产品接入进展。", "created_by": "llm"}
+{"from_event": "EV-36dcfbc0", "to_event": "EV-7ee15578", "relation": "same_actor_track", "basis": "同为 ai_vendor 的动作，时间相邻（2026-11-15 → 2026-11-16）", "created_by": "rule"}
+{"from_event": "EV-9069561c", "to_event": "EV-649b0cdd", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-11-09 → 2026-11-09）", "created_by": "rule"}
+{"from_event": "EV-649b0cdd", "to_event": "EV-0888de59", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-11-09 → 2026-11-10）", "created_by": "rule"}
+{"from_event": "EV-91a55d9c", "to_event": "EV-2799e418", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-11-15 → 2026-11-16）", "created_by": "rule"}
+{"from_event": "EV-2799e418", "to_event": "EV-a0998319", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-11-16 → 2026-11-16）", "created_by": "rule"}
+{"from_event": "EV-a0998319", "to_event": "EV-72255d5d", "relation": "same_actor_track", "basis": "同为 alibaba 的动作，时间相邻（2026-11-16 → 2026-11-16）", "created_by": "rule"}
+{"from_event": "EV-ff681dbb", "to_event": "EV-7665d626", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-11-11 → 2026-11-12）", "created_by": "rule"}
+{"from_event": "EV-7665d626", "to_event": "EV-78ee1277", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-11-12 → 2026-11-12）", "created_by": "rule"}
+{"from_event": "EV-8f7ba96e", "to_event": "EV-e8a3af2d", "relation": "same_actor_track", "basis": "同为 industry 的动作，时间相邻（2026-11-15 → 2026-11-16）", "created_by": "rule"}
+{"from_event": "EV-dd700a42", "to_event": "EV-4f2ba420", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-02-11 → 2026-02-12）", "created_by": "rule"}
+{"from_event": "EV-4f2ba420", "to_event": "EV-6acbe345", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-02-12 → 2026-02-12）", "created_by": "rule"}
+{"from_event": "EV-fd3902bf", "to_event": "EV-2b80f4c0", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-11-12 → 2026-11-12）", "created_by": "rule"}
+{"from_event": "EV-2b80f4c0", "to_event": "EV-0fa4d851", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-11-12 → 2026-11-14）", "created_by": "rule"}
+{"from_event": "EV-5101df7c", "to_event": "EV-8f6736d5", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-11-15 → 2026-11-16）", "created_by": "rule"}
+{"from_event": "EV-8f6736d5", "to_event": "EV-f0e09ee9", "relation": "same_actor_track", "basis": "同为 douyin 的动作，时间相邻（2026-11-16 → 2026-11-30）", "created_by": "rule"}
+{"from_event": "EV-92c9a430", "to_event": "EV-7b3e8f5f", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-05-18 → 2026-05-19）", "created_by": "rule"}
+{"from_event": "EV-34e7228e", "to_event": "EV-ca2c1738", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-06-15 → 2026-06-19）", "created_by": "rule"}
+{"from_event": "EV-ca2c1738", "to_event": "EV-4125065e", "relation": "same_actor_track", "basis": "同为 jd 的动作，时间相邻（2026-06-19 → 2026-07-15）", "created_by": "rule"}
