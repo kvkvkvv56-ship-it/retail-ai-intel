@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react'
-import { api, CLASS_LABEL, CLASS_SHORT, fmtDate } from '../api.js'
+import { api, REVIEW_STATUS, CLASS_LABEL, CLASS_SHORT, fmtDate } from '../api.js'
 import { Confidence, Status, TimeMark, Empty, Loading } from '../components/Bits.jsx'
 
 const EventAssistant = lazy(() => import('../components/EventAssistant.jsx'))
@@ -24,6 +24,7 @@ export default function EventDetail({ id, meta, nav }) {
 
   const domName = Object.fromEntries(meta.domains.map((d) => [d.id, d.name]))
   const compName = Object.fromEntries(meta.companies.map((c) => [c.id, c.name]))
+  const review = REVIEW_STATUS[e.review_state]
   const byId = Object.fromEntries((e.items || []).map((i) => [i.id, i]))
 
   return (
@@ -52,13 +53,10 @@ export default function EventDetail({ id, meta, nav }) {
           <span className="note">{e.stage_basis}</span>
         </div>
       )}
-      {e.review_state && e.review_state !== 'none' && (
-        <div className="callout warn">
+      {review && (
+        <div className={review.queued ? 'callout warn' : 'callout'}>
           <span className="k">人工复核</span>
-          <span className="v">
-            {e.review_state === 'pending' ? '单源待确认，已进复核队列'
-              : '疑似与其他事件重复，待人工判定'}
-          </span>
+          <span className="v">{review.detail}</span>
         </div>
       )}
 

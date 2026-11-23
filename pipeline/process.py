@@ -648,10 +648,6 @@ def stage_merge_cross(store, llm, run_id: str) -> dict:
         if len(idx) < 2:
             continue
         ms = [evs[i] for i in idx]
-        for m in ms:
-            store.db.execute(
-                "UPDATE events SET review_state='suspect_duplicate' "
-                "WHERE id=? AND review_state IN ('none','')", (m["id"],))
         stats["suspects"] += _flag_once(
             store, seen, [m["id"] for m in ms],
             "模型标记疑似重复，证据不足未自动合并：" + g.get("reason", "")
@@ -694,11 +690,13 @@ def _clear_stale_suspects(store) -> int:
 def _flagged_pairs(store) -> set[frozenset]:
     """已经标记过、或人已经裁决过的疑似重复组。成员顺序不同视为同一组。
 
-    裁决过的（split / same）也算在内：人已经回答过的问题不该再问一遍，
+    已有裁决的组也算在内：已处理的疑似重复组不再重复排队，
     否则队列里会反复冒出同一组，而它早就有结论了。
     """
     return {frozenset(r["target_id"].split("|")) for r in store.q(
-        "SELECT target_id FROM reviews WHERE action IN ('flag','split','same')")}
+        """SELECT target_id FROM reviews
+           WHERE target_type='merge'
+             AND action IN ('flag','split','same','duplicate','pair_watch')""")}
 
 
 def _flag_once(store, seen: set, ids: list[str], note: str) -> int:
@@ -717,6 +715,9 @@ def _flag_once(store, seen: set, ids: list[str], note: str) -> int:
     if key in seen:
         return 0
     seen.add(key)
+    store.db.executemany(
+        "UPDATE events SET review_state='suspect_duplicate' "
+        "WHERE id=? AND review_state IN ('none','')", [(i,) for i in ids])
     store.insert("reviews", {
         "target_type": "merge", "target_id": "|".join(ids), "action": "flag",
         "note": note, "reviewer": "system", "created_at": _now()})
@@ -755,10 +756,6 @@ def _flag_suspect_duplicates(store, jaccard: float = 0.34,
             if not A or not B:
                 continue
             if len(A & B) / len(A | B) >= jaccard:
-                for e in (a, b):
-                    store.db.execute(
-                        "UPDATE events SET review_state='suspect_duplicate' "
-                        "WHERE id=? AND review_state IN ('none','')", (e["id"],))
                 n += _flag_once(
                     store, seen, [a["id"], b["id"]],
                     f"疑似重复待人工判定：「{a['title'][:30]}」({a['company']}) "

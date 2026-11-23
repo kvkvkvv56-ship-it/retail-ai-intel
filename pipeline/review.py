@@ -75,8 +75,10 @@ def cmd_queue(store, _):
     # 标记记录里的事件可能在后续轮次被自动归并掉，留下陈旧引用。
     # 展示前校验存在性，只列仍可裁决的组。
     alive = {r["id"] for r in store.q("SELECT id FROM events")}
-    done = {r["target_id"] for r in
-            store.q("SELECT target_id FROM reviews WHERE action IN ('split','same')")}
+    done = {r["target_id"] for r in store.q(
+        """SELECT target_id FROM reviews
+           WHERE target_type='merge'
+             AND action IN ('split','same','duplicate','pair_watch')""")}
     # 批量裁决同样算已处理：涉及的事件已脱离 suspect_duplicate 态，
     # 标记若还挂着会造成「队列清空但仍显示待裁决」的自相矛盾
     resolved = {r["id"] for r in store.q(

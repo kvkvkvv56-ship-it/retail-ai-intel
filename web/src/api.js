@@ -106,3 +106,12 @@ export const REASON_LABEL = {
 }
 
 export const fmtDate = (s) => (s || '').slice(0, 10) || '—'
+
+
+export const REVIEW_STATUS = {
+  pending: { badge: '待复核', detail: '单源待确认，已进复核队列', queued: true },
+  suspect_duplicate: { badge: '待复核', detail: '疑似与其他事件重复，待判定', queued: true },
+  watching: { badge: '持续观察', detail: '持续观察，等待更多证据' },
+  confirmed: { detail: '已复核' },
+  rejected: { badge: '已驳回', detail: '复核未采信' },
+}

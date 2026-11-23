@@ -8,6 +8,7 @@ import { Loading } from '../components/Bits.jsx'
  */
 const ACTION_LABEL = {
   same: '判定为同一事件并合并', split: '判定为不同事件',
+  duplicate: '确认重复并保留原记录', pair_watch: '重复组转持续观察',
   confirm: '确认采信', reject: '驳回', watch: '转持续观察',
   retier: '信源分级调整', flag: '系统标记疑似重复',
 }
