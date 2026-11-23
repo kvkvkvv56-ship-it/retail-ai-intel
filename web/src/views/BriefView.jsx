@@ -1,3 +1,4 @@
+import { marked } from 'marked'
 import React, { useRef, useState } from 'react'
 import { ThinkingOrb } from 'thinking-orbs'
 import { BorderBeam } from 'border-beam'
@@ -260,7 +261,14 @@ function FilterRow({ label, opts, cur, on }) {
 /** 极简 Markdown 渲染：标题 / 列表 / 表格 / 加粗 / EV 编号可点 */
 function renderMarkdown(md, nav) {
   const out = []
-  const lines = md.split('\n')
+  // Use Markdown tokens to distinguish dividers from table delimiters and fenced text.
+  const lines = marked.lexer(md, { gfm: true }).map((token) => {
+    if (token.type === 'hr') return '\n'
+    if (token.type === 'heading' && !token.raw.trimStart().startsWith('#')) {
+      return `## ${token.text.replace(/\n/g, ' ')}\n`
+    }
+    return token.raw
+  }).join('').split('\n')
   let list = null
   let table = null
 
@@ -313,8 +321,11 @@ function inline(s, nav) {
   while ((m = re.exec(s))) {
     if (m.index > i) parts.push(s.slice(i, m.index))
     if (m[2]) parts.push(<b key={m.index}>{m[2]}</b>)
-    else parts.push(
-      <button className="ev" key={m.index} onClick={() => nav(`/events/${m[3]}`)}>{m[3]}</button>)
+    else {
+      const eventId = m[3]
+      parts.push(
+        <button className="ev" key={m.index} onClick={() => nav(`/events/${eventId}`)}>{eventId}</button>)
+    }
     i = m.index + m[0].length
   }
   if (i < s.length) parts.push(s.slice(i))

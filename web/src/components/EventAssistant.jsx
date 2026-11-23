@@ -38,7 +38,6 @@ export default function EventAssistant({ event }) {
   const [quickInput, setQuickInput] = useState('')
   const [launcherActive, setLauncherActive] = useState(false)
   const [pageVisible, setPageVisible] = useState(!document.hidden)
-  const [noticeOpen, setNoticeOpen] = useState(() => Boolean(document.querySelector('.notice-backdrop')))
   const [hint, setHint] = useState('')
   const [hintPhase, setHintPhase] = useState('hidden')
   const [hintCount, setHintCount] = useState(0)
@@ -54,19 +53,8 @@ export default function EventAssistant({ event }) {
     document.addEventListener('visibilitychange', onVisibilityChange)
     return () => document.removeEventListener('visibilitychange', onVisibilityChange)
   }, [])
-  useEffect(() => setNoticeOpen(Boolean(document.querySelector('.notice-backdrop'))), [])
   useEffect(() => {
-    if (!noticeOpen) return
-    const notice = document.querySelector('.notice-backdrop')
-    if (!notice) { setNoticeOpen(false); return }
-    const observer = new MutationObserver(() => {
-      if (!notice.isConnected) { setNoticeOpen(false); observer.disconnect() }
-    })
-    observer.observe(notice.parentElement, { childList: true })
-    return () => observer.disconnect()
-  }, [noticeOpen])
-  useEffect(() => {
-    if (open || busy || quickInput.trim() || launcherActive || !pageVisible || noticeOpen || hintPhase !== 'hidden') return
+    if (open || busy || quickInput.trim() || launcherActive || !pageVisible || hintPhase !== 'hidden') return
     const dueAt = hintCount === 0 && !lastBotUseAt.current
       ? pageEnteredAt.current + 5000
       : Math.max(lastBotUseAt.current, lastHintAt.current) + 60000
@@ -77,7 +65,7 @@ export default function EventAssistant({ event }) {
       setHintCount(count => count + 1)
     }, Math.max(0, dueAt - Date.now()))
     return () => clearTimeout(timer)
-  }, [open, busy, quickInput, launcherActive, pageVisible, noticeOpen, hintCount, hintPhase])
+  }, [open, busy, quickInput, launcherActive, pageVisible, hintCount, hintPhase])
   useEffect(() => {
     if (hintPhase === 'entering') {
       const frame = requestAnimationFrame(() => setHintPhase('visible'))

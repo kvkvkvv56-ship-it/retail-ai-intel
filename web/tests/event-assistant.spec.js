@@ -1,11 +1,14 @@
 import { test, expect } from '@playwright/test'
+import { useSnapshots } from './snapshot-fixtures.js'
+
+test.beforeEach(async ({ page }) => useSnapshots(page))
+
 const pagePath = '/events/EV-1c9c9501'
 const answer = '报告覆盖 378 家企业。依据原文 [1](http://www.100ec.cn/detail--6659528.html)。'
 const webAnswer = '补充材料见 [1](https://news.example.com/a)。'
 function sse(content, sources = []) { return `${sources.length ? `data: ${JSON.stringify({ web_sources: sources })}\n\n` : ''}data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\ndata: {"choices":[{"delta":{},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n` }
 async function open(page) {
   await page.goto(pagePath)
-  await page.getByRole('button', { name: '我知道了', exact: true }).click()
   await expect(page.getByRole('button', { name: '打开事件助手' })).toBeVisible()
   await expect(page.getByRole('dialog', { name: '事件助手' })).toHaveCount(0)
   await page.getByRole('button', { name: '打开事件助手' }).click()
@@ -30,7 +33,6 @@ test('floating launcher, question, follow-up context, reset and event isolation'
       ? sse(webAnswer, ['https://news.example.com/a']) : sse(answer) })
   })
   await page.goto(pagePath)
-  await page.getByRole('button', { name: '我知道了', exact: true }).click()
   const launcher = page.locator('.assistant-launcher')
   const collapsed = await launcher.boundingBox()
   await launcher.hover()
@@ -77,7 +79,6 @@ test('floating launcher, question, follow-up context, reset and event isolation'
 test('launcher avatar and send arrow crossfade without remounting', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   await page.goto(pagePath)
-  await page.getByRole('button', { name: '我知道了', exact: true }).click()
   const bot = page.locator('.assistant-launcher-bot')
   const send = page.locator('.assistant-launcher-send')
   const field = page.getByRole('textbox', { name: '快速提问' })
@@ -131,8 +132,8 @@ test('mobile floating layout, close, retry and stop', async ({ page }) => {
 test('bot invitation appears after five seconds even while browsing the page', async ({ page }) => {
   await page.clock.install({ time: new Date('2026-10-08T12:00:00Z') })
   await page.goto(pagePath)
-  await page.getByRole('button', { name: '我知道了', exact: true }).click()
   const hint = page.locator('.assistant-idle-hint')
+  await expect(page.getByRole('button', { name: '打开事件助手' })).toBeVisible()
   await page.clock.runFor(3000)
   await page.mouse.move(300, 300)
   await page.keyboard.press('ArrowDown')
@@ -155,18 +156,11 @@ test('bot invitation appears after five seconds even while browsing the page', a
   await expect.poll(async () => (await page.locator('.assistant-launcher').boundingBox()).width).toBeGreaterThan(250)
 })
 
-test('invitation waits for the site notice and resets after bot use', async ({ page }) => {
+test('invitation resets after bot use', async ({ page }) => {
   await page.clock.install({ time: new Date('2026-10-08T12:00:00Z') })
   await page.goto(pagePath)
   const hint = page.locator('.assistant-idle-hint')
   await expect(page.getByRole('button', { name: '打开事件助手' })).toBeVisible()
-  await page.clock.runFor(5500)
-  await expect(hint).toHaveCount(0)
-  await page.getByRole('button', { name: '我知道了', exact: true }).click()
-  await page.clock.runFor(100)
-  await expect(hint).toBeVisible()
-  await hint.click()
-  await expect(hint).toHaveCount(0)
   await page.getByRole('button', { name: '打开事件助手' }).click()
   await expect(page.getByRole('dialog', { name: '事件助手' })).toBeVisible()
   await page.clock.runFor(6000)
@@ -183,8 +177,6 @@ test('invitation clouds flow and the bubble exits before removal', async ({ page
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   await page.clock.install({ time: new Date('2026-10-08T12:00:00Z') })
   await page.goto(pagePath)
-  await page.getByRole('button', { name: '我知道了', exact: true }).click()
-  await expect(page.locator('.notice-backdrop')).toHaveCount(0)
   await expect(page.getByRole('button', { name: '打开事件助手' })).toBeVisible()
   await page.clock.runFor(5500)
   const hint = page.locator('.assistant-idle-hint')
